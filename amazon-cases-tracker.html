@@ -104,6 +104,10 @@
       gap: 16px;
       margin-bottom: 12px;
       align-items: center;
+      background: #fff;
+      padding: 12px 16px;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
     }
     .filter-bar label {
       font-size: 0.72rem;
@@ -201,6 +205,7 @@
     .bucket-ip   { background: #f0f1f5; color: #666; }
     .bucket-esc  { background: #fff3e0; color: #bb6600; }
     .bucket-res  { background: #e6f9ee; color: #156930; }
+    .issue-vip   { background: #e6f9ee; color: #156930; padding: 2px 7px; border-radius: 4px; font-weight: 600; font-size: 0.78rem; white-space: nowrap; display: inline-block; }
 
     .days-urgent { color: #bb2211; font-weight: 700; }
     .days-warn   { color: #996600; font-weight: 600; }
@@ -404,7 +409,7 @@ const CASES = [
   {
     case_id: '10995838672', brand: 'QSTA', marketplace: 'UK',
     asin: 'B0BM1WPXC5', asin_name: 'LAX',
-    issue_type: 'VIP Seller Relations',
+    issue_type: 'Premium Support',
     status_bucket: 'Waiting on Amazon',
     days_open: 16, msgs: 24, close: false, closed_date: null,
     opened_date: '2026-02-18', owner: 'Unassigned', outcome: null
@@ -898,7 +903,7 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
         <td class="col-date">2026-02-18</td>
         <td class="col-date">2026-03-06</td>
         <td class="col-asin"><span class="asin-code">B0BM1WPXC5</span><span class="asin-name">LAX</span></td>
-        <td class="col-issue">VIP Seller Relations</td>
+        <td class="col-issue"><span class="issue-vip">Premium Support</span></td>
         <td><span class="bucket bucket-amz">Waiting on Amazon</span></td>
         <td class="col-summary">VIP coordinator case: manufacturer info requests, suppressed ASINs, listing compliance. 24 messages. Links to escalation #12199208622.</td>
         <td class="col-action"><div class="note-text" data-case="10995838672" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
