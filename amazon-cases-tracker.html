@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Amazon Cases Tracker</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -98,7 +101,7 @@
     /* ── Tables ──────────────────────────────────────────────────────────── */
     .table-wrap { width: 100%; overflow-x: auto; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
 
-    table { width: 100%; border-collapse: collapse; font-size: 0.8rem; background: #fff; min-width: 1400px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.8rem; background: #fff; min-width: 1500px; }
     th {
       background: #f0f1f5;
       color: #999;
@@ -165,7 +168,7 @@
     .due-soon   { color: #996600; font-weight: 600; }
     .due-blank  { color: #ccc; }
 
-    .col-closedate-active { color: #ddd; }  /* muted dash in active table */
+    .col-closedate-active { color: #ddd; }
 
     .closed-section { opacity: 0.6; }
     .closed-section table { background: #fafbfc; }
@@ -198,9 +201,122 @@
     }
     .owner-select:focus { outline: none; border-color: #5282e0; }
     .owner-select option[value="Unassigned"] { color: #aaa; }
+
+    /* ── Login overlay ──────────────────────────────────────────────────── */
+    .login-overlay {
+      position: fixed;
+      inset: 0;
+      background: #f5f6fa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .login-box {
+      background: #fff;
+      border-radius: 12px;
+      padding: 40px 48px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+      text-align: center;
+      max-width: 400px;
+    }
+    .login-box h1 { margin-bottom: 8px; }
+    .login-box p { color: #888; font-size: 0.85rem; margin-bottom: 24px; }
+    .btn-google {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 24px;
+      background: #fff;
+      border: 1px solid #dde0ea;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #444;
+      cursor: pointer;
+      transition: background 0.15s, box-shadow 0.15s;
+    }
+    .btn-google:hover { background: #f8f9fd; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+    .btn-google svg { width: 18px; height: 18px; }
+
+    /* ── User bar ───────────────────────────────────────────────────────── */
+    .user-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.75rem;
+      color: #888;
+    }
+    .user-bar img {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+    }
+    .btn-signout {
+      padding: 4px 10px;
+      background: none;
+      border: 1px solid #dde0ea;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      color: #888;
+      cursor: pointer;
+    }
+    .btn-signout:hover { background: #f0f1f5; }
+
+    /* ── Notes column ───────────────────────────────────────────────────── */
+    .col-notes { min-width: 180px; }
+    .note-text {
+      padding: 4px 6px;
+      min-height: 24px;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      color: #555;
+      white-space: pre-wrap;
+      word-break: break-word;
+      cursor: text;
+    }
+    .note-text:hover {
+      border-color: #dde0ea;
+      background: #fafbfc;
+    }
+    .note-text:empty::before {
+      content: 'Click to add note...';
+      color: #ccc;
+      font-style: italic;
+    }
+    .note-input {
+      width: 100%;
+      min-height: 48px;
+      padding: 4px 6px;
+      border: 1px solid #5282e0;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-family: inherit;
+      color: #444;
+      resize: vertical;
+      background: #fff;
+      box-shadow: 0 0 0 2px rgba(82,130,224,0.15);
+    }
+    .note-input:focus { outline: none; }
   </style>
 </head>
 <body>
+
+<!-- ═══ LOGIN OVERLAY ══════════════════════════════════════════════════════════ -->
+<div id="login-overlay" class="login-overlay">
+  <div class="login-box">
+    <h1>Amazon Cases Tracker</h1>
+    <p>Sign in with your Google account to access the tracker.</p>
+    <button class="btn-google" onclick="signIn()">
+      <svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+      Sign in with Google
+    </button>
+  </div>
+</div>
+
+<!-- ═══ APP (hidden until signed in) ═══════════════════════════════════════════ -->
+<div id="app" style="display:none">
 
 <!-- ═══ HEADER ═══════════════════════════════════════════════════════════════ -->
 <header>
@@ -212,6 +328,7 @@
     <button class="btn-copy" onclick="copyAssignments(this)" title="Copy current owner assignments and close flags as JSON to paste to Claude">
       &#128203; Copy Assignments
     </button>
+    <div class="user-bar" id="user-bar"></div>
   </div>
 </header>
 
@@ -626,6 +743,7 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
         <th class="col-action">Next Action</th>
         <th class="col-closedate">Closed</th>
         <th class="col-num">Msgs</th>
+        <th class="col-notes">Notes</th>
       </tr>
     </thead>
     <tbody id="active-tbody">
@@ -652,6 +770,7 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
         <td class="col-action">Provide correct ASIN for mislabeled units</td>
         <td class="col-closedate col-closedate-active">—</td>
         <td class="col-num">6</td>
+        <td class="col-notes"><div class="note-text" data-case="12139919272" onclick="editNote(this)"></div></td>
       </tr>
 
       <!-- 12122795542 -->
@@ -676,6 +795,7 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
         <td class="col-action">—</td>
         <td class="col-closedate col-closedate-active">—</td>
         <td class="col-num">9</td>
+        <td class="col-notes"><div class="note-text" data-case="12122795542" onclick="editNote(this)"></div></td>
       </tr>
 
       <!-- 12139373442 -->
@@ -700,6 +820,7 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
         <td class="col-action">—</td>
         <td class="col-closedate col-closedate-active">—</td>
         <td class="col-num">2</td>
+        <td class="col-notes"><div class="note-text" data-case="12139373442" onclick="editNote(this)"></div></td>
       </tr>
 
       <!-- 12122998082 -->
@@ -724,6 +845,7 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
         <td class="col-action">—</td>
         <td class="col-closedate col-closedate-active">—</td>
         <td class="col-num">1</td>
+        <td class="col-notes"><div class="note-text" data-case="12122998082" onclick="editNote(this)"></div></td>
       </tr>
 
       <!-- 10995838672 -->
@@ -748,6 +870,7 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
         <td class="col-action">—</td>
         <td class="col-closedate col-closedate-active">—</td>
         <td class="col-num">24</td>
+        <td class="col-notes"><div class="note-text" data-case="10995838672" onclick="editNote(this)"></div></td>
       </tr>
 
       <!-- 11756757402 -->
@@ -772,6 +895,7 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
         <td class="col-action">—</td>
         <td class="col-closedate col-closedate-active">—</td>
         <td class="col-num">1</td>
+        <td class="col-notes"><div class="note-text" data-case="11756757402" onclick="editNote(this)"></div></td>
       </tr>
 
       <!-- 12150140992 -->
@@ -796,6 +920,7 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
         <td class="col-action">—</td>
         <td class="col-closedate col-closedate-active">—</td>
         <td class="col-num">6</td>
+        <td class="col-notes"><div class="note-text" data-case="12150140992" onclick="editNote(this)"></div></td>
       </tr>
 
       <!-- 12160163052 -->
@@ -820,6 +945,7 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
         <td class="col-action">—</td>
         <td class="col-closedate col-closedate-active">—</td>
         <td class="col-num">1</td>
+        <td class="col-notes"><div class="note-text" data-case="12160163052" onclick="editNote(this)"></div></td>
       </tr>
 
       <!-- 12160765972 -->
@@ -844,6 +970,7 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
         <td class="col-action">—</td>
         <td class="col-closedate col-closedate-active">—</td>
         <td class="col-num">2</td>
+        <td class="col-notes"><div class="note-text" data-case="12160765972" onclick="editNote(this)"></div></td>
       </tr>
 
       <!-- 12196144212 -->
@@ -868,6 +995,7 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
         <td class="col-action">—</td>
         <td class="col-closedate col-closedate-active">—</td>
         <td class="col-num">4</td>
+        <td class="col-notes"><div class="note-text" data-case="12196144212" onclick="editNote(this)"></div></td>
       </tr>
 
       <!-- 12189296792 -->
@@ -892,6 +1020,7 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
         <td class="col-action">—</td>
         <td class="col-closedate col-closedate-active">—</td>
         <td class="col-num">2</td>
+        <td class="col-notes"><div class="note-text" data-case="12189296792" onclick="editNote(this)"></div></td>
       </tr>
 
       <!-- 12193136902 -->
@@ -916,6 +1045,7 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
         <td class="col-action">—</td>
         <td class="col-closedate col-closedate-active">—</td>
         <td class="col-num">2</td>
+        <td class="col-notes"><div class="note-text" data-case="12193136902" onclick="editNote(this)"></div></td>
       </tr>
 
       <!-- 12196786792 -->
@@ -940,6 +1070,7 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
         <td class="col-action">—</td>
         <td class="col-closedate col-closedate-active">—</td>
         <td class="col-num">1</td>
+        <td class="col-notes"><div class="note-text" data-case="12196786792" onclick="editNote(this)"></div></td>
       </tr>
 
       <!-- 12199208622 -->
@@ -964,6 +1095,7 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
         <td class="col-action">—</td>
         <td class="col-closedate col-closedate-active">—</td>
         <td class="col-num">2</td>
+        <td class="col-notes"><div class="note-text" data-case="12199208622" onclick="editNote(this)"></div></td>
       </tr>
 
       <!-- 12202348262 -->
@@ -988,6 +1120,7 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
         <td class="col-action">—</td>
         <td class="col-closedate col-closedate-active">—</td>
         <td class="col-num">1</td>
+        <td class="col-notes"><div class="note-text" data-case="12202348262" onclick="editNote(this)"></div></td>
       </tr>
 
     </tbody>
@@ -1016,10 +1149,11 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
         <th class="col-action">Next Action</th>
         <th class="col-closedate">Closed</th>
         <th class="col-num">Msgs</th>
+        <th class="col-notes">Notes</th>
       </tr>
     </thead>
     <tbody id="closed-tbody">
-      <tr class="empty-row" id="closed-empty" style="display:none"><td colspan="16">No closed cases yet</td></tr>
+      <tr class="empty-row" id="closed-empty" style="display:none"><td colspan="17">No closed cases yet</td></tr>
 
       <!-- 12159445672 — closed 2026-03-06 -->
       <tr data-case="12159445672" data-closedate="2026-03-06">
@@ -1043,6 +1177,7 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
         <td class="col-action">—</td>
         <td class="col-closedate">2026-03-06</td>
         <td class="col-num">3</td>
+        <td class="col-notes"><div class="note-text" data-case="12159445672" onclick="editNote(this)"></div></td>
       </tr>
 
       <!-- 19599539061 — closed 2026-03-06 -->
@@ -1067,6 +1202,7 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
         <td class="col-action">—</td>
         <td class="col-closedate">2026-03-06</td>
         <td class="col-num">1</td>
+        <td class="col-notes"><div class="note-text" data-case="19599539061" onclick="editNote(this)"></div></td>
       </tr>
 
       <!-- 12053445982 — closed 2026-02-25 -->
@@ -1091,6 +1227,7 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
         <td class="col-action">—</td>
         <td class="col-closedate">2026-02-25</td>
         <td class="col-num">4</td>
+        <td class="col-notes"><div class="note-text" data-case="12053445982" onclick="editNote(this)"></div></td>
       </tr>
 
       <!-- 12014653392 — closed 2026-02-17 -->
@@ -1115,76 +1252,152 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
         <td class="col-action">—</td>
         <td class="col-closedate">2026-02-17</td>
         <td class="col-num">4</td>
+        <td class="col-notes"><div class="note-text" data-case="12014653392" onclick="editNote(this)"></div></td>
       </tr>
 
     </tbody>
   </table>
 </div>
 
-<!-- ═══ TRACKER LOGIC ═════════════════════════════════════════════════════════ -->
+<!-- ═══ FIREBASE + TRACKER LOGIC ═════════════════════════════════════════════ -->
 <script>
-  const CLOSE_KEY     = 'amazon_case_closed';
-  const CLOSEDATE_KEY = 'amazon_case_close_dates';
-  const OWNER_KEY     = 'amazon_case_owners';
+  // ── Firebase Config ─────────────────────────────────────────────────────
+  // TODO: Replace with your Firebase project config from Firebase Console
+  const firebaseConfig = {
+    apiKey: "AIzaSyDDuBOndDZ7BXmMDY8AqzLoSNBf2r4rseU",
+    authDomain: "cases-tracker-dc2f2.firebaseapp.com",
+    databaseURL: "https://cases-tracker-dc2f2-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "cases-tracker-dc2f2",
+    storageBucket: "cases-tracker-dc2f2.firebasestorage.app",
+    messagingSenderId: "694983914978",
+    appId: "1:694983914978:web:6ca811e7bfc31a0487b5bb"
+  };
 
-  function loadClosed()     { try { return JSON.parse(localStorage.getItem(CLOSE_KEY)     || '[]'); } catch { return []; } }
-  function loadCloseDates() { try { return JSON.parse(localStorage.getItem(CLOSEDATE_KEY) || '{}'); } catch { return {}; } }
-  function loadOwners()     { try { return JSON.parse(localStorage.getItem(OWNER_KEY)     || '{}'); } catch { return {}; } }
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db   = firebase.database();
+
+  // ── Auth ────────────────────────────────────────────────────────────────
+  function signIn() {
+    auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+  }
+
+  function signOut() {
+    auth.signOut();
+  }
+
+  auth.onAuthStateChanged(user => {
+    const overlay = document.getElementById('login-overlay');
+    const app     = document.getElementById('app');
+    const userBar = document.getElementById('user-bar');
+
+    if (user) {
+      overlay.style.display = 'none';
+      app.style.display = '';
+      userBar.innerHTML = (user.photoURL ? '<img src="' + user.photoURL + '" alt="">' : '') +
+        '<span>' + (user.displayName || user.email) + '</span>' +
+        '<button class="btn-signout" onclick="signOut()">Sign out</button>';
+      initFirebaseSync();
+    } else {
+      overlay.style.display = '';
+      app.style.display = 'none';
+      userBar.innerHTML = '';
+    }
+  });
+
+  // ── Firebase Sync ───────────────────────────────────────────────────────
+  let _syncing = false; // prevents listener → save loops
+
+  function initFirebaseSync() {
+    // Sync owners
+    db.ref('owners').on('value', snap => {
+      _syncing = true;
+      const owners = snap.val() || {};
+      document.querySelectorAll('.owner-select').forEach(sel => {
+        if (owners[sel.dataset.case]) {
+          sel.value = owners[sel.dataset.case];
+        }
+      });
+      _syncing = false;
+    });
+
+    // Sync closed states
+    db.ref('closed').on('value', snap => {
+      _syncing = true;
+      const closed = snap.val() || {};
+      document.querySelectorAll('.close-check').forEach(cb => {
+        const caseId = cb.dataset.case;
+        const shouldBeChecked = closed[caseId] || cb.dataset.source === 'true';
+        if (cb.checked !== shouldBeChecked) {
+          cb.checked = shouldBeChecked;
+          moveRow(caseId, shouldBeChecked);
+        }
+      });
+      _syncing = false;
+    });
+
+    // Sync close dates
+    db.ref('close_dates').on('value', snap => {
+      _syncing = true;
+      const dates = snap.val() || {};
+      // Store for use in moveRow
+      window._fbCloseDates = dates;
+      _syncing = false;
+    });
+
+    // Sync notes
+    db.ref('notes').on('value', snap => {
+      _syncing = true;
+      const notes = snap.val() || {};
+      document.querySelectorAll('.note-text').forEach(div => {
+        const caseId = div.dataset.case;
+        if (notes[caseId] !== undefined && notes[caseId] !== null) {
+          div.textContent = notes[caseId];
+        } else {
+          div.textContent = '';
+        }
+      });
+      _syncing = false;
+    });
+
+    // Initial close state from HTML source (cases already closed in cases_core.md)
+    document.querySelectorAll('.close-check').forEach(cb => {
+      if (cb.dataset.source === 'true') {
+        cb.checked = true;
+        moveRow(cb.dataset.case, true);
+      }
+    });
+  }
+
+  // ── Owner changed ─────────────────────────────────────────────────────
+  function ownerChanged(sel) {
+    if (_syncing) return;
+    db.ref('owners/' + sel.dataset.case).set(sel.value);
+  }
+
+  // ── Close toggle ──────────────────────────────────────────────────────
+  function closeToggled(cb) {
+    if (_syncing) return;
+    const caseId = cb.dataset.case;
+
+    if (cb.checked) {
+      const row  = document.querySelector('tr[data-case="' + caseId + '"]');
+      const date = (row && row.dataset.closedate) || today();
+      db.ref('closed/' + caseId).set(true);
+      db.ref('close_dates/' + caseId).set(date);
+    } else {
+      db.ref('closed/' + caseId).remove();
+    }
+
+    moveRow(caseId, cb.checked);
+  }
 
   function today() {
     return new Date().toISOString().split('T')[0];
   }
 
-  // ── Init ─────────────────────────────────────────────────────────────────
-  (function init() {
-    // Restore close states
-    const closedList = loadClosed();
-    document.querySelectorAll('.close-check').forEach(cb => {
-      const isClosed = closedList.includes(cb.dataset.case) || cb.dataset.source === 'true';
-      if (isClosed) { cb.checked = true; moveRow(cb.dataset.case, true); }
-    });
-    // Restore owner assignments from localStorage (overrides static HTML defaults)
-    const savedOwners = loadOwners();
-    document.querySelectorAll('.owner-select').forEach(sel => {
-      if (savedOwners[sel.dataset.case]) {
-        sel.value = savedOwners[sel.dataset.case];
-      }
-    });
-  })();
-
-  // ── Owner changed ─────────────────────────────────────────────────────────
-  function ownerChanged(sel) {
-    const owners = loadOwners();
-    owners[sel.dataset.case] = sel.value;
-    localStorage.setItem(OWNER_KEY, JSON.stringify(owners));
-  }
-
-  // ── Close ─────────────────────────────────────────────────────────────────
-  function closeToggled(cb) {
-    const caseId = cb.dataset.case;
-    const list   = loadClosed();
-    const dates  = loadCloseDates();
-
-    if (cb.checked) {
-      if (!list.includes(caseId)) list.push(caseId);
-      // Stamp close date only once — don't overwrite if already set from cases_core.md
-      if (!dates[caseId]) {
-        const row = document.querySelector(`tr[data-case="${caseId}"]`);
-        dates[caseId] = (row && row.dataset.closedate) || today();
-        localStorage.setItem(CLOSEDATE_KEY, JSON.stringify(dates));
-      }
-    } else {
-      const i = list.indexOf(caseId);
-      if (i > -1) list.splice(i, 1);
-      // Keep close date in localStorage — it stays as historical record
-    }
-
-    localStorage.setItem(CLOSE_KEY, JSON.stringify(list));
-    moveRow(caseId, cb.checked);
-  }
-
   function moveRow(caseId, toClose) {
-    const row = document.querySelector(`tr[data-case="${caseId}"]`);
+    const row = document.querySelector('tr[data-case="' + caseId + '"]');
     if (!row) return;
     const activeTbody = document.getElementById('active-tbody');
     const closedTbody = document.getElementById('closed-tbody');
@@ -1192,19 +1405,17 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
     const dateTd      = row.querySelector('.col-closedate');
 
     if (toClose) {
-      // Fill close date cell
       if (dateTd) {
-        const dates = loadCloseDates();
-        const date  = (row.dataset.closedate) || dates[caseId] || today();
+        const fbDates = window._fbCloseDates || {};
+        const date = row.dataset.closedate || fbDates[caseId] || today();
         dateTd.textContent = date;
         dateTd.classList.remove('col-closedate-active');
       }
       closedTbody.appendChild(row);
       if (emptyRow) emptyRow.style.display = 'none';
     } else {
-      // Clear close date cell when reopening
       if (dateTd) {
-        dateTd.textContent = '—';
+        dateTd.textContent = '\u2014';
         dateTd.classList.add('col-closedate-active');
       }
       activeTbody.appendChild(row);
@@ -1213,19 +1424,53 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
     }
   }
 
-  // ── Copy Assignments ──────────────────────────────────────────────────────
-  function copyAssignments(btn) {
-    const closedList = loadClosed();
-    const closeDates = loadCloseDates();
+  // ── Notes ──────────────────────────────────────────────────────────────
+  function editNote(div) {
+    if (div.querySelector('textarea')) return; // already editing
 
+    const caseId = div.dataset.case;
+    const current = div.textContent || '';
+
+    const textarea = document.createElement('textarea');
+    textarea.className = 'note-input';
+    textarea.value = current;
+    div.textContent = '';
+    div.appendChild(textarea);
+    textarea.focus();
+
+    function save() {
+      const val = textarea.value.trim();
+      div.textContent = val;
+      if (val) {
+        db.ref('notes/' + caseId).set(val);
+      } else {
+        db.ref('notes/' + caseId).remove();
+      }
+    }
+
+    textarea.addEventListener('blur', save);
+    textarea.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        div.textContent = current; // revert
+      }
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        save();
+      }
+    });
+  }
+
+  // ── Copy Assignments ──────────────────────────────────────────────────
+  function copyAssignments(btn) {
     const toClose = [];
     const toCloseDates = {};
+    const fbDates = window._fbCloseDates || {};
+
     document.querySelectorAll('.close-check').forEach(cb => {
-      const isClosed = closedList.includes(cb.dataset.case) || cb.dataset.source === 'true';
-      if (isClosed) {
+      if (cb.checked) {
         toClose.push(cb.dataset.case);
-        const row  = document.querySelector(`tr[data-case="${cb.dataset.case}"]`);
-        const date = (row && row.dataset.closedate) || closeDates[cb.dataset.case] || null;
+        const row  = document.querySelector('tr[data-case="' + cb.dataset.case + '"]');
+        const date = (row && row.dataset.closedate) || fbDates[cb.dataset.case] || null;
         if (date) toCloseDates[cb.dataset.case] = date;
       }
     });
@@ -1236,15 +1481,17 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
     });
 
     const output = { close: toClose, close_dates: toCloseDates, owners };
-    const text = `Case assignments:\n${JSON.stringify(output, null, 2)}`;
+    const text = 'Case assignments:\n' + JSON.stringify(output, null, 2);
 
     navigator.clipboard.writeText(text).then(() => {
       btn.classList.add('copied');
-      btn.textContent = '✓ Copied!';
+      btn.textContent = '\u2713 Copied!';
       setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = '&#128203; Copy Assignments'; }, 2000);
     });
   }
 </script>
+
+</div><!-- /app -->
 
 </body>
 </html>
