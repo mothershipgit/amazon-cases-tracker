@@ -206,7 +206,7 @@
 <header>
   <div>
     <h1>Amazon Cases Tracker</h1>
-    <div class="meta">Last updated: 2026-03-03 &nbsp;·&nbsp; Source: projects/Amazon Cases/cases_core.md</div>
+    <div class="meta">Last updated: 2026-03-06 &nbsp;·&nbsp; Source: projects/Amazon Cases/cases_core.md</div>
   </div>
   <div class="header-actions">
     <button class="btn-copy" onclick="copyAssignments(this)" title="Copy current owner assignments and close flags as JSON to paste to Claude">
@@ -223,15 +223,15 @@ const CASES = [
     asin: 'B0BH37FCZQ', asin_name: 'BRNR21-DE-FR-IT',
     issue_type: 'FBA Stock Investigation',
     status_bucket: 'Waiting on Amazon',
-    days_open: 15, msgs: 6, close: false, closed_date: null,
+    days_open: 18, msgs: 6, close: false, closed_date: null,
     opened_date: '2026-02-16', owner: 'Vitali', outcome: null
   },
   {
     case_id: '12122795542', brand: 'QSTA', marketplace: 'IT',
     asin: 'B0BC4FT3XP', asin_name: 'CUT',
     issue_type: 'Restricted Products Appeal',
-    status_bucket: 'Waiting on Amazon',
-    days_open: 19, msgs: 7, close: false, closed_date: null,
+    status_bucket: 'Escalated',
+    days_open: 22, msgs: 9, close: false, closed_date: null,
     opened_date: '2026-02-12', owner: 'Vitali', outcome: null
   },
   {
@@ -239,7 +239,7 @@ const CASES = [
     asin: 'B0GMYGR5Z9', asin_name: 'LAX-2-BUNDLE-IT',
     issue_type: 'Restricted Products Appeal',
     status_bucket: 'In Progress',
-    days_open: 15, msgs: 2, close: false, closed_date: null,
+    days_open: 18, msgs: 2, close: false, closed_date: null,
     opened_date: '2026-02-16', owner: 'Vitali', outcome: null
   },
   {
@@ -247,7 +247,7 @@ const CASES = [
     asin: 'B0BC4FT3XP', asin_name: 'CUT',
     issue_type: 'Restricted Products Appeal',
     status_bucket: 'Waiting on Us',
-    days_open: 14, msgs: 1, close: false, closed_date: null,
+    days_open: 17, msgs: 1, close: false, closed_date: null,
     opened_date: '2026-02-17', owner: 'Unassigned', outcome: null
   },
   {
@@ -255,7 +255,7 @@ const CASES = [
     asin: 'B0BM1WPXC5', asin_name: 'LAX',
     issue_type: 'VIP Seller Relations',
     status_bucket: 'Waiting on Amazon',
-    days_open: 13, msgs: 14, close: false, closed_date: null,
+    days_open: 16, msgs: 24, close: false, closed_date: null,
     opened_date: '2026-02-18', owner: 'Unassigned', outcome: null
   },
   {
@@ -263,7 +263,7 @@ const CASES = [
     asin: null, asin_name: null,
     issue_type: 'Country of Origin Compliance',
     status_bucket: 'Waiting on Us',
-    days_open: 12, msgs: 1, close: false, closed_date: null,
+    days_open: 15, msgs: 1, close: false, closed_date: null,
     opened_date: '2026-02-19', owner: 'Unassigned', outcome: null
   },
   {
@@ -271,7 +271,7 @@ const CASES = [
     asin: 'B0BC4FT3XP', asin_name: 'CUT',
     issue_type: 'Image Compliance - Escalation',
     status_bucket: 'In Progress',
-    days_open: 11, msgs: 6, close: false, closed_date: null,
+    days_open: 14, msgs: 6, close: false, closed_date: null,
     opened_date: '2026-02-20', owner: 'Unassigned', outcome: null
   },
   {
@@ -279,16 +279,80 @@ const CASES = [
     asin: 'B0DJTJ11PG', asin_name: 'Berberine',
     issue_type: 'FBA Stock Investigation',
     status_bucket: 'In Progress',
-    days_open: 8, msgs: 1, close: false, closed_date: null,
+    days_open: 11, msgs: 1, close: false, closed_date: null,
     opened_date: '2026-02-23', owner: 'Unassigned', outcome: null
+  },
+  {
+    case_id: '12160765972', brand: 'QSTA', marketplace: 'IT',
+    asin: 'B0GKPPG3P6', asin_name: 'LAX-2-BUNDLE-EU',
+    issue_type: 'Restricted Products Appeal',
+    status_bucket: 'Waiting on Us',
+    days_open: 10, msgs: 2, close: false, closed_date: null,
+    opened_date: '2026-02-24', owner: 'Unassigned', outcome: null
+  },
+  {
+    case_id: '12196144212', brand: 'QSTA', marketplace: 'ES',
+    asin: 'B0B6GHYP1V', asin_name: 'DETOX-EU',
+    issue_type: 'Product Suppressed - Safety',
+    status_bucket: 'In Progress',
+    days_open: 5, msgs: 4, close: false, closed_date: null,
+    opened_date: '2026-03-01', owner: 'Unassigned', outcome: null
+  },
+  {
+    case_id: '12189296792', brand: 'QSTA', marketplace: 'IT',
+    asin: 'B0BC4FT3XP', asin_name: 'CUT',
+    issue_type: 'Restricted Products Appeal',
+    status_bucket: 'Waiting on Us',
+    days_open: 3, msgs: 2, close: false, closed_date: null,
+    opened_date: '2026-03-03', owner: 'Unassigned', outcome: null
+  },
+  {
+    case_id: '12193136902', brand: 'QSTA', marketplace: 'IT',
+    asin: 'B0GKPPG3P6', asin_name: 'LAX-2-BUNDLE-EU',
+    issue_type: 'Restricted Products Appeal',
+    status_bucket: 'In Progress',
+    days_open: 3, msgs: 2, close: false, closed_date: null,
+    opened_date: '2026-03-03', owner: 'Unassigned', outcome: null
+  },
+  {
+    case_id: '12196786792', brand: 'QSTA', marketplace: 'ES',
+    asin: 'B0B6GHYP1V', asin_name: 'DETOX-EU',
+    issue_type: 'Food and Product Safety',
+    status_bucket: 'In Progress',
+    days_open: 2, msgs: 1, close: false, closed_date: null,
+    opened_date: '2026-03-04', owner: 'Unassigned', outcome: null
+  },
+  {
+    case_id: '12199208622', brand: 'QSTA', marketplace: 'DE',
+    asin: 'B0G8JPG7FF', asin_name: 'INO-C-2-BUNDLE-EU',
+    issue_type: 'Escalation Review',
+    status_bucket: 'Escalated',
+    days_open: 2, msgs: 2, close: false, closed_date: null,
+    opened_date: '2026-03-04', owner: 'Unassigned', outcome: null
+  },
+  {
+    case_id: '12202348262', brand: 'Hudson Chase', marketplace: 'ES',
+    asin: null, asin_name: null,
+    issue_type: 'VAT Number Issue',
+    status_bucket: 'In Progress',
+    days_open: 1, msgs: 1, close: false, closed_date: null,
+    opened_date: '2026-03-05', owner: 'Unassigned', outcome: null
   },
   {
     case_id: '12159445672', brand: 'QSTA', marketplace: 'DE',
     asin: 'B0BM1WPXC5', asin_name: 'LAX',
     issue_type: 'Escalation Review',
-    status_bucket: 'Escalated',
-    days_open: 8, msgs: 1, close: false, closed_date: null,
+    status_bucket: 'Resolved',
+    days_open: 11, msgs: 3, close: true, closed_date: '2026-03-06',
     opened_date: '2026-02-23', owner: 'Unassigned', outcome: null
+  },
+  {
+    case_id: '19599539061', brand: 'QSTA', marketplace: 'US',
+    asin: null, asin_name: null,
+    issue_type: 'Queue Misassignment',
+    status_bucket: 'Resolved',
+    days_open: 1, msgs: 1, close: true, closed_date: '2026-03-06',
+    opened_date: '2026-03-05', owner: 'Unassigned', outcome: null
   },
   {
     case_id: '12053445982', brand: 'QSTA', marketplace: 'IT',
@@ -579,7 +643,7 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
         </select></td>
         <td class="col-date">2026-02-16</td>
         <td class="col-date">2026-02-26</td>
-        <td class="col-num days-urgent">15</td>
+        <td class="col-num days-urgent">18</td>
         <td class="col-asin"><span class="asin-code">B0BH37FCZQ</span><span class="asin-name">BRNR21-DE-FR-IT</span></td>
         <td class="col-issue">FBA Stock Investigation</td>
         <td><span class="bucket bucket-amz">Waiting on Amazon</span></td>
@@ -602,16 +666,16 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
           <option value="Tom">Tom</option>
         </select></td>
         <td class="col-date">2026-02-12</td>
-        <td class="col-date">2026-03-02</td>
-        <td class="col-num days-urgent">19</td>
+        <td class="col-date">2026-03-05</td>
+        <td class="col-num days-urgent">22</td>
         <td class="col-asin"><span class="asin-code">B0BC4FT3XP</span><span class="asin-name">CUT</span></td>
         <td class="col-issue">Restricted Products Appeal</td>
-        <td><span class="bucket bucket-amz">Waiting on Amazon</span></td>
-        <td class="col-status">Awaiting Policy team update</td>
-        <td class="col-summary">CUT product restricted in Italy. Multiple appeals submitted (7 messages). Awaiting Amazon Policy team response — longest open case.</td>
+        <td><span class="bucket bucket-esc">Escalated</span></td>
+        <td class="col-status">Internal team removing non-compliant images before escalation</td>
+        <td class="col-summary">CUT restricted in Italy. SAS-Escalation team working to remove non-compliant images from detail page. 9 messages, 22 days — longest open case.</td>
         <td class="col-action">—</td>
         <td class="col-closedate col-closedate-active">—</td>
-        <td class="col-num">7</td>
+        <td class="col-num">9</td>
       </tr>
 
       <!-- 12139373442 -->
@@ -627,12 +691,12 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
         </select></td>
         <td class="col-date">2026-02-16</td>
         <td class="col-date">2026-02-16</td>
-        <td class="col-num days-urgent">15</td>
+        <td class="col-num days-urgent">18</td>
         <td class="col-asin"><span class="asin-code">B0GMYGR5Z9</span><span class="asin-name">LAX-2-BUNDLE-IT</span></td>
         <td class="col-issue">Restricted Products Appeal</td>
         <td><span class="bucket bucket-ip">In Progress</span></td>
         <td class="col-status">Reinstatement process started</td>
-        <td class="col-summary">LAX 2-Bundle restricted in Italy. Reinstatement process just initiated. Early stage — 2 messages exchanged so far.</td>
+        <td class="col-summary">LAX 2-Bundle restricted in Italy. Reinstatement process initiated. Early stage — 2 messages exchanged so far.</td>
         <td class="col-action">—</td>
         <td class="col-closedate col-closedate-active">—</td>
         <td class="col-num">2</td>
@@ -651,7 +715,7 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
         </select></td>
         <td class="col-date">2026-02-17</td>
         <td class="col-date">2026-02-17</td>
-        <td class="col-num days-urgent">14</td>
+        <td class="col-num days-urgent">17</td>
         <td class="col-asin"><span class="asin-code">B0BC4FT3XP</span><span class="asin-name">CUT</span></td>
         <td class="col-issue">Restricted Products Appeal</td>
         <td><span class="bucket bucket-us">Waiting on Us</span></td>
@@ -674,16 +738,16 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
           <option value="Tom">Tom</option>
         </select></td>
         <td class="col-date">2026-02-18</td>
-        <td class="col-date">2026-03-03</td>
-        <td class="col-num days-warn">13</td>
+        <td class="col-date">2026-03-06</td>
+        <td class="col-num days-urgent">16</td>
         <td class="col-asin"><span class="asin-code">B0BM1WPXC5</span><span class="asin-name">LAX</span></td>
         <td class="col-issue">VIP Seller Relations</td>
         <td><span class="bucket bucket-amz">Waiting on Amazon</span></td>
-        <td class="col-status">Technical team investigating voucher &amp; listing issues</td>
-        <td class="col-summary">VIP coordinator case covering: voucher bug, LAX adult-flag/DE listing issue, image compliance (linked to #12150140992). 14 messages. Technical team investigating.</td>
+        <td class="col-status">VIP team investigating multiple issues (manufacturer info, suppressed ASINs)</td>
+        <td class="col-summary">VIP coordinator case: manufacturer info requests, suppressed ASINs (B0C1ZZCW1V, B0G8JPG7FF), listing compliance, image issues. 24 messages. Links to escalation #12199208622.</td>
         <td class="col-action">—</td>
         <td class="col-closedate col-closedate-active">—</td>
-        <td class="col-num">14</td>
+        <td class="col-num">24</td>
       </tr>
 
       <!-- 11756757402 -->
@@ -699,7 +763,7 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
         </select></td>
         <td class="col-date">2026-02-19</td>
         <td class="col-date">2026-02-19</td>
-        <td class="col-num days-warn">12</td>
+        <td class="col-num days-urgent">15</td>
         <td class="col-asin"><span class="asin-code">—</span></td>
         <td class="col-issue">Country of Origin Compliance</td>
         <td><span class="bucket bucket-us">Waiting on Us</span></td>
@@ -723,7 +787,7 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
         </select></td>
         <td class="col-date">2026-02-20</td>
         <td class="col-date">2026-02-27</td>
-        <td class="col-num days-warn">11</td>
+        <td class="col-num days-warn">14</td>
         <td class="col-asin"><span class="asin-code">B0BC4FT3XP</span><span class="asin-name">CUT</span></td>
         <td class="col-issue">Image Compliance - Escalation</td>
         <td><span class="bucket bucket-ip">In Progress</span></td>
@@ -747,7 +811,7 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
         </select></td>
         <td class="col-date">2026-02-23</td>
         <td class="col-date">2026-02-23</td>
-        <td class="col-num days-warn">8</td>
+        <td class="col-num days-warn">11</td>
         <td class="col-asin"><span class="asin-code">B0DJTJ11PG</span><span class="asin-name">Berberine</span></td>
         <td class="col-issue">FBA Stock Investigation</td>
         <td><span class="bucket bucket-ip">In Progress</span></td>
@@ -758,25 +822,169 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
         <td class="col-num">1</td>
       </tr>
 
-      <!-- 12159445672 -->
-      <tr data-case="12159445672" data-closedate="">
-        <td class="col-close"><input type="checkbox" class="close-check" data-case="12159445672" data-source="false" onchange="closeToggled(this)"></td>
-        <td class="col-case">12159445672</td>
+      <!-- 12160765972 -->
+      <tr data-case="12160765972" data-closedate="">
+        <td class="col-close"><input type="checkbox" class="close-check" data-case="12160765972" data-source="false" onchange="closeToggled(this)"></td>
+        <td class="col-case">12160765972</td>
         <td>QSTA</td>
-        <td><span class="badge mkt-de">DE</span></td>
-        <td class="col-owner"><select class="owner-select" data-case="12159445672" onchange="ownerChanged(this)">
+        <td><span class="badge mkt-it">IT</span></td>
+        <td class="col-owner"><select class="owner-select" data-case="12160765972" onchange="ownerChanged(this)">
           <option value="Unassigned" selected>Unassigned</option>
           <option value="Vitali">Vitali</option>
           <option value="Tom">Tom</option>
         </select></td>
-        <td class="col-date">2026-02-23</td>
-        <td class="col-date">2026-02-23</td>
-        <td class="col-num days-warn">8</td>
-        <td class="col-asin"><span class="asin-code">B0BM1WPXC5</span><span class="asin-name">LAX</span></td>
+        <td class="col-date">2026-02-24</td>
+        <td class="col-date">2026-02-26</td>
+        <td class="col-num days-warn">10</td>
+        <td class="col-asin"><span class="asin-code">B0GKPPG3P6</span><span class="asin-name">LAX-2-BUNDLE-EU</span></td>
+        <td class="col-issue">Restricted Products Appeal</td>
+        <td><span class="bucket bucket-us">Waiting on Us</span></td>
+        <td class="col-status">Appeal rejected - unable to reactivate ASIN</td>
+        <td class="col-summary">LAX 2-Bundle EU restricted in Italy. Two appeals rejected — Amazon unable to reactivate. New approach needed.</td>
+        <td class="col-action">—</td>
+        <td class="col-closedate col-closedate-active">—</td>
+        <td class="col-num">2</td>
+      </tr>
+
+      <!-- 12196144212 -->
+      <tr data-case="12196144212" data-closedate="">
+        <td class="col-close"><input type="checkbox" class="close-check" data-case="12196144212" data-source="false" onchange="closeToggled(this)"></td>
+        <td class="col-case">12196144212</td>
+        <td>QSTA</td>
+        <td><span class="badge mkt-es">ES</span></td>
+        <td class="col-owner"><select class="owner-select" data-case="12196144212" onchange="ownerChanged(this)">
+          <option value="Unassigned" selected>Unassigned</option>
+          <option value="Vitali">Vitali</option>
+          <option value="Tom">Tom</option>
+        </select></td>
+        <td class="col-date">2026-03-01</td>
+        <td class="col-date">2026-03-06</td>
+        <td class="col-num days-ok">5</td>
+        <td class="col-asin"><span class="asin-code">B0B6GHYP1V</span><span class="asin-name">DETOX-EU</span></td>
+        <td class="col-issue">Product Suppressed - Safety</td>
+        <td><span class="bucket bucket-ip">In Progress</span></td>
+        <td class="col-status">Updated safety documentation under review</td>
+        <td class="col-summary">DETOX-EU suppressed due to safety incident in Spain. Plan of Action and updated docs submitted. Amazon reviewing — 4 messages so far.</td>
+        <td class="col-action">—</td>
+        <td class="col-closedate col-closedate-active">—</td>
+        <td class="col-num">4</td>
+      </tr>
+
+      <!-- 12189296792 -->
+      <tr data-case="12189296792" data-closedate="">
+        <td class="col-close"><input type="checkbox" class="close-check" data-case="12189296792" data-source="false" onchange="closeToggled(this)"></td>
+        <td class="col-case">12189296792</td>
+        <td>QSTA</td>
+        <td><span class="badge mkt-it">IT</span></td>
+        <td class="col-owner"><select class="owner-select" data-case="12189296792" onchange="ownerChanged(this)">
+          <option value="Unassigned" selected>Unassigned</option>
+          <option value="Vitali">Vitali</option>
+          <option value="Tom">Tom</option>
+        </select></td>
+        <td class="col-date">2026-03-03</td>
+        <td class="col-date">2026-03-04</td>
+        <td class="col-num days-ok">3</td>
+        <td class="col-asin"><span class="asin-code">B0BC4FT3XP</span><span class="asin-name">CUT</span></td>
+        <td class="col-issue">Restricted Products Appeal</td>
+        <td><span class="bucket bucket-us">Waiting on Us</span></td>
+        <td class="col-status">Appeal rejected - unable to reactivate ASIN</td>
+        <td class="col-summary">CUT restricted products appeal in Italy. Two rejections — Amazon unable to reactivate. New appeal with stronger documentation required.</td>
+        <td class="col-action">—</td>
+        <td class="col-closedate col-closedate-active">—</td>
+        <td class="col-num">2</td>
+      </tr>
+
+      <!-- 12193136902 -->
+      <tr data-case="12193136902" data-closedate="">
+        <td class="col-close"><input type="checkbox" class="close-check" data-case="12193136902" data-source="false" onchange="closeToggled(this)"></td>
+        <td class="col-case">12193136902</td>
+        <td>QSTA</td>
+        <td><span class="badge mkt-it">IT</span></td>
+        <td class="col-owner"><select class="owner-select" data-case="12193136902" onchange="ownerChanged(this)">
+          <option value="Unassigned" selected>Unassigned</option>
+          <option value="Vitali">Vitali</option>
+          <option value="Tom">Tom</option>
+        </select></td>
+        <td class="col-date">2026-03-03</td>
+        <td class="col-date">2026-03-03</td>
+        <td class="col-num days-ok">3</td>
+        <td class="col-asin"><span class="asin-code">B0GKPPG3P6</span><span class="asin-name">LAX-2-BUNDLE-EU</span></td>
+        <td class="col-issue">Restricted Products Appeal</td>
+        <td><span class="bucket bucket-ip">In Progress</span></td>
+        <td class="col-status">Reinstatement process started</td>
+        <td class="col-summary">LAX 2-Bundle EU reinstatement process started in Italy. Amazon confirmed they are reinstating the product detail page.</td>
+        <td class="col-action">—</td>
+        <td class="col-closedate col-closedate-active">—</td>
+        <td class="col-num">2</td>
+      </tr>
+
+      <!-- 12196786792 -->
+      <tr data-case="12196786792" data-closedate="">
+        <td class="col-close"><input type="checkbox" class="close-check" data-case="12196786792" data-source="false" onchange="closeToggled(this)"></td>
+        <td class="col-case">12196786792</td>
+        <td>QSTA</td>
+        <td><span class="badge mkt-es">ES</span></td>
+        <td class="col-owner"><select class="owner-select" data-case="12196786792" onchange="ownerChanged(this)">
+          <option value="Unassigned" selected>Unassigned</option>
+          <option value="Vitali">Vitali</option>
+          <option value="Tom">Tom</option>
+        </select></td>
+        <td class="col-date">2026-03-04</td>
+        <td class="col-date">2026-03-04</td>
+        <td class="col-num days-ok">2</td>
+        <td class="col-asin"><span class="asin-code">B0B6GHYP1V</span><span class="asin-name">DETOX-EU</span></td>
+        <td class="col-issue">Food and Product Safety</td>
+        <td><span class="bucket bucket-ip">In Progress</span></td>
+        <td class="col-status">Reinstatement request under review (ES safety)</td>
+        <td class="col-summary">DETOX-EU removed due to food safety violation in Spain. Reinstatement request submitted and under review by ES compliance team.</td>
+        <td class="col-action">—</td>
+        <td class="col-closedate col-closedate-active">—</td>
+        <td class="col-num">1</td>
+      </tr>
+
+      <!-- 12199208622 -->
+      <tr data-case="12199208622" data-closedate="">
+        <td class="col-close"><input type="checkbox" class="close-check" data-case="12199208622" data-source="false" onchange="closeToggled(this)"></td>
+        <td class="col-case">12199208622</td>
+        <td>QSTA</td>
+        <td><span class="badge mkt-de">DE</span></td>
+        <td class="col-owner"><select class="owner-select" data-case="12199208622" onchange="ownerChanged(this)">
+          <option value="Unassigned" selected>Unassigned</option>
+          <option value="Vitali">Vitali</option>
+          <option value="Tom">Tom</option>
+        </select></td>
+        <td class="col-date">2026-03-04</td>
+        <td class="col-date">2026-03-05</td>
+        <td class="col-num days-ok">2</td>
+        <td class="col-asin"><span class="asin-code">B0G8JPG7FF</span><span class="asin-name">INO-C-2-BUNDLE-EU</span></td>
         <td class="col-issue">Escalation Review</td>
         <td><span class="bucket bucket-esc">Escalated</span></td>
-        <td class="col-status">Escalated to specialist team by Premium Dept</td>
-        <td class="col-summary">LAX listing issue in Germany escalated to specialist team by Premium Dept. Likely adult-content flag — awaiting specialist decision.</td>
+        <td class="col-status">Premium team reviewing suppressed ASINs</td>
+        <td class="col-summary">Premium Technical Support (Teresa/Angelo) investigating suppressed ASINs in DE. Both ASINs currently restricted. Linked from VIP case #10995838672.</td>
+        <td class="col-action">—</td>
+        <td class="col-closedate col-closedate-active">—</td>
+        <td class="col-num">2</td>
+      </tr>
+
+      <!-- 12202348262 -->
+      <tr data-case="12202348262" data-closedate="">
+        <td class="col-close"><input type="checkbox" class="close-check" data-case="12202348262" data-source="false" onchange="closeToggled(this)"></td>
+        <td class="col-case">12202348262</td>
+        <td>Hudson Chase</td>
+        <td><span class="badge mkt-es">ES</span></td>
+        <td class="col-owner"><select class="owner-select" data-case="12202348262" onchange="ownerChanged(this)">
+          <option value="Unassigned" selected>Unassigned</option>
+          <option value="Vitali">Vitali</option>
+          <option value="Tom">Tom</option>
+        </select></td>
+        <td class="col-date">2026-03-05</td>
+        <td class="col-date">2026-03-05</td>
+        <td class="col-num days-ok">1</td>
+        <td class="col-asin"><span class="asin-code">—</span></td>
+        <td class="col-issue">VAT Number Issue</td>
+        <td><span class="bucket bucket-ip">In Progress</span></td>
+        <td class="col-status">Spanish VAT number issue under investigation</td>
+        <td class="col-summary">Hudson Chase Spanish VAT number issue. Amazon support (Kafui) investigating the VAT registration problem for ES marketplace.</td>
         <td class="col-action">—</td>
         <td class="col-closedate col-closedate-active">—</td>
         <td class="col-num">1</td>
@@ -812,6 +1020,54 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
     </thead>
     <tbody id="closed-tbody">
       <tr class="empty-row" id="closed-empty" style="display:none"><td colspan="16">No closed cases yet</td></tr>
+
+      <!-- 12159445672 — closed 2026-03-06 -->
+      <tr data-case="12159445672" data-closedate="2026-03-06">
+        <td class="col-close"><input type="checkbox" class="close-check" data-case="12159445672" data-source="true" onchange="closeToggled(this)" checked></td>
+        <td class="col-case">12159445672</td>
+        <td>QSTA</td>
+        <td><span class="badge mkt-de">DE</span></td>
+        <td class="col-owner"><select class="owner-select" data-case="12159445672" onchange="ownerChanged(this)">
+          <option value="Unassigned" selected>Unassigned</option>
+          <option value="Vitali">Vitali</option>
+          <option value="Tom">Tom</option>
+        </select></td>
+        <td class="col-date">2026-02-23</td>
+        <td class="col-date">2026-02-26</td>
+        <td class="col-num days-ok">11</td>
+        <td class="col-asin"><span class="asin-code">B0BM1WPXC5</span><span class="asin-name">LAX</span></td>
+        <td class="col-issue">Escalation Review</td>
+        <td><span class="bucket bucket-res">Resolved</span></td>
+        <td class="col-status">No restrictions found on listings</td>
+        <td class="col-summary">LAX escalation review in Germany. Amazon confirmed no restrictions currently on the listings. Case resolved — ASIN is active.</td>
+        <td class="col-action">—</td>
+        <td class="col-closedate">2026-03-06</td>
+        <td class="col-num">3</td>
+      </tr>
+
+      <!-- 19599539061 — closed 2026-03-06 -->
+      <tr data-case="19599539061" data-closedate="2026-03-06">
+        <td class="col-close"><input type="checkbox" class="close-check" data-case="19599539061" data-source="true" onchange="closeToggled(this)" checked></td>
+        <td class="col-case">19599539061</td>
+        <td>QSTA</td>
+        <td><span class="badge mkt-us">US</span></td>
+        <td class="col-owner"><select class="owner-select" data-case="19599539061" onchange="ownerChanged(this)">
+          <option value="Unassigned" selected>Unassigned</option>
+          <option value="Vitali">Vitali</option>
+          <option value="Tom">Tom</option>
+        </select></td>
+        <td class="col-date">2026-03-05</td>
+        <td class="col-date">2026-03-05</td>
+        <td class="col-num days-ok">1</td>
+        <td class="col-asin"><span class="asin-code">—</span></td>
+        <td class="col-issue">Queue Misassignment</td>
+        <td><span class="bucket bucket-res">Resolved</span></td>
+        <td class="col-status">Incorrectly assigned queue - Amazon apologized</td>
+        <td class="col-summary">Queue incorrectly assigned to QSTA product. Amazon apologized for the error. No action needed — auto-resolved.</td>
+        <td class="col-action">—</td>
+        <td class="col-closedate">2026-03-06</td>
+        <td class="col-num">1</td>
+      </tr>
 
       <!-- 12053445982 — closed 2026-02-25 -->
       <tr data-case="12053445982" data-closedate="2026-02-25">

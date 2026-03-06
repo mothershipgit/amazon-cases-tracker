@@ -1,29 +1,33 @@
 # Amazon Cases Tracker
 
 > Simplified view for Obsidian. Source of truth: `cases_core.md`
-> Last updated: 2026-03-03 | 9 active · 2 closed
-
----
+> Last updated: 2026-03-06 | 15 active · 4 closed
 
 ## Active Cases
 
-| Case ID | Brand | MKT | ASIN | Issue | Status | Days Open | Next Action Due |
-|---------|-------|-----|------|-------|--------|-----------|-----------------|
-| 12139919272 | QSTA | FR | B0BH37FCZQ | FBA Stock Investigation | Waiting on Amazon | 15 | 2026-02-19 |
-| 12122795542 | QSTA | IT | B0BC4FT3XP | Restricted Products Appeal | Waiting on Amazon | 19 | |
-| 12139373442 | QSTA | IT | B0GMYGR5Z9 | Restricted Products Appeal | In Progress | 15 | |
-| 12122998082 | QSTA | IT | B0BC4FT3XP | Restricted Products Appeal | Waiting on Us | 14 | |
-| 10995838672 | QSTA | UK | B0BM1WPXC5 | VIP Seller Relations | Waiting on Amazon | 13 | |
-| 11756757402 | TCU | UK | — | Country of Origin Compliance | Waiting on Us | 12 | |
-| 12150140992 | QSTA | ES | B0BC4FT3XP | Image Compliance - Escalation | In Progress | 11 | |
-| 12160163052 | Vegan Vitality | ES | B0DJTJ11PG | FBA Stock Investigation | In Progress | 8 | |
-| 12159445672 | QSTA | DE | B0BM1WPXC5 | Escalation Review | Escalated | 8 | |
-
----
+| Case ID | MKT | Issue Type | Status Bucket | Status Current | Days Open |
+|---------|-----|------------|---------------|----------------|-----------|
+| 12139919272 | FR | FBA Stock Investigation | Waiting on Amazon | Investigation complete, corrective measures taken | 18 |
+| 12122795542 | IT | Restricted Products Appeal | Escalated | Internal team removing non-compliant images | 22 |
+| 12139373442 | IT | Restricted Products Appeal | In Progress | Reinstatement process started | 18 |
+| 12122998082 | IT | Restricted Products Appeal | Waiting on Us | ASIN reinstatement rejected - new appeal required | 17 |
+| 10995838672 | UK | VIP Seller Relations | Waiting on Amazon | VIP team investigating multiple issues | 16 |
+| 11756757402 | UK | Country of Origin Compliance | Waiting on Us | Action required - provide COO information | 15 |
+| 12150140992 | ES | Image Compliance - Escalation | In Progress | Premium Support reviewing image removal | 14 |
+| 12160163052 | ES | FBA Stock Investigation | In Progress | FBA inspection complete - no defects found | 11 |
+| 12160765972 | IT | Restricted Products Appeal | Waiting on Us | Appeal rejected - unable to reactivate ASIN | 10 |
+| 12196144212 | ES | Product Suppressed - Safety | In Progress | Updated safety documentation under review | 5 |
+| 12189296792 | IT | Restricted Products Appeal | Waiting on Us | Appeal rejected - unable to reactivate ASIN | 3 |
+| 12193136902 | IT | Restricted Products Appeal | In Progress | Reinstatement process started | 3 |
+| 12196786792 | ES | Food and Product Safety | In Progress | Reinstatement request under review (ES) | 2 |
+| 12199208622 | DE | Escalation Review | Escalated | Premium team reviewing suppressed ASINs | 2 |
+| 12202348262 | ES | VAT Number Issue | In Progress | Spanish VAT number issue under investigation | 1 |
 
 ## Closed Cases
 
-| Case ID | Brand | MKT | ASIN | Issue | Status | Closed Date |
-|---------|-------|-----|------|-------|--------|-------------|
-| 12053445982 | QSTA | IT | B0BC4FT3XP | Restricted Products Appeal | Resolved | 2026-02-25 |
-| 12014653392 | QSTA | UK | — | VAT Invoice Reissue | Resolved | 2026-02-17 |
+| Case ID | MKT | Issue Type | Status | Days Open | Closed |
+|---------|-----|------------|--------|-----------|--------|
+| 12159445672 | DE | Escalation Review | No restrictions found on listings | 11 | 2026-03-06 |
+| 19599539061 | US | Queue Misassignment | Incorrectly assigned - Amazon apologized | 1 | 2026-03-06 |
+| 12053445982 | IT | Restricted Products Appeal | Auto-closed - no response received | 4 | 2026-02-25 |
+| 12014653392 | UK | VAT Invoice Reissue | Amazon still investigating (manually closed) | 2 | 2026-02-17 |
