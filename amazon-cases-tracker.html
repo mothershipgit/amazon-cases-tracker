@@ -1278,6 +1278,13 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
   const db   = firebase.database();
 
   // ── Auth ────────────────────────────────────────────────────────────────
+  const ALLOWED_EMAILS = [
+    'tom.mickiewicz@themothership.ai',
+    'francesco.diana@themothership.ai',
+    'natasha.heneghan@themothership.ai',
+    'vitalii.suvorov@themothership.ai'
+  ];
+
   function signIn() {
     auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
   }
@@ -1292,6 +1299,17 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
     const userBar = document.getElementById('user-bar');
 
     if (user) {
+      if (!ALLOWED_EMAILS.includes(user.email)) {
+        overlay.innerHTML = '<div class="login-box">' +
+          '<h1>Access Denied</h1>' +
+          '<p style="color:#bb2211;margin-bottom:16px;">Your account (' + user.email + ') is not authorized to access this tracker.</p>' +
+          '<p>Contact tom.mickiewicz@themothership.ai for access.</p>' +
+          '<button class="btn-google" onclick="signOut()" style="margin-top:16px;">Sign out</button>' +
+          '</div>';
+        overlay.style.display = '';
+        app.style.display = 'none';
+        return;
+      }
       overlay.style.display = 'none';
       app.style.display = '';
       userBar.innerHTML = (user.photoURL ? '<img src="' + user.photoURL + '" alt="">' : '') +
