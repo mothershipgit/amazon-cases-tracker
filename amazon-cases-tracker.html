@@ -167,9 +167,10 @@
 
     /* ── Sort ─────────────────────────────────────────────────────────────── */
     th.sortable { cursor: pointer; user-select: none; }
-    th.sortable:hover { color: #444; }
-    th.sort-asc::after { content: ' \25B2'; font-size: 0.55rem; }
-    th.sort-desc::after { content: ' \25BC'; font-size: 0.55rem; }
+    th.sortable::after { content: ' \25B2\25BC'; font-size: 0.5rem; color: #ccc; margin-left: 3px; }
+    th.sortable:hover::after { color: #888; }
+    th.sort-asc::after { content: ' \25B2'; font-size: 0.55rem; color: #1a1d26; }
+    th.sort-desc::after { content: ' \25BC'; font-size: 0.55rem; color: #1a1d26; }
 
     .col-close    { width: 48px; text-align: center; }
     input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-color: #2277cc; margin-top: 2px; }
