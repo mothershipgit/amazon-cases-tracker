@@ -1567,14 +1567,41 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
     th.dataset.sortDir = newDir;
     th.classList.add('sort-' + newDir);
 
-    rows.sort((a, b) => {
+    // Build parent map and row lookup
+    const parentMap = {};
+    const rowMap = {};
+    rows.forEach(row => {
+      rowMap[row.dataset.case] = row;
+      const span = row.querySelector('.parent-link');
+      if (span && span.textContent.trim()) {
+        parentMap[row.dataset.case] = span.textContent.trim();
+      }
+    });
+
+    // Separate roots (non-children) and children
+    const roots = rows.filter(r => !parentMap[r.dataset.case]);
+    const children = rows.filter(r => parentMap[r.dataset.case]);
+
+    // Sort roots by column value
+    roots.sort((a, b) => {
       const aVal = a.children[colIndex].textContent.trim();
       const bVal = b.children[colIndex].textContent.trim();
       const cmp = aVal.localeCompare(bVal, undefined, { numeric: true });
       return newDir === 'asc' ? cmp : -cmp;
     });
 
-    rows.forEach(row => tbody.appendChild(row));
+    // Build ordered list: each root followed by its children
+    const ordered = [];
+    roots.forEach(row => {
+      ordered.push(row);
+      const kids = children.filter(c => parentMap[c.dataset.case] === row.dataset.case);
+      kids.forEach(k => ordered.push(k));
+    });
+    // Orphaned children (parent not in table)
+    children.filter(c => !ordered.includes(c)).forEach(c => ordered.push(c));
+
+    ordered.forEach(row => tbody.appendChild(row));
+    regroupRows();
   }
 
   // ── Parent-case grouping ─────────────────────────────────────────────
