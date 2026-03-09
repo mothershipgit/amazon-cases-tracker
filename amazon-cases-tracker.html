@@ -67,6 +67,8 @@
     .stat-sub   { font-size: 0.7rem; color: #bbb; margin-top: 3px; }
     .stat-open .stat-value   { color: #cc3322; }
     .stat-closed .stat-value { color: #156930; }
+    .stat-resolved .stat-value { color: #156930; }
+    .stat-notresolved .stat-value { color: #bb2211; }
     .stat-days .stat-value   { color: #1a1d26; }
     .stat-msgs .stat-value   { color: #2277cc; }
 
@@ -768,6 +770,16 @@ const MSG_DATA = {
     <div class="stat-value" id="stat-closed">&mdash;</div>
     <div class="stat-sub">all closed</div>
   </div>
+  <div class="stat-card stat-resolved">
+    <div class="stat-label">Resolved</div>
+    <div class="stat-value" id="stat-resolved">&mdash;</div>
+    <div class="stat-sub">closed successfully</div>
+  </div>
+  <div class="stat-card stat-notresolved">
+    <div class="stat-label">Not Resolved</div>
+    <div class="stat-value" id="stat-notresolved">&mdash;</div>
+    <div class="stat-sub" id="stat-notresolved-pct"></div>
+  </div>
   <div class="stat-card stat-days">
     <div class="stat-label">Avg Days Open</div>
     <div class="stat-value" id="stat-days">&mdash;</div>
@@ -790,6 +802,21 @@ const MSG_DATA = {
     const closedRows = document.querySelectorAll('#closed-tbody tr[data-case]:not(.msg-detail-row)').length;
     document.getElementById('stat-open').textContent = activeRows;
     document.getElementById('stat-closed').textContent = closedRows;
+
+    // Count resolved / not resolved from outcome dropdowns
+    let resolved = 0, notResolved = 0;
+    document.querySelectorAll('#closed-tbody .close-status-select').forEach(sel => {
+      if (sel.value === 'Resolved') resolved++;
+      else if (sel.value === 'Not Resolved') notResolved++;
+    });
+    document.getElementById('stat-resolved').textContent = resolved;
+    document.getElementById('stat-notresolved').textContent = notResolved;
+    const pctEl = document.getElementById('stat-notresolved-pct');
+    if (closedRows > 0) {
+      pctEl.textContent = Math.round((notResolved / closedRows) * 100) + '% of closed';
+    } else {
+      pctEl.textContent = '';
+    }
   }
 </script>
 
@@ -1679,6 +1706,7 @@ const MSG_DATA = {
           styleCloseStatus(sel);
         }
       });
+      updateKpiCounts();
       _syncing = false;
     });
 
@@ -1804,6 +1832,7 @@ const MSG_DATA = {
     if (_syncing) return;
     styleCloseStatus(sel);
     db.ref('close_statuses/' + sel.dataset.case).set(sel.value);
+    updateKpiCounts();
   }
 
   function styleCloseStatus(sel) {
