@@ -916,9 +916,9 @@ const MSG_DATA = {
   </div>
   <div class="accordion-body" id="acc-body-total">
     <div class="acc-charts-row">
-      <div class="chart-card acc-chart-quarter"><div class="chart-title">Case Type per Brand (ALL)</div><div class="chart-wrap" style="height:300px;"><canvas id="an-total-brand"></canvas></div></div>
-      <div class="chart-card acc-chart-quarter"><div class="chart-title">Case Type per Marketplace (ALL)</div><div class="chart-wrap" style="height:300px;"><canvas id="an-total-mkt"></canvas></div></div>
-      <div class="chart-card acc-chart-half"><div class="chart-title">Case Type per Product (ALL)</div><div class="chart-wrap" style="height:300px;"><canvas id="an-total-product"></canvas></div></div>
+      <div class="chart-card acc-chart-quarter"><div class="chart-title">Issue Type per Brand (ALL)</div><div class="chart-wrap" style="height:300px;"><canvas id="an-total-brand"></canvas></div></div>
+      <div class="chart-card acc-chart-quarter"><div class="chart-title">Issue Type per Marketplace (ALL)</div><div class="chart-wrap" style="height:300px;"><canvas id="an-total-mkt"></canvas></div></div>
+      <div class="chart-card acc-chart-half"><div class="chart-title">Issue Type per Product (ALL)</div><div class="chart-wrap" style="height:300px;"><canvas id="an-total-product"></canvas></div></div>
     </div>
   </div>
 
@@ -927,9 +927,9 @@ const MSG_DATA = {
   </div>
   <div class="accordion-body" id="acc-body-open">
     <div class="acc-charts-row">
-      <div class="chart-card acc-chart-quarter"><div class="chart-title">Case Type per Brand (OPEN)</div><div class="chart-wrap" style="height:300px;"><canvas id="an-open-brand"></canvas></div></div>
-      <div class="chart-card acc-chart-quarter"><div class="chart-title">Case Type per Marketplace (OPEN)</div><div class="chart-wrap" style="height:300px;"><canvas id="an-open-mkt"></canvas></div></div>
-      <div class="chart-card acc-chart-half"><div class="chart-title">Case Type per Product (OPEN)</div><div class="chart-wrap" style="height:300px;"><canvas id="an-open-product"></canvas></div></div>
+      <div class="chart-card acc-chart-quarter"><div class="chart-title">Issue Type per Brand (OPEN)</div><div class="chart-wrap" style="height:300px;"><canvas id="an-open-brand"></canvas></div></div>
+      <div class="chart-card acc-chart-quarter"><div class="chart-title">Issue Type per Marketplace (OPEN)</div><div class="chart-wrap" style="height:300px;"><canvas id="an-open-mkt"></canvas></div></div>
+      <div class="chart-card acc-chart-half"><div class="chart-title">Issue Type per Product (OPEN)</div><div class="chart-wrap" style="height:300px;"><canvas id="an-open-product"></canvas></div></div>
     </div>
   </div>
 
@@ -938,9 +938,9 @@ const MSG_DATA = {
   </div>
   <div class="accordion-body" id="acc-body-closed">
     <div class="acc-charts-row">
-      <div class="chart-card acc-chart-quarter"><div class="chart-title">Case Type per Brand (CLOSED)</div><div class="chart-wrap" style="height:300px;"><canvas id="an-closed-brand"></canvas></div></div>
-      <div class="chart-card acc-chart-quarter"><div class="chart-title">Case Type per Marketplace (CLOSED)</div><div class="chart-wrap" style="height:300px;"><canvas id="an-closed-mkt"></canvas></div></div>
-      <div class="chart-card acc-chart-half"><div class="chart-title">Case Type per Product (CLOSED)</div><div class="chart-wrap" style="height:300px;"><canvas id="an-closed-product"></canvas></div></div>
+      <div class="chart-card acc-chart-quarter"><div class="chart-title">Issue Type per Brand (CLOSED)</div><div class="chart-wrap" style="height:300px;"><canvas id="an-closed-brand"></canvas></div></div>
+      <div class="chart-card acc-chart-quarter"><div class="chart-title">Issue Type per Marketplace (CLOSED)</div><div class="chart-wrap" style="height:300px;"><canvas id="an-closed-mkt"></canvas></div></div>
+      <div class="chart-card acc-chart-half"><div class="chart-title">Issue Type per Product (CLOSED)</div><div class="chart-wrap" style="height:300px;"><canvas id="an-closed-product"></canvas></div></div>
     </div>
   </div>
 </div>
@@ -1311,16 +1311,16 @@ const MSG_DATA = {
   });
 </script>
 
-<!-- Section: Case Types & Products -->
-<h2>Case Types &amp; Products</h2>
+<!-- Section: Issue Types & Products -->
+<h2>Issue Types &amp; Products</h2>
 <div class="charts-grid">
   <div class="chart-card">
-    <div class="chart-title">Cases per Case Type</div>
+    <div class="chart-title">Cases per Issue Type</div>
     <div class="chart-sub">Distribution by issue type</div>
     <div class="chart-wrap"><canvas id="ch-casetype"></canvas></div>
   </div>
   <div class="chart-card">
-    <div class="chart-title">Cases per Product (by Case Type)</div>
+    <div class="chart-title">Cases per Product (by Issue Type)</div>
     <div class="chart-sub">Per product, grouped by issue type</div>
     <div class="chart-wrap"><canvas id="ch-product-type"></canvas></div>
   </div>
@@ -1336,7 +1336,7 @@ const MSG_DATA = {
 <h2>Closed Cases Analysis</h2>
 <div class="charts-grid">
   <div class="chart-card">
-    <div class="chart-title">Closed per Marketplace (by Case Type)</div>
+    <div class="chart-title">Closed per Marketplace (by Issue Type)</div>
     <div class="chart-sub">Closed cases split by issue type</div>
     <div class="chart-wrap"><canvas id="ch-closed-mkt-type"></canvas></div>
   </div>
