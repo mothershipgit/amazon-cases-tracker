@@ -118,7 +118,6 @@
     .acc-total  { background: #1a2744; }
     .acc-open   { background: #c97c00; }
     .acc-closed { background: #156930; }
-    .acc-outcomes { background: #5a2d82; }
     .accordion-body {
       display: none; padding: 16px 0;
     }
@@ -945,19 +944,6 @@ const MSG_DATA = {
   </div>
 </div>
 
-<!-- Group 2: Outcomes -->
-<div class="accordion-group" id="acc-group-outcomes">
-  <div class="accordion-header acc-outcomes" onclick="toggleAccordion(this,'acc-group-outcomes')">
-    <span>Closed Cases — Outcomes</span><span class="arrow">&#9654;</span>
-  </div>
-  <div class="accordion-body" id="acc-body-outcomes">
-    <div class="charts-grid">
-      <div class="chart-card"><div class="chart-title">Outcome per Marketplace</div><div class="chart-wrap" style="height:280px;"><canvas id="an-out-mkt"></canvas></div></div>
-      <div class="chart-card"><div class="chart-title">Outcome per Brand</div><div class="chart-wrap" style="height:280px;"><canvas id="an-out-brand"></canvas></div></div>
-      <div class="chart-card" style="grid-column: 1 / -1;"><div class="chart-title">Outcome per Product</div><div class="chart-wrap" style="height:300px;"><canvas id="an-out-product"></canvas></div></div>
-    </div>
-  </div>
-</div>
 </div>
 
 <script>
@@ -1012,7 +998,6 @@ const MSG_DATA = {
     if (bodyId === 'acc-body-total')  buildAnalyticsSet('total', getLiveSubset('total'));
     if (bodyId === 'acc-body-open')   buildAnalyticsSet('open', getLiveSubset('open'));
     if (bodyId === 'acc-body-closed') buildAnalyticsSet('closed', getLiveSubset('closed'));
-    if (bodyId === 'acc-body-outcomes') buildOutcomeCharts();
   }
 
   function buildAnalyticsSet(prefix, subset) {
@@ -1047,65 +1032,6 @@ const MSG_DATA = {
     });
   }
 
-  // Outcome charts — stacked bar with outcome as group
-  const OUTCOME_PAL = {
-    'Resolved': '#52c97c', 'Not Resolved': '#e05252', 'On Hold': '#e09b52',
-    'Waiting on Amazon': '#5282e0', 'Waiting on Us': '#cc3322'
-  };
-
-  function getClosedWithOutcome() {
-    const rows = document.querySelectorAll('#closed-tbody tr[data-case]:not(.msg-detail-row)');
-    const arr = [];
-    rows.forEach(row => {
-      const caseId = row.dataset.case;
-      const caseData = CASES.find(c => String(c.case_id) === caseId);
-      if (!caseData) return;
-      const sel = row.querySelector('.close-status-select');
-      const outcome = sel ? sel.value : 'Resolved';
-      arr.push({ ...caseData, outcome });
-    });
-    return arr;
-  }
-
-  function buildOutcomeCharts() {
-    destroyAnCharts('an-out');
-    const data = getClosedWithOutcome();
-    if (data.length === 0) {
-      ['an-out-mkt','an-out-brand','an-out-product'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.parentElement.innerHTML = '<div style="color:#ccc;font-size:0.82rem;font-style:italic;display:flex;align-items:center;justify-content:center;height:100%;">No closed cases yet</div>';
-      });
-      return;
-    }
-    _anCharts['an-out-mkt']     = makeOutcomeBar('an-out-mkt', data, 'marketplace');
-    _anCharts['an-out-brand']   = makeOutcomeBar('an-out-brand', data, 'brand');
-    _anCharts['an-out-product'] = makeOutcomeBar('an-out-product', data, 'product');
-  }
-
-  function makeOutcomeBar(canvasId, data, primaryKey) {
-    const primaries = [...new Set(data.map(c => c[primaryKey] || 'Unknown'))];
-    const outcomes  = [...new Set(data.map(c => c.outcome))];
-    const datasets  = outcomes.map(o => ({
-      label: o,
-      data: primaries.map(p => data.filter(c => (c[primaryKey]||'Unknown') === p && c.outcome === o).length),
-      backgroundColor: OUTCOME_PAL[o] || '#aaa',
-      borderRadius: 3,
-      stack: 'stack'
-    }));
-    return new Chart(document.getElementById(canvasId), {
-      type: 'bar',
-      data: { labels: primaries, datasets },
-      options: {
-        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { position: 'top', align: 'end', labels: { boxWidth: 10, padding: 10, font: { size: 10 } } } },
-        scales: {
-          x: { stacked: true, grid: { display: true }, border: { display: false }, ticks: { stepSize: 1, precision: 0 } },
-          y: { stacked: true, grid: { display: false }, border: { display: false } }
-        }
-      }
-    });
-  }
-
   // Rebuild analytics charts after Firebase sync (owner changes, close toggles)
   function rebuildAnalyticsIfOpen() {
     ['total','open','closed'].forEach(prefix => {
@@ -1114,10 +1040,6 @@ const MSG_DATA = {
         buildAnalyticsSet(prefix, getLiveSubset(prefix));
       }
     });
-    const outBody = document.getElementById('acc-body-outcomes');
-    if (outBody && outBody.dataset.inited && outBody.classList.contains('open')) {
-      buildOutcomeCharts();
-    }
   }
 </script>
 
@@ -1129,32 +1051,6 @@ const MSG_DATA = {
   Chart.defaults.color       = '#888';
 
   const PAL = ['#e05252','#5282e0','#52c97c','#e09b52','#aa52e0','#52c9c9','#e0527c','#7ce052','#c9a052','#5252e0'];
-
-  function makeGroupedBar(canvasId, subset, primaryKey, groupKey, opts = {}) {
-    const primaries = [...new Set(subset.map(c => c[primaryKey] || 'Unknown'))];
-    const groups    = [...new Set(subset.map(c => c[groupKey] || 'Unknown'))];
-    const datasets  = groups.map((g, i) => ({
-      label: g,
-      data: primaries.map(p => subset.filter(c => (c[primaryKey]||'Unknown') === p && (c[groupKey]||'Unknown') === g).length),
-      backgroundColor: PAL[i % PAL.length],
-      borderRadius: 3,
-      stack: 'stack'
-    }));
-    const axis = opts.horizontal ? 'y' : 'x';
-    new Chart(document.getElementById(canvasId), {
-      type: 'bar',
-      data: { labels: primaries, datasets },
-      options: {
-        indexAxis: opts.horizontal ? 'y' : 'x',
-        responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { position: 'top', align: 'end', labels: { boxWidth: 10, padding: 10, font: { size: 10 } } } },
-        scales: {
-          x: { stacked: true, grid: { display: axis==='x' }, border: { display: false }, ticks: opts.horizontal ? { stepSize: 1, precision: 0 } : {} },
-          y: { stacked: true, beginAtZero: true, grid: { color: '#f0f1f5', display: axis==='y' }, border: { display: false }, ticks: !opts.horizontal ? { stepSize: 1, precision: 0 } : {} }
-        }
-      }
-    });
-  }
 
   function makeSimpleBar(canvasId, subset, key, color, opts = {}, returnInstance = false) {
     const map = {};
@@ -1301,73 +1197,6 @@ const MSG_DATA = {
   });
 </script>
 
-<!-- Section: Marketplace & Brand -->
-<h2>Marketplace &amp; Brand</h2>
-<div class="charts-grid">
-  <div class="chart-card">
-    <div class="chart-title">Cases per Marketplace (by Brand)</div>
-    <div class="chart-sub">Grouped by brand per marketplace</div>
-    <div class="chart-wrap"><canvas id="ch-mkt-brand"></canvas></div>
-  </div>
-  <div class="chart-card">
-    <div class="chart-title">Cases per Brand (by Marketplace)</div>
-    <div class="chart-sub">Grouped by marketplace per brand</div>
-    <div class="chart-wrap"><canvas id="ch-brand-mkt"></canvas></div>
-  </div>
-</div>
-<script>
-  _chartInits.push(() => {
-    makeGroupedBar('ch-mkt-brand', kpiCases, 'marketplace', 'brand');
-    makeGroupedBar('ch-brand-mkt', kpiCases, 'brand', 'marketplace');
-  });
-</script>
-
-<!-- Section: Issue Types & Products -->
-<h2>Issue Types &amp; Products</h2>
-<div class="charts-grid">
-  <div class="chart-card">
-    <div class="chart-title">Cases per Issue Type</div>
-    <div class="chart-sub">Distribution by issue type</div>
-    <div class="chart-wrap"><canvas id="ch-casetype"></canvas></div>
-  </div>
-  <div class="chart-card">
-    <div class="chart-title">Cases per Product (by Issue Type)</div>
-    <div class="chart-sub">Per product, grouped by issue type</div>
-    <div class="chart-wrap"><canvas id="ch-product-type"></canvas></div>
-  </div>
-</div>
-<script>
-  _chartInits.push(() => {
-    makeSimpleBar('ch-casetype', kpiCases, 'issue_type', '#aa52e0');
-    makeGroupedBar('ch-product-type', kpiCases, 'product', 'issue_type', { horizontal: true });
-  });
-</script>
-
-<!-- Section: Closed Cases Analysis -->
-<h2>Closed Cases Analysis</h2>
-<div class="charts-grid">
-  <div class="chart-card">
-    <div class="chart-title">Closed per Marketplace (by Issue Type)</div>
-    <div class="chart-sub">Closed cases split by issue type</div>
-    <div class="chart-wrap"><canvas id="ch-closed-mkt-type"></canvas></div>
-  </div>
-  <div class="chart-card">
-    <div class="chart-title">Closed per Marketplace (by Outcome)</div>
-    <div class="chart-sub">Awaiting outcome column</div>
-    <div class="chart-wrap" style="display:flex;align-items:center;justify-content:center;">
-      <div style="color:#ccc;font-size:0.82rem;font-style:italic;">No outcome data yet</div>
-    </div>
-  </div>
-</div>
-<script>
-  _chartInits.push(() => {
-    if (kpiClosed.length > 0) {
-      makeGroupedBar('ch-closed-mkt-type', kpiClosed, 'marketplace', 'issue_type');
-    } else {
-      document.getElementById('ch-closed-mkt-type').parentElement.innerHTML = '<div style="color:#ccc;font-size:0.82rem;font-style:italic;display:flex;align-items:center;justify-content:center;height:100%;">No closed cases yet</div>';
-    }
-  });
-</script>
 
 <!-- ═══ FILTERS ═══════════════════════════════════════════════════════════════ -->
 <h2>Active Cases</h2>
