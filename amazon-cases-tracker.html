@@ -1152,7 +1152,7 @@ const MSG_DATA = {
         <th class="col-date sortable" onclick="sortTable(this,'active-tbody')">Last Update</th>
         <th class="col-asin">ASIN / Product</th>
         <th class="col-issue">Issue Type</th>
-        <th>Status Bucket</th>
+        <th>Status</th>
         <th class="col-summary">Summary</th>
         <th class="col-action">Next Action</th>
         <th class="col-notes">Notes</th>
@@ -1719,6 +1719,19 @@ const MSG_DATA = {
       _syncing = false;
     });
 
+    // Sync active case statuses
+    db.ref('statuses').on('value', snap => {
+      _syncing = true;
+      const statuses = snap.val() || {};
+      document.querySelectorAll('#active-tbody .close-status-select').forEach(sel => {
+        if (statuses[sel.dataset.case]) {
+          sel.value = statuses[sel.dataset.case];
+          styleCloseStatus(sel);
+        }
+      });
+      _syncing = false;
+    });
+
     // Sync notes
     db.ref('notes').on('value', snap => {
       _syncing = true;
@@ -1801,33 +1814,26 @@ const MSG_DATA = {
     const emptyRow    = document.getElementById('closed-empty');
 
     if (toClose) {
-      // Replace static bucket span with outcome dropdown if not already a select
-      const bucketCell = row.cells[10]; // Status Bucket column (index 10)
-      if (bucketCell && !bucketCell.querySelector('.close-status-select')) {
-        const curStatus = (bucketCell.textContent || '').trim();
-        const defaultVal = (curStatus === 'Resolved' || curStatus === 'Not Resolved' || curStatus === 'On Hold') ? curStatus : 'Resolved';
-        bucketCell.innerHTML = '<select class="close-status-select" data-case="' + caseId + '" onchange="closeStatusChanged(this)">' +
-          '<option value="Resolved"' + (defaultVal === 'Resolved' ? ' selected' : '') + '>Resolved</option>' +
-          '<option value="Not Resolved"' + (defaultVal === 'Not Resolved' ? ' selected' : '') + '>Not Resolved</option>' +
-          '<option value="On Hold"' + (defaultVal === 'On Hold' ? ' selected' : '') + '>On Hold</option>' +
-          '<option value="Waiting on Amazon">Waiting on Amazon</option>' +
-          '<option value="Waiting on Us">Waiting on Us</option>' +
-          '</select>';
-        styleCloseStatus(bucketCell.querySelector('.close-status-select'));
-        // Save default status to Firebase (only if not syncing from remote)
-        if (!_syncing) db.ref('close_statuses/' + caseId).set(defaultVal);
+      // Switch dropdown to closed-table handler and default to Resolved
+      const bucketCell = row.cells[10];
+      const sel = bucketCell && bucketCell.querySelector('.close-status-select');
+      if (sel) {
+        sel.setAttribute('onchange', 'closeStatusChanged(this)');
+        sel.value = 'Resolved';
+        styleCloseStatus(sel);
+        if (!_syncing) db.ref('close_statuses/' + caseId).set('Resolved');
       }
       closedTbody.appendChild(row);
       if (emptyRow) emptyRow.style.display = 'none';
     } else {
-      // Restore static bucket span from cases_core source
+      // Switch dropdown back to active-table handler and restore original status
       const bucketCell = row.cells[10];
       const sel = bucketCell && bucketCell.querySelector('.close-status-select');
       if (sel) {
+        sel.setAttribute('onchange', 'statusChanged(this)');
         const c = CASES.find(x => x.case_id === caseId);
-        const bucket = c ? c.status_bucket : 'In Progress';
-        const cls = bucket === 'Waiting on Us' ? 'bucket-us' : bucket === 'Waiting on Amazon' ? 'bucket-amz' : bucket === 'Escalated' ? 'bucket-esc' : bucket === 'Resolved' ? 'bucket-res' : 'bucket-ip';
-        bucketCell.innerHTML = '<span class="bucket ' + cls + '">' + bucket + '</span>';
+        sel.value = c ? c.status_bucket : 'In Progress';
+        styleCloseStatus(sel);
       }
       if (!_syncing) db.ref('close_statuses/' + caseId).remove();
       activeTbody.appendChild(row);
@@ -2056,8 +2062,13 @@ const MSG_DATA = {
       owners[sel.dataset.case] = sel.value;
     });
 
+    const statuses = {};
+    document.querySelectorAll('#active-tbody .close-status-select').forEach(sel => {
+      statuses[sel.dataset.case] = sel.value;
+    });
+
     const closeStatuses = {};
-    document.querySelectorAll('.close-status-select').forEach(sel => {
+    document.querySelectorAll('#closed-tbody .close-status-select').forEach(sel => {
       closeStatuses[sel.dataset.case] = sel.value;
     });
 
@@ -2066,7 +2077,7 @@ const MSG_DATA = {
       parentCases[span.dataset.case] = span.textContent.trim();
     });
 
-    const output = { close: toClose, close_dates: toCloseDates, close_statuses: closeStatuses, owners, parent_cases: parentCases };
+    const output = { close: toClose, close_dates: toCloseDates, close_statuses: closeStatuses, statuses, owners, parent_cases: parentCases };
     const text = 'Case assignments:\n' + JSON.stringify(output, null, 2);
 
     navigator.clipboard.writeText(text).then(() => {
@@ -2157,7 +2168,41 @@ const MSG_DATA = {
     }
   }
 
+  // Convert static bucket spans to status dropdowns in active table
+  function initStatusDropdowns() {
+    const STATUS_OPTIONS = ['Waiting on Us', 'Waiting on Amazon', 'In Progress', 'Escalated', 'Resolved', 'Not Resolved', 'On Hold'];
+    document.querySelectorAll('#active-tbody tr[data-case]:not(.msg-detail-row)').forEach(row => {
+      const cell = row.cells[10]; // Status column
+      if (!cell) return;
+      const span = cell.querySelector('.bucket');
+      if (!span) return;
+      const currentVal = span.textContent.trim();
+      const caseId = row.dataset.case;
+      const sel = document.createElement('select');
+      sel.className = 'close-status-select';
+      sel.dataset.case = caseId;
+      sel.setAttribute('onchange', 'statusChanged(this)');
+      STATUS_OPTIONS.forEach(opt => {
+        const o = document.createElement('option');
+        o.value = opt;
+        o.textContent = opt;
+        if (opt === currentVal) o.selected = true;
+        sel.appendChild(o);
+      });
+      cell.innerHTML = '';
+      cell.appendChild(sel);
+      styleCloseStatus(sel);
+    });
+  }
+
+  function statusChanged(sel) {
+    if (_syncing) return;
+    styleCloseStatus(sel);
+    db.ref('statuses/' + sel.dataset.case).set(sel.value);
+  }
+
   // Initial render
+  initStatusDropdowns();
   initMsgTimeline();
 </script>
 
