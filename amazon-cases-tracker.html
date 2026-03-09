@@ -873,6 +873,11 @@ const MSG_DATA = {
     <div class="chart-wrap"><canvas id="ch-workload-status"></canvas></div>
   </div>
   <div class="chart-card">
+    <div class="chart-title">Workload by Issue</div>
+    <div class="chart-sub">Open cases by issue type</div>
+    <div class="chart-wrap"><canvas id="ch-workload-issue"></canvas></div>
+  </div>
+  <div class="chart-card">
     <div class="chart-title">Cases Created Daily</div>
     <div class="chart-sub">Last 30 days (open + closed)</div>
     <div class="chart-wrap"><canvas id="ch-daily"></canvas></div>
@@ -1155,7 +1160,7 @@ const MSG_DATA = {
       type: 'bar',
       data: {
         labels: entries.map(([k]) => k),
-        datasets: [{ data: entries.map(([,v]) => v), backgroundColor: color, borderRadius: 3 }]
+        datasets: [{ data: entries.map(([,v]) => v), backgroundColor: Array.isArray(color) ? entries.map((_,i) => color[i % color.length]) : color, borderRadius: 3 }]
       },
       options: {
         indexAxis: opts.horizontal ? 'y' : 'x',
@@ -1193,7 +1198,7 @@ const MSG_DATA = {
 
   function buildAssigneeCharts() {
     if (_assigneeOpenChart) _assigneeOpenChart.destroy();
-    _assigneeOpenChart = makeSimpleBar('ch-assignee-open', kpiOpen, 'owner', '#e05252', {}, true);
+    _assigneeOpenChart = makeSimpleBar('ch-assignee-open', kpiOpen, 'owner', PAL, {}, true);
   }
 
   _chartInits.push(() => {
@@ -1202,6 +1207,7 @@ const MSG_DATA = {
       'Waiting on Us': '#e05252', 'Waiting on Amazon': '#5282e0',
       'On Hold': '#e09b52', 'Not Resolved': '#cc3322', 'Resolved': '#52c97c'
     });
+    makeSimpleBar('ch-workload-issue', kpiOpen, 'issue_type', PAL);
 
     // Daily chart — last 30 days with zero-fill (all cases: open + closed)
     const today = new Date();
