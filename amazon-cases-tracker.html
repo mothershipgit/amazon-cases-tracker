@@ -1908,10 +1908,23 @@ const MSG_DATA = {
 
   // ── Message Timeline (expandable rows) ──────────────────────────────
   function initMsgTimeline() {
+    // Build opened_date lookup from CASES
+    const caseOpenedTs = {};
+    CASES.forEach(c => {
+      if (c.opened_date) caseOpenedTs[c.case_id] = new Date(c.opened_date + 'T00:00:00Z').getTime() / 1000;
+    });
+
     document.querySelectorAll('#active-tbody tr[data-case]').forEach(row => {
       const caseId = row.dataset.case;
-      const msgs = MSG_DATA[caseId];
+      let msgs = MSG_DATA[caseId];
       if (!msgs || msgs.length === 0) return;
+
+      // Filter out messages from before the case was opened
+      const openTs = caseOpenedTs[caseId];
+      if (openTs) {
+        msgs = msgs.filter(m => m.ts >= openTs - 86400); // 1 day grace
+      }
+      if (msgs.length === 0) return;
 
       // Add expand toggle to case ID cell
       const caseCell = row.querySelector('.col-case');
