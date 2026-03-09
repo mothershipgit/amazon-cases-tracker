@@ -694,7 +694,7 @@ const CASES = [
 ];
 
 // Derived fields
-CASES.forEach(c => { c.product = c.asin_name || c.asin || '\u2014'; });
+CASES.forEach(c => { c.product = c.asin_name || c.asin || (c.issue_type || '\u2014'); });
 // Exclude VIP case 10995838672 from KPI calculations (long-running, distorts metrics)
 const EXCLUDED_FROM_STATS = ['10995838672'];
 const openCases   = CASES.filter(c => !c.close);
@@ -996,10 +996,22 @@ const MSG_DATA = {
     });
   }
 
+  function getLiveSubset(prefix) {
+    // Read current open/closed state from DOM (Firebase may have moved rows)
+    const openIds = new Set();
+    const closedIds = new Set();
+    document.querySelectorAll('#active-tbody tr[data-case]:not(.msg-detail-row)').forEach(r => openIds.add(r.dataset.case));
+    document.querySelectorAll('#closed-tbody tr[data-case]:not(.msg-detail-row)').forEach(r => closedIds.add(r.dataset.case));
+    if (prefix === 'total') return kpiCases;
+    if (prefix === 'open')  return kpiCases.filter(c => openIds.has(String(c.case_id)));
+    if (prefix === 'closed') return kpiCases.filter(c => closedIds.has(String(c.case_id)));
+    return kpiCases;
+  }
+
   function initAccordionCharts(bodyId) {
-    if (bodyId === 'acc-body-total')  buildAnalyticsSet('total', kpiCases);
-    if (bodyId === 'acc-body-open')   buildAnalyticsSet('open', kpiOpen);
-    if (bodyId === 'acc-body-closed') buildAnalyticsSet('closed', kpiClosed);
+    if (bodyId === 'acc-body-total')  buildAnalyticsSet('total', getLiveSubset('total'));
+    if (bodyId === 'acc-body-open')   buildAnalyticsSet('open', getLiveSubset('open'));
+    if (bodyId === 'acc-body-closed') buildAnalyticsSet('closed', getLiveSubset('closed'));
     if (bodyId === 'acc-body-outcomes') buildOutcomeCharts();
   }
 
@@ -1099,8 +1111,7 @@ const MSG_DATA = {
     ['total','open','closed'].forEach(prefix => {
       const body = document.getElementById('acc-body-' + prefix);
       if (body && body.dataset.inited && body.classList.contains('open')) {
-        const subset = prefix === 'total' ? kpiCases : prefix === 'open' ? kpiOpen : kpiClosed;
-        buildAnalyticsSet(prefix, subset);
+        buildAnalyticsSet(prefix, getLiveSubset(prefix));
       }
     });
     const outBody = document.getElementById('acc-body-outcomes');
