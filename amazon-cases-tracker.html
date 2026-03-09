@@ -771,12 +771,12 @@ const MSG_DATA = {
     <div class="stat-sub">all closed</div>
   </div>
   <div class="stat-card stat-resolved">
-    <div class="stat-label">Resolved</div>
+    <div class="stat-label">Closed, Resolved</div>
     <div class="stat-value" id="stat-resolved">&mdash;</div>
     <div class="stat-sub">closed successfully</div>
   </div>
   <div class="stat-card stat-notresolved">
-    <div class="stat-label">Not Resolved</div>
+    <div class="stat-label">Closed, Not Resolved</div>
     <div class="stat-value" id="stat-notresolved">&mdash;</div>
     <div class="stat-sub" id="stat-notresolved-pct"></div>
   </div>
@@ -784,6 +784,11 @@ const MSG_DATA = {
     <div class="stat-label">Avg Days Open</div>
     <div class="stat-value" id="stat-days">&mdash;</div>
     <div class="stat-sub">active cases only</div>
+  </div>
+  <div class="stat-card stat-days">
+    <div class="stat-label">Avg Days Open</div>
+    <div class="stat-value" id="stat-days-all">&mdash;</div>
+    <div class="stat-sub">active + closed</div>
   </div>
   <div class="stat-card stat-msgs">
     <div class="stat-label">Total Amazon Msgs</div>
@@ -795,6 +800,10 @@ const MSG_DATA = {
   document.getElementById('stat-open').textContent   = kpiOpen.length;
   document.getElementById('stat-closed').textContent = kpiClosed.length;
   document.getElementById('stat-days').textContent   = avgDaysOpen;
+  const avgDaysAll = kpiCases.length
+    ? Math.round(kpiCases.reduce((s, c) => s + c.days_open, 0) / kpiCases.length)
+    : 0;
+  document.getElementById('stat-days-all').textContent = avgDaysAll;
   document.getElementById('stat-msgs').textContent   = totalMsgs;
 
   function updateKpiCounts() {
