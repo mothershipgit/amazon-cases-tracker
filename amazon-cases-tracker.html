@@ -547,12 +547,17 @@ const CASES = [
 
 // Derived fields
 CASES.forEach(c => { c.product = c.asin_name || c.asin || '\u2014'; });
+// Exclude VIP case 10995838672 from KPI calculations (long-running, distorts metrics)
+const EXCLUDED_FROM_STATS = ['10995838672'];
 const openCases   = CASES.filter(c => !c.close);
 const closedCases = CASES.filter(c => c.close);
-const avgDaysOpen = openCases.length
-  ? Math.round(openCases.reduce((s, c) => s + c.days_open, 0) / openCases.length)
+const kpiCases    = CASES.filter(c => !EXCLUDED_FROM_STATS.includes(c.case_id));
+const kpiOpen     = kpiCases.filter(c => !c.close);
+const kpiClosed   = kpiCases.filter(c => c.close);
+const avgDaysOpen = kpiOpen.length
+  ? Math.round(kpiOpen.reduce((s, c) => s + c.days_open, 0) / kpiOpen.length)
   : 0;
-const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
+const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
 </script>
 
 <!-- ═══ STAT CARDS ════════════════════════════════════════════════════════════ -->
@@ -580,8 +585,8 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
   </div>
 </div>
 <script>
-  document.getElementById('stat-open').textContent   = openCases.length;
-  document.getElementById('stat-closed').textContent = closedCases.length;
+  document.getElementById('stat-open').textContent   = kpiOpen.length;
+  document.getElementById('stat-closed').textContent = kpiClosed.length;
   document.getElementById('stat-days').textContent   = avgDaysOpen;
   document.getElementById('stat-msgs').textContent   = totalMsgs;
 </script>
@@ -686,14 +691,14 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
 </div>
 <script>
   _chartInits.push(() => {
-    makeSimpleBar('ch-assignee-total', CASES,     'owner', '#5282e0');
-    makeSimpleBar('ch-assignee-open',  openCases, 'owner', '#e05252');
-    makeDoughnut('ch-workload-status', CASES, 'status_bucket', {
+    makeSimpleBar('ch-assignee-total', kpiCases,  'owner', '#5282e0');
+    makeSimpleBar('ch-assignee-open',  kpiOpen,  'owner', '#e05252');
+    makeDoughnut('ch-workload-status', kpiCases, 'status_bucket', {
       'Waiting on Us': '#e05252', 'Waiting on Amazon': '#5282e0',
       'In Progress': '#aaa', 'Escalated': '#e09b52', 'Resolved': '#52c97c'
     });
     const map = {};
-    CASES.forEach(c => { if(c.opened_date) map[c.opened_date] = (map[c.opened_date]||0)+1; });
+    kpiCases.forEach(c => { if(c.opened_date) map[c.opened_date] = (map[c.opened_date]||0)+1; });
     const sorted = Object.entries(map).sort((a,b) => a[0].localeCompare(b[0]));
     new Chart(document.getElementById('ch-daily'), {
       type: 'bar',
@@ -729,8 +734,8 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
 </div>
 <script>
   _chartInits.push(() => {
-    makeGroupedBar('ch-mkt-brand', CASES, 'marketplace', 'brand');
-    makeGroupedBar('ch-brand-mkt', CASES, 'brand', 'marketplace');
+    makeGroupedBar('ch-mkt-brand', kpiCases, 'marketplace', 'brand');
+    makeGroupedBar('ch-brand-mkt', kpiCases, 'brand', 'marketplace');
   });
 </script>
 
@@ -750,8 +755,8 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
 </div>
 <script>
   _chartInits.push(() => {
-    makeSimpleBar('ch-casetype', CASES, 'issue_type', '#aa52e0');
-    makeGroupedBar('ch-product-type', CASES, 'product', 'issue_type', { horizontal: true });
+    makeSimpleBar('ch-casetype', kpiCases, 'issue_type', '#aa52e0');
+    makeGroupedBar('ch-product-type', kpiCases, 'product', 'issue_type', { horizontal: true });
   });
 </script>
 
@@ -773,8 +778,8 @@ const totalMsgs = CASES.reduce((s, c) => s + c.msgs, 0);
 </div>
 <script>
   _chartInits.push(() => {
-    if (closedCases.length > 0) {
-      makeGroupedBar('ch-closed-mkt-type', closedCases, 'marketplace', 'issue_type');
+    if (kpiClosed.length > 0) {
+      makeGroupedBar('ch-closed-mkt-type', kpiClosed, 'marketplace', 'issue_type');
     } else {
       document.getElementById('ch-closed-mkt-type').parentElement.innerHTML = '<div style="color:#ccc;font-size:0.82rem;font-style:italic;display:flex;align-items:center;justify-content:center;height:100%;">No closed cases yet</div>';
     }
