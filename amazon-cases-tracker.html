@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Amazon Cases Tracker</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
@@ -1156,8 +1157,15 @@ const MSG_DATA = {
     const map = {};
     subset.forEach(c => { const k = c[key] || 'Unknown'; map[k] = (map[k]||0) + 1; });
     const entries = Object.entries(map).sort((a,b) => b[1] - a[1]);
+    const cfgPlugins = { legend: { display: false } };
+    const chartPlugins = [];
+    if (opts.datalabels && typeof ChartDataLabels !== 'undefined') {
+      chartPlugins.push(ChartDataLabels);
+      cfgPlugins.datalabels = { anchor: 'end', align: 'end', font: { weight: 600, size: 11 }, color: '#555' };
+    }
     const chart = new Chart(document.getElementById(canvasId), {
       type: 'bar',
+      plugins: chartPlugins,
       data: {
         labels: entries.map(([k]) => k),
         datasets: [{ data: entries.map(([,v]) => v), backgroundColor: Array.isArray(color) ? entries.map((_,i) => color[i % color.length]) : color, borderRadius: 3 }]
@@ -1165,7 +1173,7 @@ const MSG_DATA = {
       options: {
         indexAxis: opts.horizontal ? 'y' : 'x',
         responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
+        plugins: cfgPlugins,
         scales: {
           x: { grid: { display: opts.horizontal }, border: { display: false }, ticks: opts.horizontal ? { stepSize: 1, precision: 0 } : {} },
           y: { beginAtZero: true, grid: { color: '#f0f1f5', display: !opts.horizontal }, border: { display: false }, ticks: !opts.horizontal ? { stepSize: 1, precision: 0 } : {} }
@@ -1177,17 +1185,39 @@ const MSG_DATA = {
 
   let _chartInits = [];
 
-  function makeDoughnut(canvasId, subset, key, colorMap) {
+  function makeDoughnut(canvasId, subset, key, colorMap, opts = {}) {
     const map = {};
     subset.forEach(c => { const k = c[key] || 'Unknown'; map[k] = (map[k]||0) + 1; });
     const entries = Object.entries(map);
+    const cfgPlugins = {
+      legend: {
+        position: 'right',
+        labels: {
+          boxWidth: 10, padding: 10, font: { size: 10 },
+          generateLabels: opts.datalabels ? function(chart) {
+            const ds = chart.data.datasets[0];
+            return chart.data.labels.map((label, i) => ({
+              text: label + ' (' + ds.data[i] + ')',
+              fillStyle: ds.backgroundColor[i],
+              strokeStyle: '#fff', lineWidth: 2, hidden: false, index: i
+            }));
+          } : undefined
+        }
+      }
+    };
+    const chartPlugins = [];
+    if (opts.datalabels && typeof ChartDataLabels !== 'undefined') {
+      chartPlugins.push(ChartDataLabels);
+      cfgPlugins.datalabels = { color: '#fff', font: { weight: 700, size: 12 }, formatter: v => v > 0 ? v : '' };
+    }
     new Chart(document.getElementById(canvasId), {
       type: 'doughnut',
+      plugins: chartPlugins,
       data: {
         labels: entries.map(([k]) => k),
         datasets: [{ data: entries.map(([,v]) => v), backgroundColor: entries.map(([k],i) => (colorMap && colorMap[k]) || PAL[i % PAL.length]), borderWidth: 2, borderColor: '#fff' }]
       },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 10, padding: 10, font: { size: 10 } } } }, cutout: '60%' }
+      options: { responsive: true, maintainAspectRatio: false, plugins: cfgPlugins, cutout: '60%' }
     });
   }
 </script>
@@ -1198,7 +1228,7 @@ const MSG_DATA = {
 
   function buildAssigneeCharts() {
     if (_assigneeOpenChart) _assigneeOpenChart.destroy();
-    _assigneeOpenChart = makeSimpleBar('ch-assignee-open', kpiOpen, 'owner', PAL, {}, true);
+    _assigneeOpenChart = makeSimpleBar('ch-assignee-open', kpiOpen, 'owner', PAL, { datalabels: true }, true);
   }
 
   _chartInits.push(() => {
@@ -1206,8 +1236,8 @@ const MSG_DATA = {
     makeDoughnut('ch-workload-status', kpiOpen, 'status_bucket', {
       'Waiting on Us': '#e05252', 'Waiting on Amazon': '#5282e0',
       'On Hold': '#e09b52', 'Not Resolved': '#cc3322', 'Resolved': '#52c97c'
-    });
-    makeSimpleBar('ch-workload-issue', kpiOpen, 'issue_type', PAL);
+    }, { datalabels: true });
+    makeSimpleBar('ch-workload-issue', kpiOpen, 'issue_type', PAL, { datalabels: true });
 
     // Daily chart — last 30 days with zero-fill (all cases: open + closed)
     const today = new Date();
@@ -1224,13 +1254,14 @@ const MSG_DATA = {
     }
     new Chart(document.getElementById('ch-daily'), {
       type: 'bar',
+      plugins: typeof ChartDataLabels !== 'undefined' ? [ChartDataLabels] : [],
       data: {
         labels: dailyLabels,
         datasets: [{ data: dailyData, backgroundColor: '#5282e0', borderRadius: 3 }]
       },
       options: {
         responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
+        plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'end', font: { weight: 600, size: 10 }, color: '#555', formatter: v => v > 0 ? v : '' } },
         scales: {
           x: { grid: { display: false }, border: { display: false }, ticks: { maxTicksLimit: 10 } },
           y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 }, grid: { color: '#f0f1f5' }, border: { display: false } }
@@ -1249,13 +1280,14 @@ const MSG_DATA = {
     const monthlySorted = Object.entries(monthlyMap).sort((a, b) => a[0].localeCompare(b[0]));
     new Chart(document.getElementById('ch-monthly'), {
       type: 'bar',
+      plugins: typeof ChartDataLabels !== 'undefined' ? [ChartDataLabels] : [],
       data: {
         labels: monthlySorted.map(([m]) => m),
         datasets: [{ data: monthlySorted.map(([, v]) => v), backgroundColor: '#52c97c', borderRadius: 3 }]
       },
       options: {
         responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
+        plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'end', font: { weight: 600, size: 11 }, color: '#555' } },
         scales: {
           x: { grid: { display: false }, border: { display: false } },
           y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 }, grid: { color: '#f0f1f5' }, border: { display: false } }
