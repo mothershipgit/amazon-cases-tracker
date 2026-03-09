@@ -859,6 +859,31 @@ const MSG_DATA = {
   }
 </script>
 
+<!-- ═══ TEAM & WORKLOAD (static, above analytics) ═════════════════════════════ -->
+<h2>Team &amp; Workload</h2>
+<div class="charts-grid">
+  <div class="chart-card">
+    <div class="chart-title">Open Cases by Assignee</div>
+    <div class="chart-sub">Currently active per person</div>
+    <div class="chart-wrap"><canvas id="ch-assignee-open"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Workload by Status</div>
+    <div class="chart-sub">Open cases by status</div>
+    <div class="chart-wrap"><canvas id="ch-workload-status"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Cases Created Daily</div>
+    <div class="chart-sub">Last 30 days (open + closed)</div>
+    <div class="chart-wrap"><canvas id="ch-daily"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Monthly Cases</div>
+    <div class="chart-sub">Cases opened per month (open + closed)</div>
+    <div class="chart-wrap"><canvas id="ch-monthly"></canvas></div>
+  </div>
+</div>
+
 <!-- ═══ ANALYTICS ACCORDIONS ═══════════════════════════════════════════════════ -->
 <div class="analytics-section">
 <h2>Analytics</h2>
@@ -1162,55 +1187,23 @@ const MSG_DATA = {
   }
 </script>
 
-<!-- Section: Team & Workload -->
-<h2>Team &amp; Workload</h2>
-<div class="charts-grid">
-  <div class="chart-card">
-    <div class="chart-title">Total Cases by Assignee</div>
-    <div class="chart-sub">All cases per team member</div>
-    <div class="chart-wrap"><canvas id="ch-assignee-total"></canvas></div>
-  </div>
-  <div class="chart-card">
-    <div class="chart-title">Open Cases by Assignee</div>
-    <div class="chart-sub">Currently active per person</div>
-    <div class="chart-wrap"><canvas id="ch-assignee-open"></canvas></div>
-  </div>
-  <div class="chart-card">
-    <div class="chart-title">Workload by Status</div>
-    <div class="chart-sub">All cases by status bucket</div>
-    <div class="chart-wrap"><canvas id="ch-workload-status"></canvas></div>
-  </div>
-  <div class="chart-card">
-    <div class="chart-title">Cases Created Daily</div>
-    <div class="chart-sub">Last 30 days</div>
-    <div class="chart-wrap"><canvas id="ch-daily"></canvas></div>
-  </div>
-  <div class="chart-card">
-    <div class="chart-title">Monthly Cases</div>
-    <div class="chart-sub">Cases opened per month</div>
-    <div class="chart-wrap"><canvas id="ch-monthly"></canvas></div>
-  </div>
-</div>
+<!-- Team & Workload charts init -->
 <script>
-  // Store chart instances for rebuild on Firebase owner sync
-  let _assigneeTotalChart = null;
   let _assigneeOpenChart = null;
 
   function buildAssigneeCharts() {
-    if (_assigneeTotalChart) _assigneeTotalChart.destroy();
     if (_assigneeOpenChart) _assigneeOpenChart.destroy();
-    _assigneeTotalChart = makeSimpleBar('ch-assignee-total', kpiCases, 'owner', '#5282e0', {}, true);
     _assigneeOpenChart = makeSimpleBar('ch-assignee-open', kpiOpen, 'owner', '#e05252', {}, true);
   }
 
   _chartInits.push(() => {
     buildAssigneeCharts();
-    makeDoughnut('ch-workload-status', kpiCases, 'status_bucket', {
+    makeDoughnut('ch-workload-status', kpiOpen, 'status_bucket', {
       'Waiting on Us': '#e05252', 'Waiting on Amazon': '#5282e0',
-      'In Progress': '#aaa', 'Escalated': '#e09b52', 'Resolved': '#52c97c'
+      'On Hold': '#e09b52', 'Not Resolved': '#cc3322', 'Resolved': '#52c97c'
     });
 
-    // Daily chart — last 30 days with zero-fill
+    // Daily chart — last 30 days with zero-fill (all cases: open + closed)
     const today = new Date();
     const dailyMap = {};
     kpiCases.forEach(c => { if(c.opened_date) dailyMap[c.opened_date] = (dailyMap[c.opened_date]||0)+1; });
@@ -1239,11 +1232,11 @@ const MSG_DATA = {
       }
     });
 
-    // Monthly chart
+    // Monthly chart (all cases: open + closed)
     const monthlyMap = {};
     kpiCases.forEach(c => {
       if (c.opened_date) {
-        const m = c.opened_date.slice(0, 7); // YYYY-MM
+        const m = c.opened_date.slice(0, 7);
         monthlyMap[m] = (monthlyMap[m] || 0) + 1;
       }
     });
