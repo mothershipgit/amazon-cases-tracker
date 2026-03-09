@@ -1529,7 +1529,7 @@ const MSG_DATA = {
         <td class="col-date">2026-02-26</td>
         <td class="col-asin"><span class="asin-code">B0BM1WPXC5</span><span class="asin-name">LAX</span></td>
         <td class="col-issue">Escalation Review</td>
-        <td><select class="close-status-select st-resolved" data-case="12159445672" onchange="closeStatusChanged(this)"><option value="Waiting on Us">Waiting on Us</option><option value="Waiting on Amazon">Waiting on Amazon</option><option value="In Progress">In Progress</option><option value="Escalated">Escalated</option><option value="Resolved" selected>Resolved</option><option value="Not Resolved">Not Resolved</option><option value="On Hold">On Hold</option></select></td>
+        <td><select class="close-status-select st-resolved" data-case="12159445672" onchange="closeStatusChanged(this)"><option value="Waiting on Us">Waiting on Us</option><option value="Waiting on Amazon">Waiting on Amazon</option><option value="Resolved" selected>Resolved</option><option value="Not Resolved">Not Resolved</option><option value="On Hold">On Hold</option></select></td>
         <td class="col-summary">LAX escalation review in Germany. Amazon confirmed no restrictions on the listings. Case resolved.</td>
         <td class="col-action"><div class="note-text" data-case="12159445672" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
         <td class="col-notes"><div class="note-text" data-case="12159445672" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
@@ -1548,7 +1548,7 @@ const MSG_DATA = {
         <td class="col-date">2026-03-05</td>
         <td class="col-asin"><span class="asin-code">&mdash;</span></td>
         <td class="col-issue">Queue Misassignment</td>
-        <td><select class="close-status-select st-resolved" data-case="19599539061" onchange="closeStatusChanged(this)"><option value="Waiting on Us">Waiting on Us</option><option value="Waiting on Amazon">Waiting on Amazon</option><option value="In Progress">In Progress</option><option value="Escalated">Escalated</option><option value="Resolved" selected>Resolved</option><option value="Not Resolved">Not Resolved</option><option value="On Hold">On Hold</option></select></td>
+        <td><select class="close-status-select st-resolved" data-case="19599539061" onchange="closeStatusChanged(this)"><option value="Waiting on Us">Waiting on Us</option><option value="Waiting on Amazon">Waiting on Amazon</option><option value="Resolved" selected>Resolved</option><option value="Not Resolved">Not Resolved</option><option value="On Hold">On Hold</option></select></td>
         <td class="col-summary">Queue incorrectly assigned. Amazon apologized for the error. Auto-resolved.</td>
         <td class="col-action"><div class="note-text" data-case="19599539061" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
         <td class="col-notes"><div class="note-text" data-case="19599539061" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
@@ -1567,7 +1567,7 @@ const MSG_DATA = {
         <td class="col-date">2026-02-25</td>
         <td class="col-asin"><span class="asin-code">B0BC4FT3XP</span><span class="asin-name">CUT</span></td>
         <td class="col-issue">Restricted Products Appeal</td>
-        <td><select class="close-status-select st-resolved" data-case="12053445982" onchange="closeStatusChanged(this)"><option value="Waiting on Us">Waiting on Us</option><option value="Waiting on Amazon">Waiting on Amazon</option><option value="In Progress">In Progress</option><option value="Escalated">Escalated</option><option value="Resolved" selected>Resolved</option><option value="Not Resolved">Not Resolved</option><option value="On Hold">On Hold</option></select></td>
+        <td><select class="close-status-select st-resolved" data-case="12053445982" onchange="closeStatusChanged(this)"><option value="Waiting on Us">Waiting on Us</option><option value="Waiting on Amazon">Waiting on Amazon</option><option value="Resolved" selected>Resolved</option><option value="Not Resolved">Not Resolved</option><option value="On Hold">On Hold</option></select></td>
         <td class="col-summary">CUT restricted products appeal in Italy. Auto-closed after 4 days with no response.</td>
         <td class="col-action"><div class="note-text" data-case="12053445982" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
         <td class="col-notes"><div class="note-text" data-case="12053445982" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
@@ -1586,7 +1586,7 @@ const MSG_DATA = {
         <td class="col-date">2026-03-08</td>
         <td class="col-asin"><span class="asin-code">&mdash;</span></td>
         <td class="col-issue">VAT Invoice Reissue</td>
-        <td><select class="close-status-select st-resolved" data-case="12014653392" onchange="closeStatusChanged(this)"><option value="Waiting on Us">Waiting on Us</option><option value="Waiting on Amazon">Waiting on Amazon</option><option value="In Progress">In Progress</option><option value="Escalated">Escalated</option><option value="Resolved" selected>Resolved</option><option value="Not Resolved">Not Resolved</option><option value="On Hold">On Hold</option></select></td>
+        <td><select class="close-status-select st-resolved" data-case="12014653392" onchange="closeStatusChanged(this)"><option value="Waiting on Us">Waiting on Us</option><option value="Waiting on Amazon">Waiting on Amazon</option><option value="Resolved" selected>Resolved</option><option value="Not Resolved">Not Resolved</option><option value="On Hold">On Hold</option></select></td>
         <td class="col-summary">VAT invoice reissue for UK. Manually closed while Amazon still investigating.</td>
         <td class="col-action"><div class="note-text" data-case="12014653392" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
         <td class="col-notes"><div class="note-text" data-case="12014653392" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
@@ -2172,7 +2172,7 @@ const MSG_DATA = {
 
   // Convert static bucket spans to status dropdowns in active table
   function initStatusDropdowns() {
-    const STATUS_OPTIONS = ['Waiting on Us', 'Waiting on Amazon', 'In Progress', 'Escalated', 'Resolved', 'Not Resolved', 'On Hold'];
+    const STATUS_OPTIONS = ['Waiting on Us', 'Waiting on Amazon', 'Resolved', 'Not Resolved', 'On Hold'];
     document.querySelectorAll('#active-tbody tr[data-case]:not(.msg-detail-row)').forEach(row => {
       const cell = row.cells[10]; // Status column
       if (!cell) return;
