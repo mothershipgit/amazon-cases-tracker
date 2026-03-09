@@ -206,6 +206,17 @@
     .bucket-ip   { background: #f0f1f5; color: #666; }
     .bucket-esc  { background: #fff3e0; color: #bb6600; }
     .bucket-res  { background: #e6f9ee; color: #156930; }
+    .bucket-nr   { background: #fdecea; color: #bb2211; }
+    .bucket-hold { background: #fff3e0; color: #bb6600; }
+    .close-status-select {
+      font-size: 11px; padding: 3px 6px; border-radius: 4px; border: 1px solid #ddd;
+      cursor: pointer; font-weight: 600; background: #fff;
+    }
+    .close-status-select.st-resolved   { background: #e6f9ee; color: #156930; border-color: #b7e4c7; }
+    .close-status-select.st-notresolved { background: #fdecea; color: #bb2211; border-color: #f5c6cb; }
+    .close-status-select.st-onhold     { background: #fff3e0; color: #bb6600; border-color: #ffe0b2; }
+    .close-status-select.st-waitamazon { background: #e8f0fe; color: #1a55bb; border-color: #b6d4fe; }
+    .close-status-select.st-waitus     { background: #fdecea; color: #bb2211; border-color: #f5c6cb; }
     .issue-vip   { background: #e6f9ee; color: #156930; padding: 2px 7px; border-radius: 4px; font-weight: 600; font-size: 0.78rem; white-space: nowrap; display: inline-block; }
 
     .days-urgent { color: #bb2211; font-weight: 700; }
@@ -755,7 +766,7 @@ const MSG_DATA = {
   <div class="stat-card stat-closed">
     <div class="stat-label">Closed Cases</div>
     <div class="stat-value" id="stat-closed">&mdash;</div>
-    <div class="stat-sub">resolved</div>
+    <div class="stat-sub">all closed</div>
   </div>
   <div class="stat-card stat-days">
     <div class="stat-label">Avg Days Open</div>
@@ -1451,7 +1462,7 @@ const MSG_DATA = {
         <th class="col-date">Last Update</th>
         <th class="col-asin">ASIN / Product</th>
         <th class="col-issue">Issue Type</th>
-        <th>Status Bucket</th>
+        <th>Outcome</th>
         <th class="col-summary">Summary</th>
         <th class="col-action">Next Action</th>
         <th class="col-notes">Notes</th>
@@ -1473,7 +1484,7 @@ const MSG_DATA = {
         <td class="col-date">2026-02-26</td>
         <td class="col-asin"><span class="asin-code">B0BM1WPXC5</span><span class="asin-name">LAX</span></td>
         <td class="col-issue">Escalation Review</td>
-        <td><span class="bucket bucket-res">Resolved</span></td>
+        <td><select class="close-status-select st-resolved" data-case="12159445672" onchange="closeStatusChanged(this)"><option value="Resolved" selected>Resolved</option><option value="Not Resolved">Not Resolved</option><option value="On Hold">On Hold</option><option value="Waiting on Amazon">Waiting on Amazon</option><option value="Waiting on Us">Waiting on Us</option></select></td>
         <td class="col-summary">LAX escalation review in Germany. Amazon confirmed no restrictions on the listings. Case resolved.</td>
         <td class="col-action"><div class="note-text" data-case="12159445672" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
         <td class="col-notes"><div class="note-text" data-case="12159445672" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
@@ -1492,7 +1503,7 @@ const MSG_DATA = {
         <td class="col-date">2026-03-05</td>
         <td class="col-asin"><span class="asin-code">&mdash;</span></td>
         <td class="col-issue">Queue Misassignment</td>
-        <td><span class="bucket bucket-res">Resolved</span></td>
+        <td><select class="close-status-select st-resolved" data-case="19599539061" onchange="closeStatusChanged(this)"><option value="Resolved" selected>Resolved</option><option value="Not Resolved">Not Resolved</option><option value="On Hold">On Hold</option><option value="Waiting on Amazon">Waiting on Amazon</option><option value="Waiting on Us">Waiting on Us</option></select></td>
         <td class="col-summary">Queue incorrectly assigned. Amazon apologized for the error. Auto-resolved.</td>
         <td class="col-action"><div class="note-text" data-case="19599539061" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
         <td class="col-notes"><div class="note-text" data-case="19599539061" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
@@ -1511,7 +1522,7 @@ const MSG_DATA = {
         <td class="col-date">2026-02-25</td>
         <td class="col-asin"><span class="asin-code">B0BC4FT3XP</span><span class="asin-name">CUT</span></td>
         <td class="col-issue">Restricted Products Appeal</td>
-        <td><span class="bucket bucket-res">Resolved</span></td>
+        <td><select class="close-status-select st-resolved" data-case="12053445982" onchange="closeStatusChanged(this)"><option value="Resolved" selected>Resolved</option><option value="Not Resolved">Not Resolved</option><option value="On Hold">On Hold</option><option value="Waiting on Amazon">Waiting on Amazon</option><option value="Waiting on Us">Waiting on Us</option></select></td>
         <td class="col-summary">CUT restricted products appeal in Italy. Auto-closed after 4 days with no response.</td>
         <td class="col-action"><div class="note-text" data-case="12053445982" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
         <td class="col-notes"><div class="note-text" data-case="12053445982" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
@@ -1530,7 +1541,7 @@ const MSG_DATA = {
         <td class="col-date">2026-03-08</td>
         <td class="col-asin"><span class="asin-code">&mdash;</span></td>
         <td class="col-issue">VAT Invoice Reissue</td>
-        <td><span class="bucket bucket-res">Resolved</span></td>
+        <td><select class="close-status-select st-resolved" data-case="12014653392" onchange="closeStatusChanged(this)"><option value="Resolved" selected>Resolved</option><option value="Not Resolved">Not Resolved</option><option value="On Hold">On Hold</option><option value="Waiting on Amazon">Waiting on Amazon</option><option value="Waiting on Us">Waiting on Us</option></select></td>
         <td class="col-summary">VAT invoice reissue for UK. Manually closed while Amazon still investigating.</td>
         <td class="col-action"><div class="note-text" data-case="12014653392" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
         <td class="col-notes"><div class="note-text" data-case="12014653392" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
@@ -1650,6 +1661,19 @@ const MSG_DATA = {
       _syncing = false;
     });
 
+    // Sync close statuses (outcome)
+    db.ref('close_statuses').on('value', snap => {
+      _syncing = true;
+      const statuses = snap.val() || {};
+      document.querySelectorAll('.close-status-select').forEach(sel => {
+        if (statuses[sel.dataset.case]) {
+          sel.value = statuses[sel.dataset.case];
+          styleCloseStatus(sel);
+        }
+      });
+      _syncing = false;
+    });
+
     // Sync notes
     db.ref('notes').on('value', snap => {
       _syncing = true;
@@ -1731,13 +1755,52 @@ const MSG_DATA = {
     const emptyRow    = document.getElementById('closed-empty');
 
     if (toClose) {
+      // Replace static bucket span with outcome dropdown if not already a select
+      const bucketCell = row.cells[10]; // Status Bucket column (index 10)
+      if (bucketCell && !bucketCell.querySelector('.close-status-select')) {
+        const curStatus = (bucketCell.textContent || '').trim();
+        const defaultVal = (curStatus === 'Resolved' || curStatus === 'Not Resolved' || curStatus === 'On Hold') ? curStatus : 'Resolved';
+        bucketCell.innerHTML = '<select class="close-status-select" data-case="' + caseId + '" onchange="closeStatusChanged(this)">' +
+          '<option value="Resolved"' + (defaultVal === 'Resolved' ? ' selected' : '') + '>Resolved</option>' +
+          '<option value="Not Resolved"' + (defaultVal === 'Not Resolved' ? ' selected' : '') + '>Not Resolved</option>' +
+          '<option value="On Hold"' + (defaultVal === 'On Hold' ? ' selected' : '') + '>On Hold</option>' +
+          '<option value="Waiting on Amazon">Waiting on Amazon</option>' +
+          '<option value="Waiting on Us">Waiting on Us</option>' +
+          '</select>';
+        styleCloseStatus(bucketCell.querySelector('.close-status-select'));
+        // Save default status to Firebase (only if not syncing from remote)
+        if (!_syncing) db.ref('close_statuses/' + caseId).set(defaultVal);
+      }
       closedTbody.appendChild(row);
       if (emptyRow) emptyRow.style.display = 'none';
     } else {
+      // Restore static bucket span from cases_core source
+      const bucketCell = row.cells[10];
+      const sel = bucketCell && bucketCell.querySelector('.close-status-select');
+      if (sel) {
+        const c = CASES.find(x => x.case_id === caseId);
+        const bucket = c ? c.status_bucket : 'In Progress';
+        const cls = bucket === 'Waiting on Us' ? 'bucket-us' : bucket === 'Waiting on Amazon' ? 'bucket-amz' : bucket === 'Escalated' ? 'bucket-esc' : bucket === 'Resolved' ? 'bucket-res' : 'bucket-ip';
+        bucketCell.innerHTML = '<span class="bucket ' + cls + '">' + bucket + '</span>';
+      }
+      if (!_syncing) db.ref('close_statuses/' + caseId).remove();
       activeTbody.appendChild(row);
       const remaining = closedTbody.querySelectorAll('tr:not(#closed-empty)').length;
       if (remaining === 0 && emptyRow) emptyRow.style.display = '';
     }
+  }
+
+  // ── Close status (outcome) dropdown ──────────────────────────────────
+  function closeStatusChanged(sel) {
+    if (_syncing) return;
+    styleCloseStatus(sel);
+    db.ref('close_statuses/' + sel.dataset.case).set(sel.value);
+  }
+
+  function styleCloseStatus(sel) {
+    sel.className = 'close-status-select';
+    const map = { 'Resolved': 'st-resolved', 'Not Resolved': 'st-notresolved', 'On Hold': 'st-onhold', 'Waiting on Amazon': 'st-waitamazon', 'Waiting on Us': 'st-waitus' };
+    if (map[sel.value]) sel.classList.add(map[sel.value]);
   }
 
   // ── Editable cells (Notes + Next Action) ──────────────────────────────
@@ -1946,12 +2009,17 @@ const MSG_DATA = {
       owners[sel.dataset.case] = sel.value;
     });
 
+    const closeStatuses = {};
+    document.querySelectorAll('.close-status-select').forEach(sel => {
+      closeStatuses[sel.dataset.case] = sel.value;
+    });
+
     const parentCases = {};
     document.querySelectorAll('.parent-link.has-parent').forEach(span => {
       parentCases[span.dataset.case] = span.textContent.trim();
     });
 
-    const output = { close: toClose, close_dates: toCloseDates, owners, parent_cases: parentCases };
+    const output = { close: toClose, close_dates: toCloseDates, close_statuses: closeStatuses, owners, parent_cases: parentCases };
     const text = 'Case assignments:\n' + JSON.stringify(output, null, 2);
 
     navigator.clipboard.writeText(text).then(() => {
