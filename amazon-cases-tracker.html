@@ -212,6 +212,32 @@
     .days-warn   { color: #996600; font-weight: 600; }
     .days-ok     { color: #888; }
 
+    /* ── Parent-case grouping ──────────────────────────────────────────── */
+    tr.grouped-parent td { background: #f0f9f2; }
+    tr.grouped-parent:hover td { background: #e6f5ea; }
+    tr.grouped-child td { background: #f5fbf6; padding-left: 26px; }
+    tr.grouped-child:hover td { background: #ecf7ee; }
+    tr.grouped-child td:first-child { padding-left: 10px; }
+    tr.grouped-child .col-case { position: relative; }
+    tr.grouped-child .col-case::before { content: '\21B3'; color: #7cb88a; margin-right: 4px; font-size: 0.85rem; }
+
+    .col-parent { width: 110px; }
+    .parent-link {
+      font-family: monospace;
+      font-size: 0.72rem;
+      color: #7cb88a;
+      cursor: pointer;
+      padding: 2px 6px;
+      border: 1px dashed #cde6d2;
+      border-radius: 4px;
+      display: inline-block;
+      min-width: 40px;
+      text-align: center;
+    }
+    .parent-link:hover { border-color: #7cb88a; background: #f0f9f2; }
+    .parent-link:empty::before { content: '+'; color: #bbb; font-size: 0.8rem; }
+    .parent-link.has-parent { border-style: solid; border-color: #7cb88a; background: #f0f9f2; font-weight: 600; }
+
     .closed-section { opacity: 0.6; }
     .closed-section table { background: #fafbfc; }
     .closed-section tbody tr { background: #fafbfc; }
@@ -807,9 +833,22 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
   function applyFilters() {
     const brand = document.getElementById('filter-brand').value;
     const mkt   = document.getElementById('filter-mkt').value;
-    document.querySelectorAll('#active-tbody tr').forEach(row => {
-      const show = (!brand || row.dataset.brand === brand) && (!mkt || row.dataset.mkt === mkt);
-      row.style.display = show ? '' : 'none';
+    const rows = document.querySelectorAll('#active-tbody tr');
+
+    // First pass: determine which parent cases are visible
+    const visibleParents = new Set();
+    rows.forEach(row => {
+      const matches = (!brand || row.dataset.brand === brand) && (!mkt || row.dataset.mkt === mkt);
+      if (matches) visibleParents.add(row.dataset.case);
+    });
+
+    // Second pass: show children if their parent is visible
+    rows.forEach(row => {
+      const matches = (!brand || row.dataset.brand === brand) && (!mkt || row.dataset.mkt === mkt);
+      const parentSpan = row.querySelector('.parent-link');
+      const parentId = parentSpan ? parentSpan.textContent.trim() : '';
+      const followsParent = parentId && visibleParents.has(parentId);
+      row.style.display = (matches || followsParent) ? '' : 'none';
     });
   }
 
@@ -827,6 +866,7 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
       <tr>
         <th class="col-close">Close</th>
         <th class="col-case">Case ID</th>
+        <th class="col-parent">Parent</th>
         <th class="col-brand sortable" onclick="sortTable(this,'active-tbody')">Brand</th>
         <th class="sortable" onclick="sortTable(this,'active-tbody')">MKT</th>
         <th class="col-owner sortable" onclick="sortTable(this,'active-tbody')">Owner</th>
@@ -847,6 +887,7 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
       <tr data-case="12139919272" data-brand="QSTA" data-mkt="FR">
         <td class="col-close"><input type="checkbox" class="close-check" data-case="12139919272" data-source="false" onchange="closeToggled(this)"></td>
         <td class="col-case">12139919272</td>
+        <td class="col-parent"><span class="parent-link" data-case="12139919272" onclick="editParent(this)"></span></td>
         <td>QSTA</td>
         <td><span class="badge mkt-fr">FR</span></td>
         <td class="col-owner"><select class="owner-select" data-case="12139919272" onchange="ownerChanged(this)"><option value="Unassigned">Unassigned</option><option value="Vitali" selected>Vitali</option><option value="Tom">Tom</option></select></td>
@@ -865,6 +906,7 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
       <tr data-case="12122795542" data-brand="QSTA" data-mkt="IT">
         <td class="col-close"><input type="checkbox" class="close-check" data-case="12122795542" data-source="false" onchange="closeToggled(this)"></td>
         <td class="col-case">12122795542</td>
+        <td class="col-parent"><span class="parent-link" data-case="12122795542" onclick="editParent(this)"></span></td>
         <td>QSTA</td>
         <td><span class="badge mkt-it">IT</span></td>
         <td class="col-owner"><select class="owner-select" data-case="12122795542" onchange="ownerChanged(this)"><option value="Unassigned">Unassigned</option><option value="Vitali" selected>Vitali</option><option value="Tom">Tom</option></select></td>
@@ -883,6 +925,7 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
       <tr data-case="12139373442" data-brand="QSTA" data-mkt="IT">
         <td class="col-close"><input type="checkbox" class="close-check" data-case="12139373442" data-source="false" onchange="closeToggled(this)"></td>
         <td class="col-case">12139373442</td>
+        <td class="col-parent"><span class="parent-link" data-case="12139373442" onclick="editParent(this)"></span></td>
         <td>QSTA</td>
         <td><span class="badge mkt-it">IT</span></td>
         <td class="col-owner"><select class="owner-select" data-case="12139373442" onchange="ownerChanged(this)"><option value="Unassigned">Unassigned</option><option value="Vitali" selected>Vitali</option><option value="Tom">Tom</option></select></td>
@@ -901,6 +944,7 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
       <tr data-case="12122998082" data-brand="QSTA" data-mkt="IT">
         <td class="col-close"><input type="checkbox" class="close-check" data-case="12122998082" data-source="false" onchange="closeToggled(this)"></td>
         <td class="col-case">12122998082</td>
+        <td class="col-parent"><span class="parent-link" data-case="12122998082" onclick="editParent(this)"></span></td>
         <td>QSTA</td>
         <td><span class="badge mkt-it">IT</span></td>
         <td class="col-owner"><select class="owner-select" data-case="12122998082" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
@@ -919,6 +963,7 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
       <tr data-case="10995838672" data-brand="QSTA" data-mkt="UK">
         <td class="col-close"><input type="checkbox" class="close-check" data-case="10995838672" data-source="false" onchange="closeToggled(this)"></td>
         <td class="col-case">10995838672</td>
+        <td class="col-parent"><span class="parent-link" data-case="10995838672" onclick="editParent(this)"></span></td>
         <td>QSTA</td>
         <td><span class="badge mkt-uk">UK</span></td>
         <td class="col-owner"><select class="owner-select" data-case="10995838672" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
@@ -937,6 +982,7 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
       <tr data-case="11756757402" data-brand="TCU" data-mkt="UK">
         <td class="col-close"><input type="checkbox" class="close-check" data-case="11756757402" data-source="false" onchange="closeToggled(this)"></td>
         <td class="col-case">11756757402</td>
+        <td class="col-parent"><span class="parent-link" data-case="11756757402" onclick="editParent(this)"></span></td>
         <td>TCU</td>
         <td><span class="badge mkt-uk">UK</span></td>
         <td class="col-owner"><select class="owner-select" data-case="11756757402" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
@@ -955,6 +1001,7 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
       <tr data-case="12150140992" data-brand="QSTA" data-mkt="ES">
         <td class="col-close"><input type="checkbox" class="close-check" data-case="12150140992" data-source="false" onchange="closeToggled(this)"></td>
         <td class="col-case">12150140992</td>
+        <td class="col-parent"><span class="parent-link" data-case="12150140992" onclick="editParent(this)"></span></td>
         <td>QSTA</td>
         <td><span class="badge mkt-es">ES</span></td>
         <td class="col-owner"><select class="owner-select" data-case="12150140992" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
@@ -973,6 +1020,7 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
       <tr data-case="12160163052" data-brand="Vegan Vitality" data-mkt="ES">
         <td class="col-close"><input type="checkbox" class="close-check" data-case="12160163052" data-source="false" onchange="closeToggled(this)"></td>
         <td class="col-case">12160163052</td>
+        <td class="col-parent"><span class="parent-link" data-case="12160163052" onclick="editParent(this)"></span></td>
         <td>Vegan Vitality</td>
         <td><span class="badge mkt-es">ES</span></td>
         <td class="col-owner"><select class="owner-select" data-case="12160163052" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
@@ -991,6 +1039,7 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
       <tr data-case="12160765972" data-brand="QSTA" data-mkt="IT">
         <td class="col-close"><input type="checkbox" class="close-check" data-case="12160765972" data-source="false" onchange="closeToggled(this)"></td>
         <td class="col-case">12160765972</td>
+        <td class="col-parent"><span class="parent-link" data-case="12160765972" onclick="editParent(this)"></span></td>
         <td>QSTA</td>
         <td><span class="badge mkt-it">IT</span></td>
         <td class="col-owner"><select class="owner-select" data-case="12160765972" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
@@ -1009,6 +1058,7 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
       <tr data-case="12196144212" data-brand="QSTA" data-mkt="ES">
         <td class="col-close"><input type="checkbox" class="close-check" data-case="12196144212" data-source="false" onchange="closeToggled(this)"></td>
         <td class="col-case">12196144212</td>
+        <td class="col-parent"><span class="parent-link" data-case="12196144212" onclick="editParent(this)"></span></td>
         <td>QSTA</td>
         <td><span class="badge mkt-es">ES</span></td>
         <td class="col-owner"><select class="owner-select" data-case="12196144212" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
@@ -1027,6 +1077,7 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
       <tr data-case="12189296792" data-brand="QSTA" data-mkt="IT">
         <td class="col-close"><input type="checkbox" class="close-check" data-case="12189296792" data-source="false" onchange="closeToggled(this)"></td>
         <td class="col-case">12189296792</td>
+        <td class="col-parent"><span class="parent-link" data-case="12189296792" onclick="editParent(this)"></span></td>
         <td>QSTA</td>
         <td><span class="badge mkt-it">IT</span></td>
         <td class="col-owner"><select class="owner-select" data-case="12189296792" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
@@ -1045,6 +1096,7 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
       <tr data-case="12193136902" data-brand="QSTA" data-mkt="IT">
         <td class="col-close"><input type="checkbox" class="close-check" data-case="12193136902" data-source="false" onchange="closeToggled(this)"></td>
         <td class="col-case">12193136902</td>
+        <td class="col-parent"><span class="parent-link" data-case="12193136902" onclick="editParent(this)"></span></td>
         <td>QSTA</td>
         <td><span class="badge mkt-it">IT</span></td>
         <td class="col-owner"><select class="owner-select" data-case="12193136902" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
@@ -1063,6 +1115,7 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
       <tr data-case="12196786792" data-brand="QSTA" data-mkt="ES">
         <td class="col-close"><input type="checkbox" class="close-check" data-case="12196786792" data-source="false" onchange="closeToggled(this)"></td>
         <td class="col-case">12196786792</td>
+        <td class="col-parent"><span class="parent-link" data-case="12196786792" onclick="editParent(this)"></span></td>
         <td>QSTA</td>
         <td><span class="badge mkt-es">ES</span></td>
         <td class="col-owner"><select class="owner-select" data-case="12196786792" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
@@ -1081,6 +1134,7 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
       <tr data-case="12199208622" data-brand="QSTA" data-mkt="DE">
         <td class="col-close"><input type="checkbox" class="close-check" data-case="12199208622" data-source="false" onchange="closeToggled(this)"></td>
         <td class="col-case">12199208622</td>
+        <td class="col-parent"><span class="parent-link" data-case="12199208622" onclick="editParent(this)"></span></td>
         <td>QSTA</td>
         <td><span class="badge mkt-de">DE</span></td>
         <td class="col-owner"><select class="owner-select" data-case="12199208622" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
@@ -1099,6 +1153,7 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
       <tr data-case="12202348262" data-brand="Hudson Chase" data-mkt="ES">
         <td class="col-close"><input type="checkbox" class="close-check" data-case="12202348262" data-source="false" onchange="closeToggled(this)"></td>
         <td class="col-case">12202348262</td>
+        <td class="col-parent"><span class="parent-link" data-case="12202348262" onclick="editParent(this)"></span></td>
         <td>Hudson Chase</td>
         <td><span class="badge mkt-es">ES</span></td>
         <td class="col-owner"><select class="owner-select" data-case="12202348262" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
@@ -1117,6 +1172,7 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
       <tr data-case="12206260832" data-brand="QSTA" data-mkt="ES">
         <td class="col-close"><input type="checkbox" class="close-check" data-case="12206260832" data-source="false" onchange="closeToggled(this)"></td>
         <td class="col-case">12206260832</td>
+        <td class="col-parent"><span class="parent-link" data-case="12206260832" onclick="editParent(this)"></span></td>
         <td>QSTA</td>
         <td><span class="badge mkt-es">ES</span></td>
         <td class="col-owner"><select class="owner-select" data-case="12206260832" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
@@ -1135,6 +1191,7 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
       <tr data-case="12208889982" data-brand="QSTA" data-mkt="IT">
         <td class="col-close"><input type="checkbox" class="close-check" data-case="12208889982" data-source="false" onchange="closeToggled(this)"></td>
         <td class="col-case">12208889982</td>
+        <td class="col-parent"><span class="parent-link" data-case="12208889982" onclick="editParent(this)"></span></td>
         <td>QSTA</td>
         <td><span class="badge mkt-it">IT</span></td>
         <td class="col-owner"><select class="owner-select" data-case="12208889982" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
@@ -1162,6 +1219,7 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
       <tr>
         <th class="col-close">Reopen</th>
         <th class="col-case">Case ID</th>
+        <th class="col-parent">Parent</th>
         <th class="col-brand">Brand</th>
         <th>MKT</th>
         <th class="col-owner">Owner</th>
@@ -1178,11 +1236,12 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
       </tr>
     </thead>
     <tbody id="closed-tbody">
-      <tr class="empty-row" id="closed-empty" style="display:none"><td colspan="15">No closed cases yet</td></tr>
+      <tr class="empty-row" id="closed-empty" style="display:none"><td colspan="16">No closed cases yet</td></tr>
 
       <tr data-case="12159445672" data-brand="QSTA" data-mkt="DE" data-closedate="2026-03-06">
         <td class="col-close"><input type="checkbox" class="close-check" data-case="12159445672" data-source="true" onchange="closeToggled(this)" checked></td>
         <td class="col-case">12159445672</td>
+        <td class="col-parent"><span class="parent-link" data-case="12159445672" onclick="editParent(this)"></span></td>
         <td>QSTA</td>
         <td><span class="badge mkt-de">DE</span></td>
         <td class="col-owner"><select class="owner-select" data-case="12159445672" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
@@ -1201,6 +1260,7 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
       <tr data-case="19599539061" data-brand="QSTA" data-mkt="US" data-closedate="2026-03-06">
         <td class="col-close"><input type="checkbox" class="close-check" data-case="19599539061" data-source="true" onchange="closeToggled(this)" checked></td>
         <td class="col-case">19599539061</td>
+        <td class="col-parent"><span class="parent-link" data-case="19599539061" onclick="editParent(this)"></span></td>
         <td>QSTA</td>
         <td><span class="badge mkt-us">US</span></td>
         <td class="col-owner"><select class="owner-select" data-case="19599539061" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
@@ -1219,6 +1279,7 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
       <tr data-case="12053445982" data-brand="QSTA" data-mkt="IT" data-closedate="2026-02-25">
         <td class="col-close"><input type="checkbox" class="close-check" data-case="12053445982" data-source="true" onchange="closeToggled(this)" checked></td>
         <td class="col-case">12053445982</td>
+        <td class="col-parent"><span class="parent-link" data-case="12053445982" onclick="editParent(this)"></span></td>
         <td>QSTA</td>
         <td><span class="badge mkt-it">IT</span></td>
         <td class="col-owner"><select class="owner-select" data-case="12053445982" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
@@ -1237,6 +1298,7 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
       <tr data-case="12014653392" data-brand="QSTA" data-mkt="UK" data-closedate="2026-02-17">
         <td class="col-close"><input type="checkbox" class="close-check" data-case="12014653392" data-source="true" onchange="closeToggled(this)" checked></td>
         <td class="col-case">12014653392</td>
+        <td class="col-parent"><span class="parent-link" data-case="12014653392" onclick="editParent(this)"></span></td>
         <td>QSTA</td>
         <td><span class="badge mkt-uk">UK</span></td>
         <td class="col-owner"><select class="owner-select" data-case="12014653392" onchange="ownerChanged(this)"><option value="Unassigned">Unassigned</option><option value="Vitali" selected>Vitali</option><option value="Tom">Tom</option></select></td>
@@ -1383,6 +1445,21 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
       _syncing = false;
     });
 
+    // Sync parent cases
+    db.ref('parent_cases').on('value', snap => {
+      _syncing = true;
+      const parents = snap.val() || {};
+      document.querySelectorAll('.parent-link').forEach(span => {
+        const caseId = span.dataset.case;
+        const val = parents[caseId] || '';
+        span.textContent = val;
+        if (val) span.classList.add('has-parent');
+        else span.classList.remove('has-parent');
+      });
+      _syncing = false;
+      regroupRows();
+    });
+
     // Initial close state from HTML source
     document.querySelectorAll('.close-check').forEach(cb => {
       if (cb.dataset.source === 'true') {
@@ -1500,6 +1577,92 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
     rows.forEach(row => tbody.appendChild(row));
   }
 
+  // ── Parent-case grouping ─────────────────────────────────────────────
+  function editParent(span) {
+    const caseId = span.dataset.case;
+    const current = span.textContent.trim();
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = current;
+    input.placeholder = 'Parent case ID';
+    input.style.cssText = 'width:100px;font-family:monospace;font-size:0.72rem;padding:2px 4px;border:1px solid #5282e0;border-radius:3px;';
+    span.textContent = '';
+    span.appendChild(input);
+    input.focus();
+
+    function save() {
+      const val = input.value.trim();
+      span.textContent = val;
+      if (val) {
+        span.classList.add('has-parent');
+        db.ref('parent_cases/' + caseId).set(val);
+      } else {
+        span.classList.remove('has-parent');
+        db.ref('parent_cases/' + caseId).remove();
+      }
+      regroupRows();
+    }
+
+    input.addEventListener('blur', save);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') { e.preventDefault(); save(); }
+      if (e.key === 'Escape') { span.textContent = current; if (current) span.classList.add('has-parent'); }
+    });
+  }
+
+  function regroupRows() {
+    const tbody = document.getElementById('active-tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    const parentMap = {}; // childId -> parentId
+
+    // Build parent map from DOM
+    rows.forEach(row => {
+      const span = row.querySelector('.parent-link');
+      if (span && span.textContent.trim()) {
+        parentMap[row.dataset.case] = span.textContent.trim();
+      }
+    });
+
+    // Clear grouping classes
+    rows.forEach(row => row.classList.remove('grouped-parent', 'grouped-child'));
+
+    // Mark parents and children
+    const parentIds = new Set(Object.values(parentMap));
+    rows.forEach(row => {
+      const cid = row.dataset.case;
+      if (parentIds.has(cid)) row.classList.add('grouped-parent');
+      if (parentMap[cid]) row.classList.add('grouped-child');
+    });
+
+    // Re-order: place children after their parent
+    const placed = new Set();
+    const ordered = [];
+    rows.forEach(row => {
+      const cid = row.dataset.case;
+      if (placed.has(cid)) return;
+      if (parentMap[cid]) return; // skip children on first pass
+      ordered.push(row);
+      placed.add(cid);
+      // Find children of this row
+      rows.forEach(child => {
+        if (parentMap[child.dataset.case] === cid && !placed.has(child.dataset.case)) {
+          ordered.push(child);
+          placed.add(child.dataset.case);
+        }
+      });
+    });
+    // Add any remaining children whose parent isn't visible
+    rows.forEach(row => {
+      if (!placed.has(row.dataset.case)) {
+        ordered.push(row);
+        placed.add(row.dataset.case);
+      }
+    });
+
+    ordered.forEach(row => tbody.appendChild(row));
+    applyFilters();
+  }
+
   // ── Copy Assignments ──────────────────────────────────────────────────
   function copyAssignments(btn) {
     const toClose = [];
@@ -1520,7 +1683,12 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
       owners[sel.dataset.case] = sel.value;
     });
 
-    const output = { close: toClose, close_dates: toCloseDates, owners };
+    const parentCases = {};
+    document.querySelectorAll('.parent-link.has-parent').forEach(span => {
+      parentCases[span.dataset.case] = span.textContent.trim();
+    });
+
+    const output = { close: toClose, close_dates: toCloseDates, owners, parent_cases: parentCases };
     const text = 'Case assignments:\n' + JSON.stringify(output, null, 2);
 
     navigator.clipboard.writeText(text).then(() => {
