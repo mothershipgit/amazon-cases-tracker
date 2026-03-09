@@ -234,8 +234,6 @@
     }
     .bucket-us   { background: #fdecea; color: #bb2211; }
     .bucket-amz  { background: #e8f0fe; color: #1a55bb; }
-    .bucket-ip   { background: #f0f1f5; color: #666; }
-    .bucket-esc  { background: #fff3e0; color: #bb6600; }
     .bucket-res  { background: #e6f9ee; color: #156930; }
     .bucket-nr   { background: #fdecea; color: #bb2211; }
     .bucket-hold { background: #fff3e0; color: #bb6600; }
@@ -248,8 +246,6 @@
     .close-status-select.st-onhold     { background: #fff3e0; color: #bb6600; border-color: #ffe0b2; }
     .close-status-select.st-waitamazon { background: #e8f0fe; color: #1a55bb; border-color: #b6d4fe; }
     .close-status-select.st-waitus     { background: #fdecea; color: #bb2211; border-color: #f5c6cb; }
-    .close-status-select.st-inprogress { background: #f0f1f5; color: #666; border-color: #ddd; }
-    .close-status-select.st-escalated  { background: #fff3e0; color: #bb6600; border-color: #ffe0b2; }
     .issue-vip   { background: #e6f9ee; color: #156930; padding: 2px 7px; border-radius: 4px; font-weight: 600; font-size: 0.78rem; white-space: nowrap; display: inline-block; }
 
     .days-urgent { color: #bb2211; font-weight: 700; }
@@ -527,7 +523,7 @@ const CASES = [
     case_id: '12122795542', brand: 'QSTA', marketplace: 'IT',
     asin: 'B0BC4FT3XP', asin_name: 'CUT',
     issue_type: 'Restricted Products Appeal',
-    status_bucket: 'Escalated',
+    status_bucket: 'Waiting on Amazon',
     days_open: 25, msgs: 9, close: false, closed_date: null,
     opened_date: '2026-02-12', owner: 'Vitali', outcome: null
   },
@@ -535,7 +531,7 @@ const CASES = [
     case_id: '12139373442', brand: 'QSTA', marketplace: 'IT',
     asin: 'B0GMYGR5Z9', asin_name: 'LAX-2-BUNDLE-IT',
     issue_type: 'Restricted Products Appeal',
-    status_bucket: 'In Progress',
+    status_bucket: 'Waiting on Amazon',
     days_open: 21, msgs: 2, close: false, closed_date: null,
     opened_date: '2026-02-16', owner: 'Vitali', outcome: null
   },
@@ -567,7 +563,7 @@ const CASES = [
     case_id: '12150140992', brand: 'QSTA', marketplace: 'ES',
     asin: 'B0BC4FT3XP', asin_name: 'CUT',
     issue_type: 'Image Compliance - Escalation',
-    status_bucket: 'In Progress',
+    status_bucket: 'Waiting on Amazon',
     days_open: 17, msgs: 6, close: false, closed_date: null,
     opened_date: '2026-02-20', owner: 'Unassigned', outcome: null
   },
@@ -575,7 +571,7 @@ const CASES = [
     case_id: '12160163052', brand: 'Vegan Vitality', marketplace: 'ES',
     asin: 'B0DJTJ11PG', asin_name: 'Berberine',
     issue_type: 'FBA Stock Investigation',
-    status_bucket: 'In Progress',
+    status_bucket: 'Waiting on Amazon',
     days_open: 14, msgs: 1, close: false, closed_date: null,
     opened_date: '2026-02-23', owner: 'Unassigned', outcome: null
   },
@@ -591,7 +587,7 @@ const CASES = [
     case_id: '12196144212', brand: 'QSTA', marketplace: 'ES',
     asin: 'B0B6GHYP1V', asin_name: 'DETOX-EU',
     issue_type: 'Product Suppressed - Safety',
-    status_bucket: 'In Progress',
+    status_bucket: 'Waiting on Amazon',
     days_open: 8, msgs: 5, close: false, closed_date: null,
     opened_date: '2026-03-01', owner: 'Unassigned', outcome: null
   },
@@ -607,7 +603,7 @@ const CASES = [
     case_id: '12193136902', brand: 'QSTA', marketplace: 'IT',
     asin: 'B0GKPPG3P6', asin_name: 'LAX-2-BUNDLE-EU',
     issue_type: 'Restricted Products Appeal',
-    status_bucket: 'In Progress',
+    status_bucket: 'Waiting on Amazon',
     days_open: 6, msgs: 2, close: false, closed_date: null,
     opened_date: '2026-03-03', owner: 'Unassigned', outcome: null
   },
@@ -615,7 +611,7 @@ const CASES = [
     case_id: '12196786792', brand: 'QSTA', marketplace: 'ES',
     asin: 'B0B6GHYP1V', asin_name: 'DETOX-EU',
     issue_type: 'Food and Product Safety',
-    status_bucket: 'In Progress',
+    status_bucket: 'Waiting on Amazon',
     days_open: 5, msgs: 1, close: false, closed_date: null,
     opened_date: '2026-03-04', owner: 'Unassigned', outcome: null
   },
@@ -623,7 +619,7 @@ const CASES = [
     case_id: '12199208622', brand: 'QSTA', marketplace: 'DE',
     asin: 'B0G8JPG7FF', asin_name: 'INO-C-2-BUNDLE-EU',
     issue_type: 'Escalation Review',
-    status_bucket: 'Escalated',
+    status_bucket: 'Waiting on Amazon',
     days_open: 5, msgs: 2, close: false, closed_date: null,
     opened_date: '2026-03-04', owner: 'Unassigned', outcome: null
   },
@@ -631,7 +627,7 @@ const CASES = [
     case_id: '12202348262', brand: 'Hudson Chase', marketplace: 'ES',
     asin: null, asin_name: null,
     issue_type: 'VAT Number Issue',
-    status_bucket: 'In Progress',
+    status_bucket: 'Waiting on Amazon',
     days_open: 4, msgs: 2, close: false, closed_date: null,
     opened_date: '2026-03-05', owner: 'Unassigned', outcome: null
   },
@@ -639,7 +635,7 @@ const CASES = [
     case_id: '12206260832', brand: 'QSTA', marketplace: 'ES',
     asin: null, asin_name: null,
     issue_type: 'Feed Upload Errors',
-    status_bucket: 'In Progress',
+    status_bucket: 'Waiting on Amazon',
     days_open: 3, msgs: 1, close: false, closed_date: null,
     opened_date: '2026-03-06', owner: 'Unassigned', outcome: null
   },
@@ -1235,7 +1231,7 @@ const MSG_DATA = {
     buildAssigneeCharts();
     makeDoughnut('ch-workload-status', kpiOpen, 'status_bucket', {
       'Waiting on Us': '#e05252', 'Waiting on Amazon': '#5282e0',
-      'On Hold': '#e09b52', 'Not Resolved': '#cc3322', 'Resolved': '#52c97c'
+      'On Hold': '#e09b52', 'Not Resolved': '#cc3322', 'Resolved': '#52c97c',
     }, { datalabels: true });
     makeSimpleBar('ch-workload-issue', kpiOpen, 'issue_type', PAL, { datalabels: true });
 
@@ -1481,7 +1477,7 @@ const MSG_DATA = {
         <td class="col-date">2026-03-05</td>
         <td class="col-asin"><span class="asin-code">B0BC4FT3XP</span><span class="asin-name">CUT</span></td>
         <td class="col-issue">Restricted Products Appeal</td>
-        <td><span class="bucket bucket-esc">Escalated</span></td>
+        <td><span class="bucket bucket-wa">Waiting on Amazon</span></td>
         <td class="col-summary">CUT restricted in Italy. SAS-Escalation team working to remove non-compliant images from detail page. 9 messages, 22 days — longest open case.</td>
         <td class="col-action"><div class="note-text" data-case="12122795542" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
         <td class="col-notes"><div class="note-text" data-case="12122795542" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
@@ -1500,7 +1496,7 @@ const MSG_DATA = {
         <td class="col-date">2026-02-16</td>
         <td class="col-asin"><span class="asin-code">B0GMYGR5Z9</span><span class="asin-name">LAX-2-BUNDLE-IT</span></td>
         <td class="col-issue">Restricted Products Appeal</td>
-        <td><span class="bucket bucket-ip">In Progress</span></td>
+        <td><span class="bucket bucket-wa">Waiting on Amazon</span></td>
         <td class="col-summary">LAX 2-Bundle restricted in Italy. Reinstatement process initiated. Early stage — 2 messages exchanged so far.</td>
         <td class="col-action"><div class="note-text" data-case="12139373442" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
         <td class="col-notes"><div class="note-text" data-case="12139373442" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
@@ -1576,7 +1572,7 @@ const MSG_DATA = {
         <td class="col-date">2026-02-27</td>
         <td class="col-asin"><span class="asin-code">B0BC4FT3XP</span><span class="asin-name">CUT</span></td>
         <td class="col-issue">Image Compliance - Escalation</td>
-        <td><span class="bucket bucket-ip">In Progress</span></td>
+        <td><span class="bucket bucket-wa">Waiting on Amazon</span></td>
         <td class="col-summary">CUT main image removed as non-compliant in Spain. Escalated to Premium Support. 6 messages — decision still pending.</td>
         <td class="col-action"><div class="note-text" data-case="12150140992" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
         <td class="col-notes"><div class="note-text" data-case="12150140992" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
@@ -1595,7 +1591,7 @@ const MSG_DATA = {
         <td class="col-date">2026-02-23</td>
         <td class="col-asin"><span class="asin-code">B0DJTJ11PG</span><span class="asin-name">Berberine</span></td>
         <td class="col-issue">FBA Stock Investigation</td>
-        <td><span class="bucket bucket-ip">In Progress</span></td>
+        <td><span class="bucket bucket-wa">Waiting on Amazon</span></td>
         <td class="col-summary">Berberine flagged as defective in FBA Spain. Inspection found no defects. Requested Amazon to review and correct.</td>
         <td class="col-action"><div class="note-text" data-case="12160163052" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
         <td class="col-notes"><div class="note-text" data-case="12160163052" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
@@ -1633,7 +1629,7 @@ const MSG_DATA = {
         <td class="col-date">2026-03-07</td>
         <td class="col-asin"><span class="asin-code">B0B6GHYP1V</span><span class="asin-name">DETOX-EU</span></td>
         <td class="col-issue">Product Suppressed - Safety</td>
-        <td><span class="bucket bucket-ip">In Progress</span></td>
+        <td><span class="bucket bucket-wa">Waiting on Amazon</span></td>
         <td class="col-summary">DETOX-EU suppressed due to safety incident in Spain. Plan of Action and updated docs submitted. Amazon reviewing.</td>
         <td class="col-action"><div class="note-text" data-case="12196144212" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
         <td class="col-notes"><div class="note-text" data-case="12196144212" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
@@ -1671,7 +1667,7 @@ const MSG_DATA = {
         <td class="col-date">2026-03-03</td>
         <td class="col-asin"><span class="asin-code">B0GKPPG3P6</span><span class="asin-name">LAX-2-BUNDLE-EU</span></td>
         <td class="col-issue">Restricted Products Appeal</td>
-        <td><span class="bucket bucket-ip">In Progress</span></td>
+        <td><span class="bucket bucket-wa">Waiting on Amazon</span></td>
         <td class="col-summary">LAX 2-Bundle EU reinstatement process started in Italy. Amazon confirmed they are reinstating the product detail page.</td>
         <td class="col-action"><div class="note-text" data-case="12193136902" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
         <td class="col-notes"><div class="note-text" data-case="12193136902" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
@@ -1690,7 +1686,7 @@ const MSG_DATA = {
         <td class="col-date">2026-03-04</td>
         <td class="col-asin"><span class="asin-code">B0B6GHYP1V</span><span class="asin-name">DETOX-EU</span></td>
         <td class="col-issue">Food and Product Safety</td>
-        <td><span class="bucket bucket-ip">In Progress</span></td>
+        <td><span class="bucket bucket-wa">Waiting on Amazon</span></td>
         <td class="col-summary">DETOX-EU removed due to food safety violation in Spain. Reinstatement request under review by ES compliance team.</td>
         <td class="col-action"><div class="note-text" data-case="12196786792" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
         <td class="col-notes"><div class="note-text" data-case="12196786792" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
@@ -1709,7 +1705,7 @@ const MSG_DATA = {
         <td class="col-date">2026-03-05</td>
         <td class="col-asin"><span class="asin-code">B0G8JPG7FF</span><span class="asin-name">INO-C-2-BUNDLE-EU</span></td>
         <td class="col-issue">Escalation Review</td>
-        <td><span class="bucket bucket-esc">Escalated</span></td>
+        <td><span class="bucket bucket-wa">Waiting on Amazon</span></td>
         <td class="col-summary">Premium Technical Support investigating suppressed ASINs in DE. Both ASINs currently restricted. Linked from VIP case #10995838672.</td>
         <td class="col-action"><div class="note-text" data-case="12199208622" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
         <td class="col-notes"><div class="note-text" data-case="12199208622" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
@@ -1728,7 +1724,7 @@ const MSG_DATA = {
         <td class="col-date">2026-03-05</td>
         <td class="col-asin"><span class="asin-code">&mdash;</span></td>
         <td class="col-issue">VAT Number Issue</td>
-        <td><span class="bucket bucket-ip">In Progress</span></td>
+        <td><span class="bucket bucket-wa">Waiting on Amazon</span></td>
         <td class="col-summary">Hudson Chase Spanish VAT number issue. Amazon support investigating the VAT registration problem for ES marketplace.</td>
         <td class="col-action"><div class="note-text" data-case="12202348262" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
         <td class="col-notes"><div class="note-text" data-case="12202348262" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
@@ -1747,7 +1743,7 @@ const MSG_DATA = {
         <td class="col-date">2026-03-06</td>
         <td class="col-asin"><span class="asin-code">&mdash;</span></td>
         <td class="col-issue">Feed Upload Errors</td>
-        <td><span class="bucket bucket-ip">In Progress</span></td>
+        <td><span class="bucket bucket-wa">Waiting on Amazon</span></td>
         <td class="col-summary">Feed upload errors for SKU E0-NG6A-BO8V in Spain. Amazon reviewing the issue.</td>
         <td class="col-action"><div class="note-text" data-case="12206260832" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
         <td class="col-notes"><div class="note-text" data-case="12206260832" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
@@ -2125,7 +2121,7 @@ const MSG_DATA = {
       if (sel) {
         sel.setAttribute('onchange', 'statusChanged(this)');
         const c = CASES.find(x => x.case_id === caseId);
-        sel.value = c ? c.status_bucket : 'In Progress';
+        sel.value = c ? c.status_bucket : 'Waiting on Amazon';
         styleCloseStatus(sel);
       }
       if (!_syncing) db.ref('close_statuses/' + caseId).remove();
@@ -2146,7 +2142,7 @@ const MSG_DATA = {
 
   function styleCloseStatus(sel) {
     sel.className = 'close-status-select';
-    const map = { 'Resolved': 'st-resolved', 'Not Resolved': 'st-notresolved', 'On Hold': 'st-onhold', 'Waiting on Amazon': 'st-waitamazon', 'Waiting on Us': 'st-waitus', 'In Progress': 'st-inprogress', 'Escalated': 'st-escalated' };
+    const map = { 'Resolved': 'st-resolved', 'Not Resolved': 'st-notresolved', 'On Hold': 'st-onhold', 'Waiting on Amazon': 'st-waitamazon', 'Waiting on Us': 'st-waitus' };
     if (map[sel.value]) sel.classList.add(map[sel.value]);
   }
 
