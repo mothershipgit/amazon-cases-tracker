@@ -1966,9 +1966,11 @@ const MSG_DATA = {
     const toggle = document.querySelector('tr[data-case="' + caseId + '"] .msg-toggle');
     if (!detailRow) return;
     detailRow.classList.toggle('open');
+    const isOpen = detailRow.classList.contains('open');
+    detailRow.style.display = isOpen ? 'table-row' : 'none';
     if (toggle) {
       toggle.classList.toggle('open');
-      toggle.textContent = detailRow.classList.contains('open') ? '\u25BC' : '\u25B6';
+      toggle.textContent = isOpen ? '\u25BC' : '\u25B6';
     }
   }
 
