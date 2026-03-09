@@ -882,11 +882,6 @@ const MSG_DATA = {
     <div class="chart-wrap"><canvas id="ch-workload-status"></canvas></div>
   </div>
   <div class="chart-card">
-    <div class="chart-title">Workload by Issue</div>
-    <div class="chart-sub">Open cases by issue type</div>
-    <div class="chart-wrap"><canvas id="ch-workload-issue"></canvas></div>
-  </div>
-  <div class="chart-card">
     <div class="chart-title">Cases Created Daily</div>
     <div class="chart-sub">Last 30 days (open + closed)</div>
     <div class="chart-wrap"><canvas id="ch-daily"></canvas></div>
@@ -895,6 +890,18 @@ const MSG_DATA = {
     <div class="chart-title">Monthly Cases</div>
     <div class="chart-sub">Cases opened per month (open + closed)</div>
     <div class="chart-wrap"><canvas id="ch-monthly"></canvas></div>
+  </div>
+</div>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:14px;">
+  <div class="chart-card">
+    <div class="chart-title">Workload by Issue (OPEN)</div>
+    <div class="chart-sub">Open cases by issue type</div>
+    <div class="chart-wrap"><canvas id="ch-workload-issue"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Workload by Issue (ALL)</div>
+    <div class="chart-sub">All cases by issue type</div>
+    <div class="chart-wrap"><canvas id="ch-workload-issue-all"></canvas></div>
   </div>
 </div>
 
@@ -1223,6 +1230,7 @@ const MSG_DATA = {
       'On Hold': '#e09b52', 'Not Resolved': '#cc3322', 'Resolved': '#52c97c',
     }, { datalabels: true });
     makeSimpleBar('ch-workload-issue', kpiOpen, 'issue_type', PAL, { datalabels: true });
+    makeSimpleBar('ch-workload-issue-all', kpiCases, 'issue_type', PAL, { datalabels: true });
 
     // Daily chart — last 30 days with zero-fill (all cases: open + closed)
     const today = new Date();
