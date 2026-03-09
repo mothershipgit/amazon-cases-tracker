@@ -784,6 +784,13 @@ const MSG_DATA = {
   document.getElementById('stat-closed').textContent = kpiClosed.length;
   document.getElementById('stat-days').textContent   = avgDaysOpen;
   document.getElementById('stat-msgs').textContent   = totalMsgs;
+
+  function updateKpiCounts() {
+    const activeRows = document.querySelectorAll('#active-tbody tr[data-case]:not(.msg-detail-row)').length;
+    const closedRows = document.querySelectorAll('#closed-tbody tr[data-case]:not(.msg-detail-row)').length;
+    document.getElementById('stat-open').textContent = activeRows;
+    document.getElementById('stat-closed').textContent = closedRows;
+  }
 </script>
 
 <!-- ═══ CHARTS ════════════════════════════════════════════════════════════════ -->
@@ -1651,6 +1658,7 @@ const MSG_DATA = {
           moveRow(caseId, shouldBeChecked);
         }
       });
+      updateKpiCounts();
       _syncing = false;
     });
 
@@ -1741,6 +1749,7 @@ const MSG_DATA = {
     }
 
     moveRow(caseId, cb.checked);
+    updateKpiCounts();
   }
 
   function today() {
