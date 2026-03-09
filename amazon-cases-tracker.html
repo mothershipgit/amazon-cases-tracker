@@ -810,11 +810,11 @@ const MSG_DATA = {
     });
   }
 
-  function makeSimpleBar(canvasId, subset, key, color, opts = {}) {
+  function makeSimpleBar(canvasId, subset, key, color, opts = {}, returnInstance = false) {
     const map = {};
     subset.forEach(c => { const k = c[key] || 'Unknown'; map[k] = (map[k]||0) + 1; });
     const entries = Object.entries(map).sort((a,b) => b[1] - a[1]);
-    new Chart(document.getElementById(canvasId), {
+    const chart = new Chart(document.getElementById(canvasId), {
       type: 'bar',
       data: {
         labels: entries.map(([k]) => k),
@@ -830,6 +830,7 @@ const MSG_DATA = {
         }
       }
     });
+    if (returnInstance) return chart;
   }
 
   let _chartInits = [];
@@ -869,26 +870,77 @@ const MSG_DATA = {
   </div>
   <div class="chart-card">
     <div class="chart-title">Cases Created Daily</div>
-    <div class="chart-sub">New cases by opened date</div>
+    <div class="chart-sub">Last 30 days</div>
     <div class="chart-wrap"><canvas id="ch-daily"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Monthly Cases</div>
+    <div class="chart-sub">Cases opened per month</div>
+    <div class="chart-wrap"><canvas id="ch-monthly"></canvas></div>
   </div>
 </div>
 <script>
+  // Store chart instances for rebuild on Firebase owner sync
+  let _assigneeTotalChart = null;
+  let _assigneeOpenChart = null;
+
+  function buildAssigneeCharts() {
+    if (_assigneeTotalChart) _assigneeTotalChart.destroy();
+    if (_assigneeOpenChart) _assigneeOpenChart.destroy();
+    _assigneeTotalChart = makeSimpleBar('ch-assignee-total', kpiCases, 'owner', '#5282e0', {}, true);
+    _assigneeOpenChart = makeSimpleBar('ch-assignee-open', kpiOpen, 'owner', '#e05252', {}, true);
+  }
+
   _chartInits.push(() => {
-    makeSimpleBar('ch-assignee-total', kpiCases,  'owner', '#5282e0');
-    makeSimpleBar('ch-assignee-open',  kpiOpen,  'owner', '#e05252');
+    buildAssigneeCharts();
     makeDoughnut('ch-workload-status', kpiCases, 'status_bucket', {
       'Waiting on Us': '#e05252', 'Waiting on Amazon': '#5282e0',
       'In Progress': '#aaa', 'Escalated': '#e09b52', 'Resolved': '#52c97c'
     });
-    const map = {};
-    kpiCases.forEach(c => { if(c.opened_date) map[c.opened_date] = (map[c.opened_date]||0)+1; });
-    const sorted = Object.entries(map).sort((a,b) => a[0].localeCompare(b[0]));
+
+    // Daily chart — last 30 days with zero-fill
+    const today = new Date();
+    const dailyMap = {};
+    kpiCases.forEach(c => { if(c.opened_date) dailyMap[c.opened_date] = (dailyMap[c.opened_date]||0)+1; });
+    const dailyLabels = [];
+    const dailyData = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      dailyLabels.push(key);
+      dailyData.push(dailyMap[key] || 0);
+    }
     new Chart(document.getElementById('ch-daily'), {
       type: 'bar',
       data: {
-        labels: sorted.map(([d]) => d),
-        datasets: [{ data: sorted.map(([,v]) => v), backgroundColor: '#5282e0', borderRadius: 3 }]
+        labels: dailyLabels,
+        datasets: [{ data: dailyData, backgroundColor: '#5282e0', borderRadius: 3 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false }, border: { display: false }, ticks: { maxTicksLimit: 10 } },
+          y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 }, grid: { color: '#f0f1f5' }, border: { display: false } }
+        }
+      }
+    });
+
+    // Monthly chart
+    const monthlyMap = {};
+    kpiCases.forEach(c => {
+      if (c.opened_date) {
+        const m = c.opened_date.slice(0, 7); // YYYY-MM
+        monthlyMap[m] = (monthlyMap[m] || 0) + 1;
+      }
+    });
+    const monthlySorted = Object.entries(monthlyMap).sort((a, b) => a[0].localeCompare(b[0]));
+    new Chart(document.getElementById('ch-monthly'), {
+      type: 'bar',
+      data: {
+        labels: monthlySorted.map(([m]) => m),
+        datasets: [{ data: monthlySorted.map(([, v]) => v), backgroundColor: '#52c97c', borderRadius: 3 }]
       },
       options: {
         responsive: true, maintainAspectRatio: false,
@@ -1570,6 +1622,9 @@ const MSG_DATA = {
       document.querySelectorAll('.owner-select').forEach(sel => {
         if (owners[sel.dataset.case]) sel.value = owners[sel.dataset.case];
       });
+      // Update CASES array with Firebase owners and rebuild assignee charts
+      CASES.forEach(c => { if (owners[c.case_id]) c.owner = owners[c.case_id]; });
+      if (typeof buildAssigneeCharts === 'function') buildAssigneeCharts();
       _syncing = false;
     });
 
