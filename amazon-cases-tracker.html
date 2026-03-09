@@ -238,6 +238,76 @@
     .parent-link:empty::before { content: '+'; color: #bbb; font-size: 0.8rem; }
     .parent-link.has-parent { border-style: solid; border-color: #7cb88a; background: #f0f9f2; font-weight: 600; }
 
+    /* ── Expandable message timeline ─────────────────────────────────────── */
+    .msg-toggle {
+      display: inline-block;
+      width: 16px;
+      font-size: 0.65rem;
+      color: #aaa;
+      cursor: pointer;
+      user-select: none;
+      vertical-align: middle;
+      margin-right: 2px;
+    }
+    .msg-toggle:hover { color: #5282e0; }
+    .msg-toggle.open { color: #5282e0; }
+    tr.msg-detail-row { display: none; }
+    tr.msg-detail-row.open { display: table-row; }
+    tr.msg-detail-row > td {
+      padding: 0 16px 12px 32px;
+      background: #f8f9fc;
+      border-bottom: 1px solid #eee;
+    }
+    .msg-timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 300px;
+      overflow-y: auto;
+      padding: 10px 0 2px;
+    }
+    .msg-entry {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.74rem;
+      line-height: 1.4;
+    }
+    .msg-date {
+      flex-shrink: 0;
+      font-family: monospace;
+      font-size: 0.68rem;
+      color: #888;
+      min-width: 74px;
+      padding-top: 1px;
+    }
+    .msg-from {
+      flex-shrink: 0;
+      font-weight: 600;
+      color: #555;
+      min-width: 160px;
+      max-width: 200px;
+      font-size: 0.72rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .msg-preview {
+      color: #666;
+      flex: 1;
+    }
+    .msg-count-badge {
+      display: inline-block;
+      font-size: 0.6rem;
+      background: #e8f0fe;
+      color: #3366aa;
+      border-radius: 8px;
+      padding: 1px 5px;
+      margin-left: 4px;
+      vertical-align: middle;
+      font-weight: 600;
+    }
+
     .closed-section { opacity: 0.6; }
     .closed-section table { background: #fafbfc; }
     .closed-section tbody tr { background: #fafbfc; }
@@ -584,6 +654,94 @@ const avgDaysOpen = kpiOpen.length
   ? Math.round(kpiOpen.reduce((s, c) => s + c.days_open, 0) / kpiOpen.length)
   : 0;
 const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
+
+// ── Amazon Message Timeline Data ──────────────────────────────────────────
+const MSG_DATA = {
+  '12139919272': [
+    {ts: 1771248731, from: 'Amazon Seller Support', preview: 'Examined stock sample for ASIN B0BH37FCZQ due to negative customer return feedback.'},
+    {ts: 1771310793, from: 'Amazon Seller Support', preview: 'Identified mislabeled units for B0BH37FCZQ. Provide correct ASIN for affected units.'},
+    {ts: 1771489009, from: 'Amazon Seller Support', preview: 'Completed initial examination of sampled inventory for ASIN B0BH37FCZQ.'},
+    {ts: 1771930733, from: 'Amazon Seller Support', preview: 'Stock review for B0BH37FCZQ complete. Corrective measures taken \u2014 units relabeled.'},
+    {ts: 1772115138, from: 'Amazon Seller Support', preview: 'Investigation completed. No further action required from our side.'}
+  ],
+  '12122795542': [
+    {ts: 1770894001, from: 'SAS Escalation', preview: 'Last response on appeal case was 12053445982. To reactivate ASINs, remove non-compliant references.'},
+    {ts: 1771246849, from: 'SAS Escalation', preview: 'Awaiting updates from the Policy team. Will revert back once we have an update.'},
+    {ts: 1771513480, from: 'SAS Escalation', preview: 'Update from team \u2014 ASIN B0BC4FT3XP: remove all non-compliant image references from listing.'},
+    {ts: 1771857838, from: 'SAS Escalation', preview: 'Update from team \u2014 ASIN B0BC4FT3XP: please remove all such references from the detail page.'},
+    {ts: 1771937688, from: 'SAS Escalation', preview: 'Thanks for the update. Please keep me posted once the images are removed.'},
+    {ts: 1772184741, from: 'SAS Escalation', preview: 'Thank you for contacting. Your message has been added to case 12122795542.'},
+    {ts: 1772451062, from: 'SAS Escalation', preview: 'Awaiting updates from the Policy team. Will revert back once we have an update.'},
+    {ts: 1772706197, from: 'SAS Escalation', preview: 'Non-compliant claims still present on detail page \u2014 image URLs listed for removal.'},
+    {ts: 1772707477, from: 'SAS Escalation', preview: 'Working with internal team to remove images. Once done, will escalate further.'}
+  ],
+  '12139373442': [
+    {ts: 1771245291, from: 'Amazon Seller Services', preview: 'Received your submission. Started reinstatement process for ASIN B0GMYGR5Z9.'}
+  ],
+  '12122998082': [
+    {ts: 1771327520, from: 'Assistenza venditori Amazon', preview: 'Appeal received but unable to reactivate ASIN B0BC4FT3XP at this time. New appeal required.'}
+  ],
+  '11756757402': [
+    {ts: 1771516410, from: 'Amazon Seller Support', preview: 'Urgent compliance: attempted to reach you several times. Provide Country of Origin information for listings.'}
+  ],
+  '12150140992': [
+    {ts: 1771577496, from: 'Premium Support (Angelo)', preview: 'Created this case to review your request for ASIN B0BC4FT3XP image removal.'},
+    {ts: 1771845836, from: 'Premium Support (Teresa)', preview: 'We are reviewing the issue with the images for the ASIN. Will update through this case.'},
+    {ts: 1771924158, from: 'Premium Support (Maria)', preview: 'Thank you for continued patience regarding the image removal request for B0BC4FT3XP.'},
+    {ts: 1771936393, from: 'Premium Support', preview: 'Received screenshot from Image Manager for ASIN B0BC4FT3XP on UAE marketplace.'},
+    {ts: 1772018569, from: 'Premium Support', preview: 'Thank you for follow-up regarding ASIN B0BC4FT3XP. No final update yet from internal team.'},
+    {ts: 1772175660, from: 'Premium Support (Martin)', preview: 'Pleased to inform that non-compliant images for ASIN B0BC4FT3XP have been addressed.'}
+  ],
+  '12160163052': [
+    {ts: 1771838450, from: 'Amazon Seller Support', preview: 'Checked inventory sample for ASIN B0DJTJ11PG \u2014 no defects found. Please review listing.'}
+  ],
+  '12160765972': [
+    {ts: 1771905818, from: 'Restricted Products', preview: 'Appeal received but unable to reactivate ASIN B0GKPPG3P6 at this time.'},
+    {ts: 1772075545, from: 'Restricted Products', preview: 'Appeal received but unable to reactivate ASIN B0GKPPG3P6 at this time.'}
+  ],
+  '12196144212': [
+    {ts: 1772542099, from: 'Food Safety Compliance', preview: 'Safety incident reported. Product B0B6GHYP1V will remain suppressed. Action required.'},
+    {ts: 1772609506, from: 'Food Safety Compliance', preview: 'Reviewed your Plan of Action and documentation for ASIN B0B6GHYP1V. Additional info needed.'},
+    {ts: 1772780355, from: 'Food Safety Compliance', preview: 'Reviewed updated information for ASIN B0B6GHYP1V. Evidence under review.'},
+    {ts: 1772792655, from: 'Food Safety Compliance', preview: 'Received your message. Added to case 12196144212.'},
+    {ts: 1772871688, from: 'Food Safety Compliance', preview: 'Regarding Manufacturer Contact Information requirement for ASIN B0B6GHYP1V.'},
+    {ts: 1772902281, from: 'Food Safety Compliance', preview: 'Received your message. Added to case 12196144212.'}
+  ],
+  '12189296792': [
+    {ts: 1772537976, from: 'Restricted Products', preview: 'Appeal received but unable to reactivate ASIN B0BC4FT3XP at this time.'},
+    {ts: 1772620976, from: 'Restricted Products', preview: 'Appeal received but unable to reactivate ASIN B0BC4FT3XP at this time.'}
+  ],
+  '12193136902': [
+    {ts: 1772506679, from: 'Amazon Seller Services', preview: 'Received your submission. Started reinstatement process for ASIN B0GKPPG3P6.'}
+  ],
+  '12196786792': [
+    {ts: 1727360231, from: 'Amazon Seller Support', preview: 'We understand your concern regarding ASIN B0B6GHYP1V which has been removed.'},
+    {ts: 1727461470, from: 'Amazon Seller Support', preview: 'My name is Angelina. I understand you need assistance with ASIN B0B6GHYP1V reinstatement.'},
+    {ts: 1730143206, from: 'Amazon Seller Support', preview: 'My name is Elizabet. Understand you are requesting ASIN reinstatement.'},
+    {ts: 1730278539, from: 'Amazon Seller Support', preview: 'Internal team reviewed reinstatement request for B0B6GHYP1V. Additional images requested.'},
+    {ts: 1730370568, from: 'Amazon Seller Support', preview: 'Thank you for prompt answer and provided images. Internal review in progress.'},
+    {ts: 1730448497, from: 'Amazon Seller Support', preview: 'Review completed \u2014 ASIN B0B6GHYP1V successfully reinstated.'},
+    {ts: 1730798421, from: 'Amazon Seller Support', preview: 'Confirmed ASIN B0B6GHYP1V has been successfully reinstated on your account.'},
+    {ts: 1730878518, from: 'Amazon Seller Support', preview: 'Please try deleting and relisting ASIN B0B6GHYP1V from your inventory.'},
+    {ts: 1730987255, from: 'Amazon Seller Support', preview: 'Confirmed ASIN B0B6GHYP1V has been reactivated on your account.'},
+    {ts: 1772571311, from: 'Amazon Seller Support', preview: 'Your request to reinstate ASIN B0B6GHYP1V is being reviewed (food safety violation).'}
+  ],
+  '12199208622': [
+    {ts: 1772626731, from: 'Premium Support (Angelo)', preview: 'Created case to investigate suppressed ASIN B0G8JPG7FF and B0GKPJJTZW on DE marketplace.'},
+    {ts: 1772706769, from: 'Premium Support (Teresa)', preview: 'Reviewed case \u2014 both ASINs currently suppressed. Investigating reactivation.'},
+    {ts: 1772806402, from: 'Premium Support (Teresa)', preview: 'Thank you for patience. Investigating reactivation of your ASINs.'}
+  ],
+  '12202348262': [
+    {ts: 1772714106, from: 'Amazon Seller Support', preview: 'Case opened to address your inquiry (Spanish marketplace).'},
+    {ts: 1772717963, from: 'Amazon Seller Support (Kafui)', preview: 'Understand your Spanish VAT number is not displaying correctly. Investigating.'}
+  ],
+  '12206260832': [
+    {ts: 1772829063, from: 'Amazon Seller Support', preview: 'Reviewed feed upload errors for SKU E0-NG6A-BO8V. Troubleshooting in progress.'}
+  ],
+  '12208889982': [
+    {ts: 1772972433, from: 'Food Safety Compliance', preview: 'Safety incident reported with product B0B6GHYP1V. Product under investigation.'}
+  ]
+};
 </script>
 
 <!-- ═══ STAT CARDS ════════════════════════════════════════════════════════════ -->
@@ -842,13 +1000,27 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
       if (matches) visibleParents.add(row.dataset.case);
     });
 
-    // Second pass: show children if their parent is visible
+    // Second pass: show children if their parent is visible, handle detail rows
+    const visibleCases = new Set();
     rows.forEach(row => {
+      if (row.classList.contains('msg-detail-row')) return; // handle separately
       const matches = (!brand || row.dataset.brand === brand) && (!mkt || row.dataset.mkt === mkt);
       const parentSpan = row.querySelector('.parent-link');
       const parentId = parentSpan ? parentSpan.textContent.trim() : '';
       const followsParent = parentId && visibleParents.has(parentId);
-      row.style.display = (matches || followsParent) ? '' : 'none';
+      const visible = matches || followsParent;
+      row.style.display = visible ? '' : 'none';
+      if (visible) visibleCases.add(row.dataset.case);
+    });
+    // Show/hide detail rows based on parent visibility
+    document.querySelectorAll('.msg-detail-row').forEach(dr => {
+      const parentId = dr.dataset.parentCase;
+      if (!visibleCases.has(parentId)) {
+        dr.style.display = 'none';
+      } else {
+        // Restore to whatever toggle state it was in
+        dr.style.display = dr.classList.contains('open') ? 'table-row' : 'none';
+      }
     });
   }
 
@@ -1553,7 +1725,7 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
   // ── Sort ──────────────────────────────────────────────────────────────
   function sortTable(th, tbodyId) {
     const tbody = document.getElementById(tbodyId);
-    const rows = Array.from(tbody.querySelectorAll('tr'));
+    const rows = Array.from(tbody.querySelectorAll('tr:not(.msg-detail-row)'));
     const colIndex = Array.from(th.parentElement.children).indexOf(th);
     const currentDir = th.dataset.sortDir || '';
 
@@ -1600,7 +1772,11 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
     // Orphaned children (parent not in table)
     children.filter(c => !ordered.includes(c)).forEach(c => ordered.push(c));
 
-    ordered.forEach(row => tbody.appendChild(row));
+    ordered.forEach(row => {
+      tbody.appendChild(row);
+      const dr = document.getElementById('msg-row-' + row.dataset.case);
+      if (dr) tbody.appendChild(dr);
+    });
     regroupRows();
   }
 
@@ -1639,7 +1815,7 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
 
   function regroupRows() {
     const tbody = document.getElementById('active-tbody');
-    const rows = Array.from(tbody.querySelectorAll('tr'));
+    const rows = Array.from(tbody.querySelectorAll('tr:not(.msg-detail-row)'));
     const parentMap = {}; // childId -> parentId
 
     // Build parent map from DOM
@@ -1686,7 +1862,12 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
       }
     });
 
-    ordered.forEach(row => tbody.appendChild(row));
+    ordered.forEach(row => {
+      tbody.appendChild(row);
+      // Re-position detail row after its parent
+      const dr = document.getElementById('msg-row-' + row.dataset.case);
+      if (dr) tbody.appendChild(dr);
+    });
     applyFilters();
   }
 
@@ -1724,6 +1905,75 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
       setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = '&#128203; Copy Assignments'; }, 2000);
     });
   }
+
+  // ── Message Timeline (expandable rows) ──────────────────────────────
+  function initMsgTimeline() {
+    document.querySelectorAll('#active-tbody tr[data-case]').forEach(row => {
+      const caseId = row.dataset.case;
+      const msgs = MSG_DATA[caseId];
+      if (!msgs || msgs.length === 0) return;
+
+      // Add expand toggle to case ID cell
+      const caseCell = row.querySelector('.col-case');
+      if (caseCell && !caseCell.querySelector('.msg-toggle')) {
+        const toggle = document.createElement('span');
+        toggle.className = 'msg-toggle';
+        toggle.textContent = '\u25B6';
+        toggle.title = msgs.length + ' Amazon message' + (msgs.length > 1 ? 's' : '');
+        toggle.onclick = function(e) { e.stopPropagation(); toggleMsgRow(caseId); };
+        const badge = document.createElement('span');
+        badge.className = 'msg-count-badge';
+        badge.textContent = msgs.length;
+        caseCell.insertBefore(toggle, caseCell.firstChild);
+        caseCell.appendChild(badge);
+      }
+
+      // Create detail row if not exists
+      if (!document.getElementById('msg-row-' + caseId)) {
+        const detailRow = document.createElement('tr');
+        detailRow.id = 'msg-row-' + caseId;
+        detailRow.className = 'msg-detail-row';
+        detailRow.dataset.parentCase = caseId;
+        const td = document.createElement('td');
+        td.colSpan = row.children.length;
+
+        const timeline = document.createElement('div');
+        timeline.className = 'msg-timeline';
+
+        // Sort messages oldest first
+        const sorted = [...msgs].sort((a, b) => a.ts - b.ts);
+        sorted.forEach(m => {
+          const entry = document.createElement('div');
+          entry.className = 'msg-entry';
+          const d = new Date(m.ts * 1000);
+          const dateStr = d.toISOString().split('T')[0];
+          entry.innerHTML =
+            '<span class="msg-date">' + dateStr + '</span>' +
+            '<span class="msg-from" title="' + m.from.replace(/"/g, '&quot;') + '">' + m.from + '</span>' +
+            '<span class="msg-preview">' + m.preview + '</span>';
+          timeline.appendChild(entry);
+        });
+
+        td.appendChild(timeline);
+        detailRow.appendChild(td);
+        row.after(detailRow);
+      }
+    });
+  }
+
+  function toggleMsgRow(caseId) {
+    const detailRow = document.getElementById('msg-row-' + caseId);
+    const toggle = document.querySelector('tr[data-case="' + caseId + '"] .msg-toggle');
+    if (!detailRow) return;
+    detailRow.classList.toggle('open');
+    if (toggle) {
+      toggle.classList.toggle('open');
+      toggle.textContent = detailRow.classList.contains('open') ? '\u25BC' : '\u25B6';
+    }
+  }
+
+  // Initial render
+  initMsgTimeline();
 </script>
 
 </div><!-- /app -->
