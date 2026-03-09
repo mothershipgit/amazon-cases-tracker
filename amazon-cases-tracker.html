@@ -509,7 +509,7 @@
 <header>
   <div>
     <h1>Amazon Cases Tracker</h1>
-    <div class="meta">Last updated: 2026-03-09 &nbsp;·&nbsp; Source: projects/Amazon Cases/cases_core.md</div>
+    <div class="meta">Last updated: 2026-03-09 &nbsp;·&nbsp; 20 active &nbsp;·&nbsp; 4 closed &nbsp;·&nbsp; Source: projects/Amazon Cases/cases_core.md</div>
   </div>
   <div class="header-actions">
     <button class="btn-copy" onclick="copyAssignments(this)" title="Copy current owner assignments and close flags as JSON to paste to Claude">
@@ -535,7 +535,7 @@ const CASES = [
     asin: 'B0BC4FT3XP', asin_name: 'CUT',
     issue_type: 'Restricted Products Appeal',
     status_bucket: 'Waiting on Amazon',
-    days_open: 25, msgs: 9, close: false, closed_date: null,
+    days_open: 25, msgs: 10, close: false, closed_date: null,
     opened_date: '2026-02-12', owner: 'Vitali', outcome: null
   },
   {
@@ -599,7 +599,7 @@ const CASES = [
     asin: 'B0B6GHYP1V', asin_name: 'DETOX-EU',
     issue_type: 'Product Suppressed - Safety',
     status_bucket: 'Waiting on Amazon',
-    days_open: 8, msgs: 5, close: false, closed_date: null,
+    days_open: 8, msgs: 6, close: false, closed_date: null,
     opened_date: '2026-03-01', owner: 'Unassigned', outcome: null
   },
   {
@@ -631,7 +631,7 @@ const CASES = [
     asin: 'B0G8JPG7FF', asin_name: 'INO-C-2-BUNDLE-EU',
     issue_type: 'Escalation Review',
     status_bucket: 'Waiting on Amazon',
-    days_open: 5, msgs: 2, close: false, closed_date: null,
+    days_open: 5, msgs: 4, close: false, closed_date: null,
     opened_date: '2026-03-04', owner: 'Unassigned', outcome: null
   },
   {
@@ -657,6 +657,30 @@ const CASES = [
     status_bucket: 'Waiting on Us',
     days_open: 1, msgs: 1, close: false, closed_date: null,
     opened_date: '2026-03-08', owner: 'Unassigned', outcome: null
+  },
+  {
+    case_id: '10195287522', brand: 'TCU', marketplace: 'UK',
+    asin: null, asin_name: null,
+    issue_type: 'General Product Safety Regulation',
+    status_bucket: 'Waiting on Us',
+    days_open: 0, msgs: 1, close: false, closed_date: null,
+    opened_date: '2026-03-09', owner: 'Unassigned', outcome: null
+  },
+  {
+    case_id: '12212227522', brand: 'Vegan Vitality', marketplace: 'IT',
+    asin: null, asin_name: null,
+    issue_type: 'New Case',
+    status_bucket: 'Waiting on Amazon',
+    days_open: 0, msgs: 1, close: false, closed_date: null,
+    opened_date: '2026-03-09', owner: 'Unassigned', outcome: null
+  },
+  {
+    case_id: '12212267962', brand: 'TCU', marketplace: 'IT',
+    asin: null, asin_name: null,
+    issue_type: 'New Case',
+    status_bucket: 'Waiting on Amazon',
+    days_open: 0, msgs: 1, close: false, closed_date: null,
+    opened_date: '2026-03-09', owner: 'Unassigned', outcome: null
   },
   {
     case_id: '12159445672', brand: 'QSTA', marketplace: 'DE',
@@ -724,7 +748,8 @@ const MSG_DATA = {
     {ts: 1772184741, from: 'SAS Escalation', preview: 'Thank you for contacting. Your message has been added to case 12122795542.'},
     {ts: 1772451062, from: 'SAS Escalation', preview: 'Awaiting updates from the Policy team. Will revert back once we have an update.'},
     {ts: 1772706197, from: 'SAS Escalation', preview: 'Non-compliant claims still present on detail page \u2014 image URLs listed for removal.'},
-    {ts: 1772707477, from: 'SAS Escalation', preview: 'Working with internal team to remove images. Once done, will escalate further.'}
+    {ts: 1772707477, from: 'SAS Escalation', preview: 'Working with internal team to remove images. Once done, will escalate further.'},
+    {ts: 1773061585, from: 'sas-escalation@amazon.co.uk', preview: 'Dear Selling Partner, We are awaiting updates from the Policy team and will revert back once we have an update. Thank you for selling with A...'}
   ],
   '12139373442': [
     {ts: 1771245291, from: 'Amazon Seller Services', preview: 'Received your submission. Started reinstatement process for ASIN B0GMYGR5Z9.'}
@@ -755,7 +780,7 @@ const MSG_DATA = {
     {ts: 1772609506, from: 'Food Safety Compliance', preview: 'Reviewed your Plan of Action and documentation for ASIN B0B6GHYP1V. Additional info needed.'},
     {ts: 1772780355, from: 'Food Safety Compliance', preview: 'Reviewed updated information for ASIN B0B6GHYP1V. Evidence under review.'},
     {ts: 1772792655, from: 'Food Safety Compliance', preview: 'Received your message. Added to case 12196144212.'},
-    {ts: 1772871688, from: 'Food Safety Compliance', preview: 'Regarding Manufacturer Contact Information requirement for ASIN B0B6GHYP1V.'},
+    {ts: 1772871688, from: 'emea-food-safety-compliance-ri@amazon.es', preview: 'Hello from Amazon Selling Partner Support, Thank you for your inquiry regarding the Manufacturer Contact Information requirement for ASIN B0...'},
     {ts: 1772902281, from: 'Food Safety Compliance', preview: 'Received your message. Added to case 12196144212.'}
   ],
   '12189296792': [
@@ -780,7 +805,8 @@ const MSG_DATA = {
   '12199208622': [
     {ts: 1772626731, from: 'Premium Support (Angelo)', preview: 'Created case to investigate suppressed ASIN B0G8JPG7FF and B0GKPJJTZW on DE marketplace.'},
     {ts: 1772706769, from: 'Premium Support (Teresa)', preview: 'Reviewed case \u2014 both ASINs currently suppressed. Investigating reactivation.'},
-    {ts: 1772806402, from: 'Premium Support (Teresa)', preview: 'Thank you for patience. Investigating reactivation of your ASINs.'}
+    {ts: 1772806402, from: 'Asistencia al Vendedor de Amazon', preview: 'Dear Vitalii, My name is Teresa from Premium Technical Support Team. Thank you for your patience while we investigated the reactivation of y...'},
+    {ts: 1773064893, from: 'Asistencia al Vendedor de Amazon', preview: 'Dear Vitalii, I am Martin from Premium Selling Partner Support. I inform you that for ASIN: B0G8JPG7FF the updates performed impacted in th...'}
   ],
   '12202348262': [
     {ts: 1772714106, from: 'Amazon Seller Support', preview: 'Case opened to address your inquiry (Spanish marketplace).'},
@@ -791,6 +817,15 @@ const MSG_DATA = {
   ],
   '12208889982': [
     {ts: 1772972433, from: 'Food Safety Compliance', preview: 'Safety incident reported with product B0B6GHYP1V. Product under investigation.'}
+  ],
+  '10195287522': [
+    {ts: 1773060382, from: 'merch.service05@amazon.co.uk', preview: 'Dear Seller, We have removed some of your listings from the invoice by Amazon service that require General Product Safety Regulation (GPSR) co...'}
+  ],
+  '12212227522': [
+    {ts: 1773074970, from: 'Amazon Seller Support', preview: 'Thank you for contacting Amazon Seller Support. We have opened a case to address your issue. A team member will follow up with you as soon a...'}
+  ],
+  '12212267962': [
+    {ts: 1773074480, from: 'Amazon Seller Support', preview: 'Thank you for contacting Amazon Seller Support. We have opened a case to address your issue. A team member will follow up with you as soon a...'}
   ]
 };
 </script>
@@ -1311,14 +1346,14 @@ const MSG_DATA = {
         <td><span class="badge mkt-it">IT</span></td>
         <td class="col-owner"><select class="owner-select" data-case="12122795542" onchange="ownerChanged(this)"><option value="Unassigned">Unassigned</option><option value="Vitali" selected>Vitali</option><option value="Tom">Tom</option></select></td>
         <td class="col-date">2026-02-12</td>
-        <td class="col-date">2026-03-05</td>
+        <td class="col-date">2026-03-09</td>
         <td class="col-asin"><span class="asin-code">B0BC4FT3XP</span><span class="asin-name">CUT</span></td>
         <td class="col-issue">Restricted Products Appeal</td>
         <td><span class="bucket bucket-wa">Waiting on Amazon</span></td>
-        <td class="col-summary">CUT restricted in Italy. SAS-Escalation team working to remove non-compliant images from detail page. 9 messages, 22 days — longest open case.</td>
+        <td class="col-summary">CUT restricted in Italy. Awaiting Policy team update on SAS escalation. 10 messages, 25 days.</td>
         <td class="col-action"><div class="note-text" data-case="12122795542" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
         <td class="col-notes"><div class="note-text" data-case="12122795542" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
-        <td class="col-num">9</td>
+        <td class="col-num">10</td>
         <td class="col-num days-urgent">25</td>
       </tr>
 
@@ -1467,10 +1502,10 @@ const MSG_DATA = {
         <td class="col-asin"><span class="asin-code">B0B6GHYP1V</span><span class="asin-name">DETOX-EU</span></td>
         <td class="col-issue">Product Suppressed - Safety</td>
         <td><span class="bucket bucket-wa">Waiting on Amazon</span></td>
-        <td class="col-summary">DETOX-EU suppressed due to safety incident in Spain. Plan of Action and updated docs submitted. Amazon reviewing.</td>
+        <td class="col-summary">DETOX-EU suppressed due to safety incident in Spain. Manufacturer contact info requirement under review. 6 messages.</td>
         <td class="col-action"><div class="note-text" data-case="12196144212" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
         <td class="col-notes"><div class="note-text" data-case="12196144212" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
-        <td class="col-num">5</td>
+        <td class="col-num">6</td>
         <td class="col-num days-ok">8</td>
       </tr>
 
@@ -1539,14 +1574,14 @@ const MSG_DATA = {
         <td><span class="badge mkt-de">DE</span></td>
         <td class="col-owner"><select class="owner-select" data-case="12199208622" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
         <td class="col-date">2026-03-04</td>
-        <td class="col-date">2026-03-05</td>
+        <td class="col-date">2026-03-09</td>
         <td class="col-asin"><span class="asin-code">B0G8JPG7FF</span><span class="asin-name">INO-C-2-BUNDLE-EU</span></td>
         <td class="col-issue">Escalation Review</td>
         <td><span class="bucket bucket-wa">Waiting on Amazon</span></td>
-        <td class="col-summary">Premium Technical Support investigating suppressed ASINs in DE. Both ASINs currently restricted. Linked from VIP case #10995838672.</td>
+        <td class="col-summary">Premium team confirms updates impacted ASIN listing. 4 messages. Linked from VIP case #10995838672.</td>
         <td class="col-action"><div class="note-text" data-case="12199208622" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
         <td class="col-notes"><div class="note-text" data-case="12199208622" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
-        <td class="col-num">2</td>
+        <td class="col-num">4</td>
         <td class="col-num days-ok">5</td>
       </tr>
 
@@ -1605,6 +1640,63 @@ const MSG_DATA = {
         <td class="col-notes"><div class="note-text" data-case="12208889982" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
         <td class="col-num">1</td>
         <td class="col-num days-ok">1</td>
+      </tr>
+
+      <tr data-case="10195287522" data-brand="TCU" data-mkt="UK">
+        <td class="col-close"><input type="checkbox" class="close-check" data-case="10195287522" data-source="false" onchange="closeToggled(this)"></td>
+        <td class="col-case">10195287522</td>
+        <td class="col-parent"><span class="parent-link" data-case="10195287522" onclick="editParent(this)"></span></td>
+        <td>TCU</td>
+        <td><span class="badge mkt-uk">UK</span></td>
+        <td class="col-owner"><select class="owner-select" data-case="10195287522" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
+        <td class="col-date">2026-03-09</td>
+        <td class="col-date">2026-03-09</td>
+        <td class="col-asin"></td>
+        <td class="col-issue">General Product Safety Regulation</td>
+        <td><span class="bucket bucket-us">Waiting on Us</span></td>
+        <td class="col-summary">Listings removed — GPSR compliance action needed.</td>
+        <td class="col-action"><div class="note-text" data-case="10195287522" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
+        <td class="col-notes"><div class="note-text" data-case="10195287522" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
+        <td class="col-num">1</td>
+        <td class="col-num days-ok">0</td>
+      </tr>
+
+      <tr data-case="12212227522" data-brand="Vegan Vitality" data-mkt="IT">
+        <td class="col-close"><input type="checkbox" class="close-check" data-case="12212227522" data-source="false" onchange="closeToggled(this)"></td>
+        <td class="col-case">12212227522</td>
+        <td class="col-parent"><span class="parent-link" data-case="12212227522" onclick="editParent(this)"></span></td>
+        <td>Vegan Vitality</td>
+        <td><span class="badge mkt-it">IT</span></td>
+        <td class="col-owner"><select class="owner-select" data-case="12212227522" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
+        <td class="col-date">2026-03-09</td>
+        <td class="col-date">2026-03-09</td>
+        <td class="col-asin"></td>
+        <td class="col-issue">New Case</td>
+        <td><span class="bucket bucket-wa">Waiting on Amazon</span></td>
+        <td class="col-summary">Case opened — awaiting Amazon response.</td>
+        <td class="col-action"><div class="note-text" data-case="12212227522" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
+        <td class="col-notes"><div class="note-text" data-case="12212227522" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
+        <td class="col-num">1</td>
+        <td class="col-num days-ok">0</td>
+      </tr>
+
+      <tr data-case="12212267962" data-brand="TCU" data-mkt="IT">
+        <td class="col-close"><input type="checkbox" class="close-check" data-case="12212267962" data-source="false" onchange="closeToggled(this)"></td>
+        <td class="col-case">12212267962</td>
+        <td class="col-parent"><span class="parent-link" data-case="12212267962" onclick="editParent(this)"></span></td>
+        <td>TCU</td>
+        <td><span class="badge mkt-it">IT</span></td>
+        <td class="col-owner"><select class="owner-select" data-case="12212267962" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
+        <td class="col-date">2026-03-09</td>
+        <td class="col-date">2026-03-09</td>
+        <td class="col-asin"></td>
+        <td class="col-issue">New Case</td>
+        <td><span class="bucket bucket-wa">Waiting on Amazon</span></td>
+        <td class="col-summary">Case opened — awaiting Amazon response.</td>
+        <td class="col-action"><div class="note-text" data-case="12212267962" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
+        <td class="col-notes"><div class="note-text" data-case="12212267962" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
+        <td class="col-num">1</td>
+        <td class="col-num days-ok">0</td>
       </tr>
 
     </tbody>
@@ -2332,6 +2424,75 @@ const MSG_DATA = {
   initStatusDropdowns();
   initMsgTimeline();
 </script>
+
+<!-- Instructions Section -->
+<div style="background: #f0f4ff; border: 1px solid #d0d8ef; border-radius: 10px; padding: 28px 32px; margin-top: 40px; font-size: 0.88rem; line-height: 1.7; color: #2a2e3a;">
+  <h2 style="font-size: 1.1rem; color: #1a1d26; text-transform: none; letter-spacing: 0; margin: 0 0 18px; background: none; padding: 0;">Instructions</h2>
+
+  <p>At the top you will find the main <strong>KPIs</strong> providing an overview of this part of the operational activity on Amazon.</p>
+
+  <p style="margin-top:12px;">Below that, there is a static section containing basic information about the <strong>team's current workload</strong>.</p>
+
+  <p style="margin-top:12px;">Further down there is an accordion section presenting the core data for:</p>
+  <ol style="margin: 8px 0 8px 24px;">
+    <li><strong>Total Cases</strong> &mdash; both open and closed cases combined.</li>
+    <li><strong>Open Cases</strong> &mdash; the same set of charts, but only for cases that are currently open.</li>
+    <li><strong>Closed Cases</strong> &mdash; the same set of three charts, but only for cases that have already been closed.</li>
+  </ol>
+
+  <p style="margin-top:12px;">At the bottom there is a <strong>table with filters</strong>, where data can be filtered by brand and by marketplace.</p>
+
+  <h3 style="font-size: 0.95rem; margin-top: 22px; color: #1a1d26;">Close &amp; Status</h3>
+  <p>In the first column, <strong>Close</strong>, we mark the moment when a case is finished &mdash; either successfully or unsuccessfully.</p>
+  <p style="margin-top:8px;">In the <strong>Status</strong> column, the following three statuses should be used before moving a case to the closed table:</p>
+  <ul style="margin: 8px 0 8px 24px;">
+    <li><strong>Resolved</strong></li>
+    <li><strong>Not Resolved</strong></li>
+    <li><strong>On Hold</strong></li>
+  </ul>
+  <p>The statuses <em>Waiting on Us</em> and <em>Waiting on Amazon</em> should only be used while the case remains in the upper table (open cases).</p>
+  <p style="margin-top:8px;">Once <strong>Close</strong> is selected and a final status is assigned, the case will automatically move to the bottom table containing closed cases.</p>
+  <p style="margin-top:8px;">If a mistake is made and the case needs to be restored, simply uncheck <strong>Close</strong> in the bottom table, and the case will return to the open cases list.</p>
+
+  <h3 style="font-size: 0.95rem; margin-top: 22px; color: #1a1d26;">Table Columns</h3>
+  <p>The table contains columns that identify and describe each case.</p>
+  <p style="margin-top:8px;"><strong>Issue Type</strong> is assigned automatically based on AI analysis of the email content. We will monitor how well this works in practice. If too many different issue types are generated, we will introduce a dropdown with a predefined list, which will then be maintained manually.</p>
+  <p style="margin-top:8px;">The <strong>Status</strong> column is filled in manually.</p>
+  <p style="margin-top:8px;">The <strong>Summary</strong> column is generated by AI and provides a short, high-level summary of the case.</p>
+
+  <p style="margin-top:12px;">There are also two additional columns:</p>
+  <ul style="margin: 8px 0 8px 24px;">
+    <li><strong>Next Action</strong></li>
+    <li><strong>Notes</strong></li>
+  </ul>
+  <p>These fields are intended for manual input by the person responsible for the case. It is recommended that the person managing the case updates these fields after completing work on the case, for example at the end of the day. This allows any team member to quickly understand the current status of the case and the next steps.</p>
+
+  <h3 style="font-size: 0.95rem; margin-top: 22px; color: #1a1d26;">Messages &amp; Days Open</h3>
+  <p>At the end of the table there are columns showing the number of <strong>messages</strong> exchanged and the number of <strong>days</strong> the case has been open.</p>
+  <p style="margin-top:8px;">For Issue Type: <strong>Premium Support</strong>, the number of messages and days may be high because this case is kept open all the time. It is excluded from the statistics and charts displayed above the table.</p>
+
+  <h3 style="font-size: 0.95rem; margin-top: 22px; color: #1a1d26;">Parent Cases (Linking Related Cases)</h3>
+  <p>An additional feature has been introduced to handle situations where one issue generates multiple Amazon cases. This often happens when, after a few days, Amazon requests an appeal, which is created under a new case. As a result, a single problem may end up having two, three, or sometimes even four related cases.</p>
+  <p style="margin-top:8px;">Every case contains a <strong>"+"</strong> button in the <strong>Parent</strong> column.</p>
+  <p style="margin-top:8px;">When a second case appears for the same issue:</p>
+  <ul style="margin: 8px 0 8px 24px;">
+    <li>Click the <strong>+</strong> icon in the Parent column next to the second case and enter the Case ID of the original (first) case.</li>
+    <li>The recommendation is that the parent should always be the first case that was created.</li>
+  </ul>
+  <p style="margin-top:8px;">Once the cases are linked, they will appear grouped together in one block, one below the other. The background will turn green, making it easier to identify related cases.</p>
+  <p style="margin-top:8px;">Within such a block, sorting (brand, market, owner, opened, last update, etc.) is based on the parent case, not on the cases that were opened later.</p>
+  <p style="margin-top:8px;">If you want to remove a parent-child connection, simply remove the Parent Case ID from the Parent column in the relevant child case row, then click away.</p>
+
+  <h3 style="font-size: 0.95rem; margin-top: 22px; color: #1a1d26;">Case ID Details</h3>
+  <p>In the <strong>Case ID</strong> column, some cases display a small number, for example <em>"6"</em>. This indicates how many messages have been exchanged between us and Amazon within that case.</p>
+  <p style="margin-top:8px;">Another important element is the <strong>triangle icon &#9654;</strong>. When clicked, it displays the case history, including:</p>
+  <ul style="margin: 8px 0 8px 24px;">
+    <li>Message dates</li>
+    <li>The issue type</li>
+    <li>A short summary of each message received from Amazon</li>
+  </ul>
+  <p style="margin-top:8px;">The summaries may not always be perfect, but they provide a quick timeline of events for the case.</p>
+</div>
 
 </div><!-- /app -->
 

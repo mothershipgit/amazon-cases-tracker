@@ -23,7 +23,7 @@ Last updated: 2026-03-09
 | close | case_id | brand | marketplace | asin_summary | issue_type | status_bucket | status_current | opened_date | days_open | closed_date | last_update_date | amazon_msgs_count | owner | next_action_due | next_action |
 |-------|---------|-------|-------------|--------------|------------|---------------|----------------|-------------|-----------|-------------|------------------|-------------------|-------|-----------------|-------------|
 | false | 12139919272 | QSTA | FR | B0BH37FCZQ | FBA Stock Investigation | Waiting on Amazon | Investigation complete, corrective measures taken | 2026-02-16 | 21 | | 2026-02-26 | 6 | Vitali | 2026-02-19 | Provide correct ASIN for mislabeled units |
-| false | 12122795542 | QSTA | IT | B0BC4FT3XP | Restricted Products Appeal | Waiting on Amazon | Internal team removing non-compliant images before escalation | 2026-02-12 | 25 | | 2026-03-05 | 9 | Vitali | | |
+| false | 12122795542 | QSTA | IT | B0BC4FT3XP | Restricted Products Appeal | Waiting on Amazon | Awaiting Policy team update on SAS escalation | 2026-02-12 | 25 | | 2026-03-09 | 10 | Vitali | | |
 | false | 12139373442 | QSTA | IT | B0GMYGR5Z9 | Restricted Products Appeal | Waiting on Amazon | Reinstatement process started | 2026-02-16 | 21 | | 2026-02-16 | 2 | Vitali | | |
 | false | 12122998082 | QSTA | IT | B0BC4FT3XP | Restricted Products Appeal | Waiting on Us | ASIN reinstatement rejected - new appeal required | 2026-02-17 | 20 | | 2026-02-17 | 1 | Unassigned | | |
 | false | 10995838672 | QSTA | UK | B0BM1WPXC5 | VIP Seller Relations | Waiting on Amazon | Modification applied correctly, VIP team confirming | 2026-02-18 | 19 | | 2026-03-09 | 26 | Unassigned | | |
@@ -31,14 +31,17 @@ Last updated: 2026-03-09
 | false | 12150140992 | QSTA | ES | B0BC4FT3XP | Image Compliance - Escalation | Waiting on Amazon | Premium Support reviewing non-compliant image removal | 2026-02-20 | 17 | | 2026-02-27 | 6 | Unassigned | | |
 | false | 12160163052 | Vegan Vitality | ES | B0DJTJ11PG | FBA Stock Investigation | Waiting on Amazon | FBA inspection complete - no defects found, review requested | 2026-02-23 | 14 | | 2026-02-23 | 1 | Unassigned | | |
 | false | 12160765972 | QSTA | IT | B0GKPPG3P6 | Restricted Products Appeal | Waiting on Us | Appeal rejected - unable to reactivate ASIN | 2026-02-24 | 13 | | 2026-02-26 | 2 | Unassigned | | |
-| false | 12196144212 | QSTA | ES | B0B6GHYP1V | Product Suppressed - Safety | Waiting on Amazon | Updated safety documentation under review | 2026-03-01 | 8 | | 2026-03-07 | 5 | Unassigned | | |
+| false | 12196144212 | QSTA | ES | B0B6GHYP1V | Product Suppressed - Safety | Waiting on Amazon | Manufacturer contact info requirement under review | 2026-03-01 | 8 | | 2026-03-07 | 6 | Unassigned | | |
 | false | 12189296792 | QSTA | IT | B0BC4FT3XP | Restricted Products Appeal | Waiting on Us | Appeal rejected - unable to reactivate ASIN | 2026-03-03 | 6 | | 2026-03-04 | 2 | Unassigned | | |
 | false | 12193136902 | QSTA | IT | B0GKPPG3P6 | Restricted Products Appeal | Waiting on Amazon | Reinstatement process started | 2026-03-03 | 6 | | 2026-03-03 | 2 | Unassigned | | |
 | false | 12196786792 | QSTA | ES | B0B6GHYP1V | Food and Product Safety | Waiting on Amazon | Reinstatement request under review (ES safety) | 2026-03-04 | 5 | | 2026-03-04 | 1 | Unassigned | | |
-| false | 12199208622 | QSTA | DE | B0G8JPG7FF | Escalation Review | Waiting on Amazon | Premium team reviewing suppressed ASINs | 2026-03-04 | 5 | | 2026-03-05 | 2 | Unassigned | | |
+| false | 12199208622 | QSTA | DE | B0G8JPG7FF | Escalation Review | Waiting on Amazon | Premium team confirms updates impacted ASIN listing | 2026-03-04 | 5 | | 2026-03-09 | 4 | Unassigned | | |
 | false | 12202348262 | Hudson Chase | ES | | VAT Number Issue | Waiting on Amazon | Spanish VAT number issue under investigation | 2026-03-05 | 4 | | 2026-03-05 | 2 | Unassigned | | |
 | false | 12206260832 | QSTA | ES | | Feed Upload Errors | Waiting on Amazon | Feed upload errors for SKU under review | 2026-03-06 | 3 | | 2026-03-06 | 1 | Unassigned | | |
 | false | 12208889982 | QSTA | IT | B0B6GHYP1V | Product Safety Investigation | Waiting on Us | Safety incident reported - action required | 2026-03-08 | 1 | | 2026-03-08 | 1 | Unassigned | | |
+| false | 10195287522 | TCU | UK | | General Product Safety Regulation | Waiting on Us | Listings removed - GPSR compliance action needed | 2026-03-09 | 0 | | 2026-03-09 | 1 | Unassigned | | |
+| false | 12212227522 | Vegan Vitality | IT | | New Case | Waiting on Amazon | Case opened - awaiting Amazon response | 2026-03-09 | 0 | | 2026-03-09 | 1 | Unassigned | | |
+| false | 12212267962 | TCU | IT | | New Case | Waiting on Amazon | Case opened - awaiting Amazon response | 2026-03-09 | 0 | | 2026-03-09 | 1 | Unassigned | | |
 | true | 12159445672 | QSTA | DE | B0BM1WPXC5 | Escalation Review | Resolved | No restrictions found on listings | 2026-02-23 | 11 | 2026-03-06 | 2026-02-26 | 3 | Unassigned | | |
 | true | 19599539061 | QSTA | US | | Queue Misassignment | Resolved | Incorrectly assigned queue - Amazon apologized | 2026-03-05 | 1 | 2026-03-06 | 2026-03-09 | 3 | Unassigned | | |
 | true | 12053445982 | QSTA | IT | B0BC4FT3XP | Restricted Products Appeal | Resolved | Auto-closed - no response received | 2026-02-21 | 4 | 2026-02-25 | 2026-02-25 | 4 | Unassigned | | |
