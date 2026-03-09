@@ -897,11 +897,9 @@ const MSG_DATA = {
   </div>
   <div class="accordion-body" id="acc-body-total">
     <div class="charts-grid">
-      <div class="chart-card"><div class="chart-title">Cases by Assignee</div><div class="chart-wrap"><canvas id="an-total-assignee"></canvas></div></div>
-      <div class="chart-card"><div class="chart-title">Cases per Marketplace</div><div class="chart-wrap"><canvas id="an-total-mkt"></canvas></div></div>
-      <div class="chart-card"><div class="chart-title">Cases per Brand</div><div class="chart-wrap"><canvas id="an-total-brand"></canvas></div></div>
-      <div class="chart-card"><div class="chart-title">Cases per Type</div><div class="chart-wrap"><canvas id="an-total-type"></canvas></div></div>
-      <div class="chart-card" style="grid-column: 1 / -1;"><div class="chart-title">Cases per Product by Case Type</div><div class="chart-wrap" style="height:300px;"><canvas id="an-total-product"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Case Type per Brand</div><div class="chart-wrap" style="height:280px;"><canvas id="an-total-brand"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Case Type per Marketplace</div><div class="chart-wrap" style="height:280px;"><canvas id="an-total-mkt"></canvas></div></div>
+      <div class="chart-card" style="grid-column: 1 / -1;"><div class="chart-title">Case Type per Product</div><div class="chart-wrap" style="height:300px;"><canvas id="an-total-product"></canvas></div></div>
     </div>
   </div>
 
@@ -910,11 +908,9 @@ const MSG_DATA = {
   </div>
   <div class="accordion-body" id="acc-body-open">
     <div class="charts-grid">
-      <div class="chart-card"><div class="chart-title">Cases by Assignee</div><div class="chart-wrap"><canvas id="an-open-assignee"></canvas></div></div>
-      <div class="chart-card"><div class="chart-title">Cases per Marketplace</div><div class="chart-wrap"><canvas id="an-open-mkt"></canvas></div></div>
-      <div class="chart-card"><div class="chart-title">Cases per Brand</div><div class="chart-wrap"><canvas id="an-open-brand"></canvas></div></div>
-      <div class="chart-card"><div class="chart-title">Cases per Type</div><div class="chart-wrap"><canvas id="an-open-type"></canvas></div></div>
-      <div class="chart-card" style="grid-column: 1 / -1;"><div class="chart-title">Cases per Product by Case Type</div><div class="chart-wrap" style="height:300px;"><canvas id="an-open-product"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Case Type per Brand</div><div class="chart-wrap" style="height:280px;"><canvas id="an-open-brand"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Case Type per Marketplace</div><div class="chart-wrap" style="height:280px;"><canvas id="an-open-mkt"></canvas></div></div>
+      <div class="chart-card" style="grid-column: 1 / -1;"><div class="chart-title">Case Type per Product</div><div class="chart-wrap" style="height:300px;"><canvas id="an-open-product"></canvas></div></div>
     </div>
   </div>
 
@@ -923,11 +919,9 @@ const MSG_DATA = {
   </div>
   <div class="accordion-body" id="acc-body-closed">
     <div class="charts-grid">
-      <div class="chart-card"><div class="chart-title">Cases by Assignee</div><div class="chart-wrap"><canvas id="an-closed-assignee"></canvas></div></div>
-      <div class="chart-card"><div class="chart-title">Cases per Marketplace</div><div class="chart-wrap"><canvas id="an-closed-mkt"></canvas></div></div>
-      <div class="chart-card"><div class="chart-title">Cases per Brand</div><div class="chart-wrap"><canvas id="an-closed-brand"></canvas></div></div>
-      <div class="chart-card"><div class="chart-title">Cases per Type</div><div class="chart-wrap"><canvas id="an-closed-type"></canvas></div></div>
-      <div class="chart-card" style="grid-column: 1 / -1;"><div class="chart-title">Cases per Product by Case Type</div><div class="chart-wrap" style="height:300px;"><canvas id="an-closed-product"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Case Type per Brand</div><div class="chart-wrap" style="height:280px;"><canvas id="an-closed-brand"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Case Type per Marketplace</div><div class="chart-wrap" style="height:280px;"><canvas id="an-closed-mkt"></canvas></div></div>
+      <div class="chart-card" style="grid-column: 1 / -1;"><div class="chart-title">Case Type per Product</div><div class="chart-wrap" style="height:300px;"><canvas id="an-closed-product"></canvas></div></div>
     </div>
   </div>
 </div>
@@ -992,29 +986,12 @@ const MSG_DATA = {
 
   function buildAnalyticsSet(prefix, subset) {
     destroyAnCharts('an-' + prefix);
-    _anCharts['an-' + prefix + '-assignee'] = makeSimpleBar('an-' + prefix + '-assignee', subset, 'owner', '#5282e0', {}, true);
-    _anCharts['an-' + prefix + '-mkt']      = makeDoughnutReturn('an-' + prefix + '-mkt', subset, 'marketplace');
-    _anCharts['an-' + prefix + '-brand']    = makeDoughnutReturn('an-' + prefix + '-brand', subset, 'brand');
-    _anCharts['an-' + prefix + '-type']     = makeSimpleBar('an-' + prefix + '-type', subset, 'issue_type', '#aa52e0', {}, true);
-    _anCharts['an-' + prefix + '-product']  = makeStackedBarReturn('an-' + prefix + '-product', subset, 'product', 'issue_type');
+    _anCharts['an-' + prefix + '-brand']   = makeStackedBarReturn('an-' + prefix + '-brand', subset, 'brand', 'issue_type');
+    _anCharts['an-' + prefix + '-mkt']     = makeStackedBarReturn('an-' + prefix + '-mkt', subset, 'marketplace', 'issue_type');
+    _anCharts['an-' + prefix + '-product'] = makeStackedBarReturn('an-' + prefix + '-product', subset, 'product', 'issue_type');
   }
 
-  // Doughnut that returns instance
-  function makeDoughnutReturn(canvasId, subset, key) {
-    const map = {};
-    subset.forEach(c => { const k = c[key] || 'Unknown'; map[k] = (map[k]||0) + 1; });
-    const entries = Object.entries(map);
-    return new Chart(document.getElementById(canvasId), {
-      type: 'doughnut',
-      data: {
-        labels: entries.map(([k]) => k),
-        datasets: [{ data: entries.map(([,v]) => v), backgroundColor: entries.map(([,],i) => PAL[i % PAL.length]), borderWidth: 2, borderColor: '#fff' }]
-      },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 10, padding: 10, font: { size: 10 } } } }, cutout: '60%' }
-    });
-  }
-
-  // Stacked bar (product × type) that returns instance
+  // Stacked bar that returns instance
   function makeStackedBarReturn(canvasId, subset, primaryKey, groupKey) {
     const primaries = [...new Set(subset.map(c => c[primaryKey] || 'Unknown'))];
     const groups    = [...new Set(subset.map(c => c[groupKey] || 'Unknown'))];
