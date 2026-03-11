@@ -1,17 +1,17 @@
 # Amazon Cases Tracker
 
 > Simplified view for Obsidian. Source of truth: `cases_core.md`
-> Last updated: 2026-03-10 | 5 active · 19 closed
+> Last updated: 2026-03-11 | 5 active · 19 closed
 
 ## Active Cases
 
 | Case ID | MKT | Issue Type | Status Bucket | Status Current | Days Open |
 |---------|-----|------------|---------------|----------------|-----------|
-| 10995838672 | UK | VIP Seller Relations | Waiting on Amazon | Modification applied correctly, VIP team confirming | 20 |
-| 12202348262 | ES | VAT Number Issue | Waiting on Amazon | Spanish VAT number issue under investigation | 5 |
-| 12208889982 | IT | Product Safety Investigation | Waiting on Us | Safety incident reported - action required | 2 |
-| 12212227522 | IT | Italian VAT Verification | Waiting on Amazon | Internal team investigating VAT verification | 1 |
-| 12212267962 | IT | Italian VAT Verification | Waiting on Amazon | Amazon reviewing Italian VAT verification status | 1 |
+| 10995838672 | UK | VIP Seller Relations | Waiting on Amazon | Modification applied correctly, VIP team confirming | 21 |
+| 12212227522 | IT | Italian VAT Verification | Waiting on Us | Reminder - more information needed to resolve case | 2 |
+| 12208889982 | IT | Product Safety Investigation | Waiting on Us | Safety incident reported - action required | 3 |
+| 12212267962 | IT | Italian VAT Verification | Waiting on Amazon | Follow-up on VAT activation error received | 2 |
+| 12202348262 | ES | VAT Number Issue | Waiting on Amazon | Grace period request being investigated | 6 |
 
 ## Closed Cases
 

@@ -527,40 +527,40 @@ const CASES = [
     asin: 'B0BM1WPXC5', asin_name: 'LAX',
     issue_type: 'Premium Support',
     status_bucket: 'Waiting on Amazon',
-    days_open: 20, msgs: 26, close: false, closed_date: null,
+    days_open: 21, msgs: 26, close: false, closed_date: null,
     opened_date: '2026-02-18', owner: 'Unassigned', outcome: null
   },
   {
-    case_id: '12202348262', brand: 'Hudson Chase', marketplace: 'ES',
+    case_id: '12212227522', brand: 'Vegan Vitality', marketplace: 'IT',
     asin: null, asin_name: null,
-    issue_type: 'VAT Number Issue',
-    status_bucket: 'Waiting on Amazon',
-    days_open: 5, msgs: 2, close: false, closed_date: null,
-    opened_date: '2026-03-05', owner: 'Tom', outcome: null
+    issue_type: 'Italian VAT Verification',
+    status_bucket: 'Waiting on Us',
+    days_open: 2, msgs: 4, close: false, closed_date: null,
+    opened_date: '2026-03-09', owner: 'Tom', outcome: null
   },
   {
     case_id: '12208889982', brand: 'QSTA', marketplace: 'IT',
     asin: 'B0B6GHYP1V', asin_name: 'DETOX-EU',
     issue_type: 'Product Safety Investigation',
     status_bucket: 'Waiting on Us',
-    days_open: 2, msgs: 1, close: false, closed_date: null,
+    days_open: 3, msgs: 1, close: false, closed_date: null,
     opened_date: '2026-03-08', owner: 'Vitali', outcome: null
-  },
-  {
-    case_id: '12212227522', brand: 'Vegan Vitality', marketplace: 'IT',
-    asin: null, asin_name: null,
-    issue_type: 'Italian VAT Verification',
-    status_bucket: 'Waiting on Amazon',
-    days_open: 1, msgs: 2, close: false, closed_date: null,
-    opened_date: '2026-03-09', owner: 'Tom', outcome: null
   },
   {
     case_id: '12212267962', brand: 'TCU', marketplace: 'IT',
     asin: null, asin_name: null,
     issue_type: 'Italian VAT Verification',
     status_bucket: 'Waiting on Amazon',
-    days_open: 1, msgs: 2, close: false, closed_date: null,
+    days_open: 2, msgs: 3, close: false, closed_date: null,
     opened_date: '2026-03-09', owner: 'Tom', outcome: null
+  },
+  {
+    case_id: '12202348262', brand: 'Hudson Chase', marketplace: 'ES',
+    asin: null, asin_name: null,
+    issue_type: 'VAT Number Issue',
+    status_bucket: 'Waiting on Amazon',
+    days_open: 6, msgs: 3, close: false, closed_date: null,
+    opened_date: '2026-03-05', owner: 'Tom', outcome: null
   },
   {
     case_id: '12139919272', brand: 'QSTA', marketplace: 'FR',
@@ -734,18 +734,22 @@ const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
 const MSG_DATA = {
   '12202348262': [
     {ts: 1772714106, from: 'Amazon Seller Support', preview: 'Case opened to address your inquiry (Spanish marketplace).'},
-    {ts: 1772717963, from: 'Amazon Seller Support (Kafui)', preview: 'Understand your Spanish VAT number is not displaying correctly. Investigating.'}
+    {ts: 1772717963, from: 'Amazon Seller Support (Kafui)', preview: 'Understand your Spanish VAT number is not displaying correctly. Investigating.'},
+    {ts: 1773125984, from: 'Asistencia al Vendedor de Amazon', preview: 'My name is Himanshu and I will be assisting you today. I understand that you want to request grac...'}
   ],
   '12208889982': [
     {ts: 1772972433, from: 'Food Safety Compliance', preview: 'Safety incident reported with product B0B6GHYP1V. Product under investigation.'}
   ],
   '12212227522': [
     {ts: 1773074970, from: 'Amazon Seller Support', preview: 'Thank you for contacting Amazon Seller Support. We have opened a case to address your issue. A team member will follow up with you as soon a...'},
-    {ts: 1773150600, from: 'Amazon Verkaeuferservice', preview: 'We have reached out to our internal team for information regarding your issue. We invite you to wait for ou...'}
+    {ts: 1773150600, from: 'Amazon Verkaeuferservice', preview: 'We have reached out to our internal team for information regarding your issue. We invite you to wait for ou...'},
+    {ts: 1773157734, from: 'Amazon Verkaeuferservice', preview: 'Thank you for your follow-up regarding the Pan-European FBA activation error in the Italian marke...'},
+    {ts: 1773172603, from: 'merch.service05@amazon.de', preview: 'This is a reminder to let you know that we need more information to resolve your case. If you still need assistance, respond to this message'}
   ],
   '12212267962': [
     {ts: 1773074480, from: 'Amazon Seller Support', preview: 'Thank you for contacting Amazon Seller Support. We have opened a case to address your issue. A team member will follow up with you as soon a...'},
-    {ts: 1773149321, from: 'Assistenza venditori Amazon', preview: 'Thank you for contacting us regarding your Italian VAT verification status and Pan-European FBA e...'}
+    {ts: 1773149321, from: 'Assistenza venditori Amazon', preview: 'Thank you for contacting us regarding your Italian VAT verification status and Pan-European FBA e...'},
+    {ts: 1773162991, from: 'Assistenza venditori Amazon', preview: 'Thank you for your follow-up regarding the error message you received when attempting to activate...'}
   ]
 };
 </script>
