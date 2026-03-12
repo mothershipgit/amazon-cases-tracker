@@ -17,18 +17,22 @@ STATUS BUCKETS:
   "Resolved"         — Case closed/reinstated/no further action
 
 Updated automatically by Claude via missive-reader skill.
-Last updated: 2026-03-11 | 5 active · 19 closed
+Last updated: 2026-03-12 | 9 active · 18 closed
 -->
 
 | close | case_id | brand | marketplace | asin_summary | issue_type | status_bucket | status_current | opened_date | days_open | closed_date | last_update_date | amazon_msgs_count | owner | next_action_due | next_action |
 |-------|---------|-------|-------------|--------------|------------|---------------|----------------|-------------|-----------|-------------|------------------|-------------------|-------|-----------------|-------------|
-| false | 10995838672 | QSTA | UK | B0BM1WPXC5 | VIP Seller Relations | Waiting on Amazon | Modification applied correctly, VIP team confirming | 2026-02-18 | 21 | | 2026-03-09 | 26 | Unassigned | | |
-| false | 12212227522 | Vegan Vitality | IT | | Italian VAT Verification | Waiting on Us | Reminder - more information needed to resolve case | 2026-03-09 | 2 | | 2026-03-11 | 4 | Tom | | |
-| false | 12208889982 | QSTA | IT | B0B6GHYP1V | Product Safety Investigation | Waiting on Us | Safety incident reported - action required | 2026-03-08 | 3 | | 2026-03-08 | 1 | Vitali | | |
-| false | 12212267962 | TCU | IT | | Italian VAT Verification | Waiting on Amazon | Follow-up on VAT activation error received | 2026-03-09 | 2 | | 2026-03-11 | 3 | Tom | | |
-| false | 12202348262 | Hudson Chase | ES | | VAT Number Issue | Waiting on Amazon | Grace period request being investigated | 2026-03-05 | 6 | | 2026-03-11 | 3 | Tom | | |
+| false | 12122795542 | QSTA | IT | B0BC4FT3XP | Restricted Products Appeal | Waiting on Us | Remove problematic images for possible reinstatement | 2026-02-12 | 28 | | 2026-03-12 | 11 | Vitali | | |
+| false | 10995838672 | QSTA | UK | B0BM1WPXC5 | VIP Seller Relations | Waiting on Amazon | Internal team contacted for image removal | 2026-02-18 | 22 | | 2026-03-12 | 27 | Unassigned | | |
+| false | 12202348262 | Hudson Chase | ES | | VAT Number Issue | Waiting on Amazon | Grace period request being investigated | 2026-03-05 | 7 | | 2026-03-11 | 3 | Tom | | |
+| false | 12208889982 | QSTA | IT | B0B6GHYP1V | Product Safety Investigation | Waiting on Amazon | Product label found compliant with regulations | 2026-03-08 | 4 | | 2026-03-12 | 2 | Vitali | | |
+| false | 12212227522 | Vegan Vitality | IT | | Italian VAT Verification | Waiting on Us | Reminder - more information needed to resolve case | 2026-03-09 | 3 | | 2026-03-11 | 4 | Tom | | |
+| false | 12212267962 | TCU | IT | | Italian VAT Verification | Waiting on Amazon | Follow-up on VAT activation error received | 2026-03-09 | 3 | | 2026-03-11 | 3 | Tom | | |
+| false | 12221503582 | Vegan Vitality | UK | | Small Business Badge | Waiting on Amazon | Badge request received, documentation provided | 2026-03-12 | 0 | | 2026-03-12 | 1 | Unassigned | | |
+| false | 12221793152 | Hudson Chase | UK | | Small Business Badge | Waiting on Amazon | Badge request received, being processed | 2026-03-12 | 0 | | 2026-03-12 | 1 | Unassigned | | |
+| false | 12221998032 | TCU | UK | | Small Business Badge | Waiting on Amazon | Badge request received, being processed | 2026-03-12 | 0 | | 2026-03-12 | 1 | Unassigned | | |
+| false | 12222315782 | QSTA | FR | | New Case Created | Waiting on Amazon | Case created, team will follow up | 2026-03-12 | 0 | | 2026-03-12 | 1 | Unassigned | | |
 | true | 12139919272 | QSTA | FR | B0BH37FCZQ | FBA Stock Investigation | Resolved | Investigation complete, corrective measures taken | 2026-02-16 | 22 | 2026-03-10 | 2026-02-26 | 6 | Vitali | 2026-02-19 | Provide correct ASIN for mislabeled units |
-| true | 12122795542 | QSTA | IT | B0BC4FT3XP | Restricted Products Appeal | Resolved | Awaiting Policy team update on SAS escalation | 2026-02-12 | 26 | 2026-03-10 | 2026-03-09 | 10 | Vitali | | |
 | true | 12139373442 | QSTA | IT | B0GMYGR5Z9 | Restricted Products Appeal | Resolved | Reinstatement process started | 2026-02-16 | 22 | 2026-03-10 | 2026-02-16 | 2 | Vitali | | |
 | true | 12122998082 | QSTA | IT | B0BC4FT3XP | Restricted Products Appeal | Resolved | ASIN reinstatement rejected - new appeal required | 2026-02-17 | 21 | 2026-03-10 | 2026-02-17 | 1 | Vitali | | |
 | true | 11756757402 | TCU | UK | | Country of Origin Compliance | Resolved | Action required - provide COO information for listings | 2026-02-19 | 19 | 2026-03-10 | 2026-02-19 | 1 | Tom | | |

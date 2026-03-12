@@ -1,24 +1,28 @@
 # Amazon Cases Tracker
 
 > Simplified view for Obsidian. Source of truth: `cases_core.md`
-> Last updated: 2026-03-11 | 5 active · 19 closed
+> Last updated: 2026-03-12 | 9 active · 18 closed
 
 ## Active Cases
 
 | Case ID | MKT | Issue Type | Status Bucket | Status Current | Days Open |
 |---------|-----|------------|---------------|----------------|-----------|
-| 10995838672 | UK | VIP Seller Relations | Waiting on Amazon | Modification applied correctly, VIP team confirming | 21 |
-| 12212227522 | IT | Italian VAT Verification | Waiting on Us | Reminder - more information needed to resolve case | 2 |
-| 12208889982 | IT | Product Safety Investigation | Waiting on Us | Safety incident reported - action required | 3 |
-| 12212267962 | IT | Italian VAT Verification | Waiting on Amazon | Follow-up on VAT activation error received | 2 |
-| 12202348262 | ES | VAT Number Issue | Waiting on Amazon | Grace period request being investigated | 6 |
+| 12122795542 | IT | Restricted Products Appeal | Waiting on Us | Remove problematic images for possible reinstatement | 28 |
+| 10995838672 | UK | VIP Seller Relations | Waiting on Amazon | Internal team contacted for image removal | 22 |
+| 12202348262 | ES | VAT Number Issue | Waiting on Amazon | Grace period request being investigated | 7 |
+| 12208889982 | IT | Product Safety Investigation | Waiting on Amazon | Product label found compliant with regulations | 4 |
+| 12212227522 | IT | Italian VAT Verification | Waiting on Us | Reminder - more information needed to resolve case | 3 |
+| 12212267962 | IT | Italian VAT Verification | Waiting on Amazon | Follow-up on VAT activation error received | 3 |
+| 12221503582 | UK | Small Business Badge | Waiting on Amazon | Badge request received, documentation provided | 0 |
+| 12221793152 | UK | Small Business Badge | Waiting on Amazon | Badge request received, being processed | 0 |
+| 12221998032 | UK | Small Business Badge | Waiting on Amazon | Badge request received, being processed | 0 |
+| 12222315782 | FR | New Case Created | Waiting on Amazon | Case created, team will follow up | 0 |
 
 ## Closed Cases
 
 | Case ID | MKT | Issue Type | Status | Days Open | Closed |
 |---------|-----|------------|--------|-----------|--------|
 | 12139919272 | FR | FBA Stock Investigation | Resolved | 22 | 2026-03-10 |
-| 12122795542 | IT | Restricted Products Appeal | Resolved | 26 | 2026-03-10 |
 | 12139373442 | IT | Restricted Products Appeal | Resolved | 22 | 2026-03-10 |
 | 12122998082 | IT | Restricted Products Appeal | Resolved | 21 | 2026-03-10 |
 | 11756757402 | UK | Country of Origin Compliance | Resolved | 19 | 2026-03-10 |
