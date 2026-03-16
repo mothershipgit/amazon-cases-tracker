@@ -512,6 +512,9 @@
     <div class="meta">Last updated: 2026-03-09 &nbsp;·&nbsp; 20 active &nbsp;·&nbsp; 4 closed &nbsp;·&nbsp; Source: projects/Amazon Cases/cases_core.md</div>
   </div>
   <div class="header-actions">
+    <button class="btn-copy" onclick="triggerRefresh(this)" id="btn-refresh" title="Pull new emails from Missive and update cases">
+      &#x21BB; Refresh
+    </button>
     <button class="btn-copy" onclick="copyAssignments(this)" title="Copy current owner assignments and close flags as JSON to paste to Claude">
       &#128203; Copy Assignments
     </button>
@@ -519,9 +522,154 @@
   </div>
 </header>
 
-<!-- ═══ DATA ══════════════════════════════════════════════════════════════════ -->
+<!-- ═══ DATA (loaded from API) ═══════════════════════════════════════════════ -->
 <script>
-const CASES = [
+const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:3002'
+  : 'https://amazon-cases-backend-production.up.railway.app';
+const API_KEY = 'cases2026';
+
+let CASES = [];
+let MSG_DATA = {};
+const EXCLUDED_FROM_STATS = ['10995838672'];
+
+async function loadDataFromAPI() {
+  try {
+    const [casesRes, msgsRes] = await Promise.all([
+      fetch(`${API_URL}/api/cases`),
+      fetch(`${API_URL}/api/messages`)
+    ]);
+    CASES = await casesRes.json();
+    MSG_DATA = await msgsRes.json();
+    // Derived fields
+    CASES.forEach(c => { c.product = c.asin_name || c.asin || (c.issue_type || '\u2014'); });
+    renderApp();
+  } catch (err) {
+    console.error('Failed to load data from API:', err);
+    document.querySelector('.meta').textContent = 'Error loading data from API — check console';
+  }
+}
+
+function renderApp() {
+  // Compute KPI values
+  const openCases   = CASES.filter(c => !c.close);
+  const closedCases = CASES.filter(c => c.close);
+  const kpiCases    = CASES.filter(c => !EXCLUDED_FROM_STATS.includes(c.case_id));
+  const kpiOpen     = kpiCases.filter(c => !c.close);
+  const kpiClosed   = kpiCases.filter(c => c.close);
+  const avgDaysOpen = kpiOpen.length ? Math.round(kpiOpen.reduce((s, c) => s + c.days_open, 0) / kpiOpen.length) : 0;
+  const totalMsgs   = kpiCases.reduce((s, c) => s + c.msgs, 0);
+  const avgDaysAll  = kpiCases.length ? Math.round(kpiCases.reduce((s, c) => s + c.days_open, 0) / kpiCases.length) : 0;
+
+  document.getElementById('stat-open').textContent    = kpiOpen.length;
+  document.getElementById('stat-closed').textContent  = kpiClosed.length;
+  document.getElementById('stat-days').textContent    = avgDaysOpen;
+  document.getElementById('stat-days-all').textContent = avgDaysAll;
+  document.getElementById('stat-msgs').textContent    = totalMsgs;
+
+  // Render table rows
+  renderTableRows('active-tbody', openCases);
+  renderTableRows('closed-tbody', closedCases);
+
+  // Update meta line
+  document.querySelector('.meta').textContent = `${openCases.length} active · ${closedCases.length} closed · Source: API`;
+
+  // Rebuild charts & timelines after DOM is ready
+  setTimeout(() => {
+    if (typeof initStatusDropdowns === 'function') initStatusDropdowns();
+    if (typeof buildAssigneeCharts === 'function') buildAssigneeCharts();
+    if (typeof buildAllCharts === 'function') buildAllCharts();
+    if (typeof initMsgTimeline === 'function') initMsgTimeline();
+    if (typeof applyFilters === 'function') applyFilters();
+    // Trigger Firebase sync to apply owners/close states
+    if (typeof _triggerFirebaseSync === 'function') _triggerFirebaseSync();
+  }, 100);
+}
+
+function renderTableRows(tbodyId, cases) {
+  const tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
+
+  // Remove all data rows (keep structure)
+  const oldRows = tbody.querySelectorAll('tr[data-case]');
+  oldRows.forEach(r => r.remove());
+  // Also remove msg detail rows
+  tbody.querySelectorAll('.msg-detail-row').forEach(r => r.remove());
+
+  cases.forEach(c => {
+    const tr = document.createElement('tr');
+    tr.setAttribute('data-case', c.case_id);
+    tr.setAttribute('data-brand', c.brand || '');
+    tr.setAttribute('data-mkt', c.marketplace || '');
+
+    const mktClass = c.marketplace ? `mkt-${c.marketplace.toLowerCase()}` : '';
+    const bucketClass = c.status_bucket === 'Waiting on Us' ? 'bucket-us'
+      : c.status_bucket === 'Waiting on Amazon' ? 'bucket-amz'
+      : c.status_bucket === 'Resolved' ? 'bucket-ok'
+      : c.status_bucket === 'Not Resolved' ? 'bucket-nr'
+      : c.status_bucket === 'On Hold' ? 'bucket-hold'
+      : 'bucket-wa';
+    const daysClass = c.days_open >= 14 ? 'days-urgent' : c.days_open >= 7 ? 'days-warn' : 'days-ok';
+    const isVip = c.issue_type === 'Premium Support' || c.issue_type === 'VIP Seller Relations';
+    const issueHtml = isVip ? `<span class="issue-vip">${c.issue_type || ''}</span>` : (c.issue_type || '');
+    const asinHtml = c.asin
+      ? `<span class="asin-code">${c.asin}</span>${c.asin_name ? `<span class="asin-name">${c.asin_name}</span>` : ''}`
+      : '';
+
+    const ownerOptions = ['Unassigned', 'Vitali', 'Tom', 'Natasha', 'Leticia', 'Francesco'].map(o =>
+      `<option value="${o}"${c.owner === o ? ' selected' : ''}>${o}</option>`
+    ).join('');
+
+    tr.innerHTML = `
+      <td class="col-close"><input type="checkbox" class="close-check" data-case="${c.case_id}" data-source="${c.close}" onchange="closeToggled(this)"></td>
+      <td class="col-case">${c.case_id}</td>
+      <td class="col-parent"><span class="parent-link" data-case="${c.case_id}" onclick="editParent(this)"></span></td>
+      <td>${c.brand || ''}</td>
+      <td><span class="badge ${mktClass}">${c.marketplace || ''}</span></td>
+      <td class="col-owner"><select class="owner-select" data-case="${c.case_id}" onchange="ownerChanged(this)">${ownerOptions}</select></td>
+      <td class="col-date">${c.opened_date || ''}</td>
+      <td class="col-date">${c.last_update_date || ''}</td>
+      <td class="col-asin">${asinHtml}</td>
+      <td class="col-issue">${issueHtml}</td>
+      <td><span class="bucket ${bucketClass}">${c.status_bucket || ''}</span></td>
+      <td class="col-summary">${c.summary || c.status_current || ''}</td>
+      <td class="col-action"><div class="note-text" data-case="${c.case_id}" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
+      <td class="col-notes"><div class="note-text" data-case="${c.case_id}" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
+      <td class="col-num">${c.msgs}</td>
+      <td class="col-num ${daysClass}">${c.days_open}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+async function triggerRefresh(btn) {
+  btn.disabled = true;
+  btn.textContent = 'Refreshing...';
+  try {
+    await fetch(`${API_URL}/api/refresh`, {
+      method: 'POST',
+      headers: { 'x-api-key': API_KEY }
+    });
+    // Poll status
+    let status = { in_progress: true };
+    while (status.in_progress) {
+      await new Promise(r => setTimeout(r, 3000));
+      const res = await fetch(`${API_URL}/api/refresh/status`);
+      status = await res.json();
+    }
+    // Reload data
+    await loadDataFromAPI();
+    btn.textContent = '\u2713 Updated!';
+    setTimeout(() => { btn.innerHTML = '&#x21BB; Refresh'; btn.disabled = false; }, 2000);
+  } catch (err) {
+    btn.textContent = 'Error';
+    console.error('Refresh failed:', err);
+    setTimeout(() => { btn.innerHTML = '&#x21BB; Refresh'; btn.disabled = false; }, 3000);
+  }
+}
+
+// ── FALLBACK: embedded data (remove after migration is confirmed) ─────────
+const _CASES_FALLBACK = [
   {
     case_id: '12122795542', brand: 'QSTA', marketplace: 'IT',
     asin: 'B0BC4FT3XP', asin_name: 'CUT',
@@ -764,22 +912,18 @@ const CASES = [
   }
 ];
 
-// Derived fields
-CASES.forEach(c => { c.product = c.asin_name || c.asin || (c.issue_type || '\u2014'); });
-// Exclude VIP case 10995838672 from KPI calculations (long-running, distorts metrics)
-const EXCLUDED_FROM_STATS = ['10995838672'];
-const openCases   = CASES.filter(c => !c.close);
-const closedCases = CASES.filter(c => c.close);
-const kpiCases    = CASES.filter(c => !EXCLUDED_FROM_STATS.includes(c.case_id));
-const kpiOpen     = kpiCases.filter(c => !c.close);
-const kpiClosed   = kpiCases.filter(c => c.close);
-const avgDaysOpen = kpiOpen.length
-  ? Math.round(kpiOpen.reduce((s, c) => s + c.days_open, 0) / kpiOpen.length)
-  : 0;
-const totalMsgs = kpiCases.reduce((s, c) => s + c.msgs, 0);
+// Use API data if available, fallback to embedded
+if (typeof _CASES_FALLBACK !== 'undefined' && _CASES_FALLBACK.length > 0 && CASES.length === 0) {
+  CASES = _CASES_FALLBACK;
+  CASES.forEach(c => { c.product = c.asin_name || c.asin || (c.issue_type || '\u2014'); });
+}
+// These are now computed inside renderApp() — kept as placeholders for initial load
+let openCases = [], closedCases = [], kpiCases = [], kpiOpen = [], kpiClosed = [];
+let avgDaysOpen = 0, totalMsgs = 0;
 
-// ── Amazon Message Timeline Data ──────────────────────────────────────────
-const MSG_DATA = {
+// MSG_DATA is now loaded from API — see loadDataFromAPI()
+// Fallback MSG_DATA for offline use:
+const _MSG_DATA_FALLBACK = {
   '12122795542': [
     {ts: 1770894001, from: 'SAS Escalation', preview: 'Last response on appeal case was 12053445982. To reactivate ASINs, remove non-compliant references.'},
     {ts: 1771246849, from: 'SAS Escalation', preview: 'Awaiting updates from the Policy team. Will revert back once we have an update.'},
@@ -869,14 +1013,8 @@ const MSG_DATA = {
   </div>
 </div>
 <script>
-  document.getElementById('stat-open').textContent   = kpiOpen.length;
-  document.getElementById('stat-closed').textContent = kpiClosed.length;
-  document.getElementById('stat-days').textContent   = avgDaysOpen;
-  const avgDaysAll = kpiCases.length
-    ? Math.round(kpiCases.reduce((s, c) => s + c.days_open, 0) / kpiCases.length)
-    : 0;
-  document.getElementById('stat-days-all').textContent = avgDaysAll;
-  document.getElementById('stat-msgs').textContent   = totalMsgs;
+  // KPI values are now set by renderApp() — this block is a no-op on initial load
+  // They will be populated once loadDataFromAPI() completes
 
   function updateKpiCounts() {
     const activeRows = document.querySelectorAll('#active-tbody tr[data-case]:not(.msg-detail-row)').length;
@@ -1317,501 +1455,7 @@ const MSG_DATA = {
       </tr>
     </thead>
     <tbody id="active-tbody">
-
-      <tr data-case="12139919272" data-brand="QSTA" data-mkt="FR">
-        <td class="col-close"><input type="checkbox" class="close-check" data-case="12139919272" data-source="false" onchange="closeToggled(this)"></td>
-        <td class="col-case">12139919272</td>
-        <td class="col-parent"><span class="parent-link" data-case="12139919272" onclick="editParent(this)"></span></td>
-        <td>QSTA</td>
-        <td><span class="badge mkt-fr">FR</span></td>
-        <td class="col-owner"><select class="owner-select" data-case="12139919272" onchange="ownerChanged(this)"><option value="Unassigned">Unassigned</option><option value="Vitali" selected>Vitali</option><option value="Tom">Tom</option></select></td>
-        <td class="col-date">2026-02-16</td>
-        <td class="col-date">2026-02-26</td>
-        <td class="col-asin"><span class="asin-code">B0BH37FCZQ</span><span class="asin-name">BRNR21-DE-FR-IT</span></td>
-        <td class="col-issue">FBA Stock Investigation</td>
-        <td><span class="bucket bucket-amz">Waiting on Amazon</span></td>
-        <td class="col-summary">Mislabeled FBA units in France warehouse. Investigation complete — corrective action needed. Must provide correct ASIN for affected units to resolve.</td>
-        <td class="col-action"><div class="note-text" data-case="12139919272" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
-        <td class="col-notes"><div class="note-text" data-case="12139919272" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
-        <td class="col-num">6</td>
-        <td class="col-num days-urgent">21</td>
-      </tr>
-
-      <tr data-case="12122795542" data-brand="QSTA" data-mkt="IT">
-        <td class="col-close"><input type="checkbox" class="close-check" data-case="12122795542" data-source="false" onchange="closeToggled(this)"></td>
-        <td class="col-case">12122795542</td>
-        <td class="col-parent"><span class="parent-link" data-case="12122795542" onclick="editParent(this)"></span></td>
-        <td>QSTA</td>
-        <td><span class="badge mkt-it">IT</span></td>
-        <td class="col-owner"><select class="owner-select" data-case="12122795542" onchange="ownerChanged(this)"><option value="Unassigned">Unassigned</option><option value="Vitali" selected>Vitali</option><option value="Tom">Tom</option></select></td>
-        <td class="col-date">2026-02-12</td>
-        <td class="col-date">2026-03-09</td>
-        <td class="col-asin"><span class="asin-code">B0BC4FT3XP</span><span class="asin-name">CUT</span></td>
-        <td class="col-issue">Restricted Products Appeal</td>
-        <td><span class="bucket bucket-amz">Waiting on Amazon</span></td>
-        <td class="col-summary">CUT restricted in Italy. SAS escalated internally, will respond with update.</td>
-        <td class="col-action"><div class="note-text" data-case="12122795542" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
-        <td class="col-notes"><div class="note-text" data-case="12122795542" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
-        <td class="col-num">12</td>
-        <td class="col-num days-urgent">32</td>
-      </tr>
-
-      <tr data-case="12139373442" data-brand="QSTA" data-mkt="IT">
-        <td class="col-close"><input type="checkbox" class="close-check" data-case="12139373442" data-source="false" onchange="closeToggled(this)"></td>
-        <td class="col-case">12139373442</td>
-        <td class="col-parent"><span class="parent-link" data-case="12139373442" onclick="editParent(this)"></span></td>
-        <td>QSTA</td>
-        <td><span class="badge mkt-it">IT</span></td>
-        <td class="col-owner"><select class="owner-select" data-case="12139373442" onchange="ownerChanged(this)"><option value="Unassigned">Unassigned</option><option value="Vitali" selected>Vitali</option><option value="Tom">Tom</option></select></td>
-        <td class="col-date">2026-02-16</td>
-        <td class="col-date">2026-02-16</td>
-        <td class="col-asin"><span class="asin-code">B0GMYGR5Z9</span><span class="asin-name">LAX-2-BUNDLE-IT</span></td>
-        <td class="col-issue">Restricted Products Appeal</td>
-        <td><span class="bucket bucket-wa">Waiting on Amazon</span></td>
-        <td class="col-summary">LAX 2-Bundle restricted in Italy. Reinstatement process initiated. Early stage — 2 messages exchanged so far.</td>
-        <td class="col-action"><div class="note-text" data-case="12139373442" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
-        <td class="col-notes"><div class="note-text" data-case="12139373442" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
-        <td class="col-num">2</td>
-        <td class="col-num days-urgent">21</td>
-      </tr>
-
-      <tr data-case="12122998082" data-brand="QSTA" data-mkt="IT">
-        <td class="col-close"><input type="checkbox" class="close-check" data-case="12122998082" data-source="false" onchange="closeToggled(this)"></td>
-        <td class="col-case">12122998082</td>
-        <td class="col-parent"><span class="parent-link" data-case="12122998082" onclick="editParent(this)"></span></td>
-        <td>QSTA</td>
-        <td><span class="badge mkt-it">IT</span></td>
-        <td class="col-owner"><select class="owner-select" data-case="12122998082" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
-        <td class="col-date">2026-02-17</td>
-        <td class="col-date">2026-02-17</td>
-        <td class="col-asin"><span class="asin-code">B0BC4FT3XP</span><span class="asin-name">CUT</span></td>
-        <td class="col-issue">Restricted Products Appeal</td>
-        <td><span class="bucket bucket-us">Waiting on Us</span></td>
-        <td class="col-summary">CUT reinstatement appeal rejected by Amazon. New appeal must be submitted. Action required from our team.</td>
-        <td class="col-action"><div class="note-text" data-case="12122998082" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
-        <td class="col-notes"><div class="note-text" data-case="12122998082" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
-        <td class="col-num">1</td>
-        <td class="col-num days-urgent">20</td>
-      </tr>
-
-      <tr data-case="10995838672" data-brand="QSTA" data-mkt="UK">
-        <td class="col-close"><input type="checkbox" class="close-check" data-case="10995838672" data-source="false" onchange="closeToggled(this)"></td>
-        <td class="col-case">10995838672</td>
-        <td class="col-parent"><span class="parent-link" data-case="10995838672" onclick="editParent(this)"></span></td>
-        <td>QSTA</td>
-        <td><span class="badge mkt-uk">UK</span></td>
-        <td class="col-owner"><select class="owner-select" data-case="10995838672" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
-        <td class="col-date">2026-02-18</td>
-        <td class="col-date">2026-03-09</td>
-        <td class="col-asin"><span class="asin-code">B0BM1WPXC5</span><span class="asin-name">LAX</span></td>
-        <td class="col-issue"><span class="issue-vip">Premium Support</span></td>
-        <td><span class="bucket bucket-us">Waiting on Us</span></td>
-        <td class="col-summary">VIP case: Images overridden on IT market. Need to confirm if IT removal is correct.</td>
-        <td class="col-action"><div class="note-text" data-case="10995838672" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
-        <td class="col-notes"><div class="note-text" data-case="10995838672" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
-        <td class="col-num">30</td>
-        <td class="col-num days-urgent">26</td>
-      </tr>
-
-      <tr data-case="11756757402" data-brand="TCU" data-mkt="UK">
-        <td class="col-close"><input type="checkbox" class="close-check" data-case="11756757402" data-source="false" onchange="closeToggled(this)"></td>
-        <td class="col-case">11756757402</td>
-        <td class="col-parent"><span class="parent-link" data-case="11756757402" onclick="editParent(this)"></span></td>
-        <td>TCU</td>
-        <td><span class="badge mkt-uk">UK</span></td>
-        <td class="col-owner"><select class="owner-select" data-case="11756757402" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
-        <td class="col-date">2026-02-19</td>
-        <td class="col-date">2026-02-19</td>
-        <td class="col-asin"><span class="asin-code">&mdash;</span></td>
-        <td class="col-issue">Country of Origin Compliance</td>
-        <td><span class="bucket bucket-us">Waiting on Us</span></td>
-        <td class="col-summary">Amazon requires Country of Origin documentation for TCU UK listings. Must provide COO data for all affected listings.</td>
-        <td class="col-action"><div class="note-text" data-case="11756757402" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
-        <td class="col-notes"><div class="note-text" data-case="11756757402" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
-        <td class="col-num">1</td>
-        <td class="col-num days-urgent">18</td>
-      </tr>
-
-      <tr data-case="12150140992" data-brand="QSTA" data-mkt="ES">
-        <td class="col-close"><input type="checkbox" class="close-check" data-case="12150140992" data-source="false" onchange="closeToggled(this)"></td>
-        <td class="col-case">12150140992</td>
-        <td class="col-parent"><span class="parent-link" data-case="12150140992" onclick="editParent(this)"></span></td>
-        <td>QSTA</td>
-        <td><span class="badge mkt-es">ES</span></td>
-        <td class="col-owner"><select class="owner-select" data-case="12150140992" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
-        <td class="col-date">2026-02-20</td>
-        <td class="col-date">2026-02-27</td>
-        <td class="col-asin"><span class="asin-code">B0BC4FT3XP</span><span class="asin-name">CUT</span></td>
-        <td class="col-issue">Image Compliance - Escalation</td>
-        <td><span class="bucket bucket-wa">Waiting on Amazon</span></td>
-        <td class="col-summary">CUT main image removed as non-compliant in Spain. Escalated to Premium Support. 6 messages — decision still pending.</td>
-        <td class="col-action"><div class="note-text" data-case="12150140992" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
-        <td class="col-notes"><div class="note-text" data-case="12150140992" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
-        <td class="col-num">6</td>
-        <td class="col-num days-urgent">17</td>
-      </tr>
-
-      <tr data-case="12160163052" data-brand="Vegan Vitality" data-mkt="ES">
-        <td class="col-close"><input type="checkbox" class="close-check" data-case="12160163052" data-source="false" onchange="closeToggled(this)"></td>
-        <td class="col-case">12160163052</td>
-        <td class="col-parent"><span class="parent-link" data-case="12160163052" onclick="editParent(this)"></span></td>
-        <td>Vegan Vitality</td>
-        <td><span class="badge mkt-es">ES</span></td>
-        <td class="col-owner"><select class="owner-select" data-case="12160163052" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
-        <td class="col-date">2026-02-23</td>
-        <td class="col-date">2026-02-23</td>
-        <td class="col-asin"><span class="asin-code">B0DJTJ11PG</span><span class="asin-name">Berberine</span></td>
-        <td class="col-issue">FBA Stock Investigation</td>
-        <td><span class="bucket bucket-wa">Waiting on Amazon</span></td>
-        <td class="col-summary">Berberine flagged as defective in FBA Spain. Inspection found no defects. Requested Amazon to review and correct.</td>
-        <td class="col-action"><div class="note-text" data-case="12160163052" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
-        <td class="col-notes"><div class="note-text" data-case="12160163052" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
-        <td class="col-num">1</td>
-        <td class="col-num days-warn">14</td>
-      </tr>
-
-      <tr data-case="12160765972" data-brand="QSTA" data-mkt="IT">
-        <td class="col-close"><input type="checkbox" class="close-check" data-case="12160765972" data-source="false" onchange="closeToggled(this)"></td>
-        <td class="col-case">12160765972</td>
-        <td class="col-parent"><span class="parent-link" data-case="12160765972" onclick="editParent(this)"></span></td>
-        <td>QSTA</td>
-        <td><span class="badge mkt-it">IT</span></td>
-        <td class="col-owner"><select class="owner-select" data-case="12160765972" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
-        <td class="col-date">2026-02-24</td>
-        <td class="col-date">2026-02-26</td>
-        <td class="col-asin"><span class="asin-code">B0GKPPG3P6</span><span class="asin-name">LAX-2-BUNDLE-EU</span></td>
-        <td class="col-issue">Restricted Products Appeal</td>
-        <td><span class="bucket bucket-us">Waiting on Us</span></td>
-        <td class="col-summary">LAX 2-Bundle EU restricted in Italy. Two appeals rejected — Amazon unable to reactivate. New approach needed.</td>
-        <td class="col-action"><div class="note-text" data-case="12160765972" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
-        <td class="col-notes"><div class="note-text" data-case="12160765972" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
-        <td class="col-num">2</td>
-        <td class="col-num days-warn">13</td>
-      </tr>
-
-      <tr data-case="12196144212" data-brand="QSTA" data-mkt="ES">
-        <td class="col-close"><input type="checkbox" class="close-check" data-case="12196144212" data-source="false" onchange="closeToggled(this)"></td>
-        <td class="col-case">12196144212</td>
-        <td class="col-parent"><span class="parent-link" data-case="12196144212" onclick="editParent(this)"></span></td>
-        <td>QSTA</td>
-        <td><span class="badge mkt-es">ES</span></td>
-        <td class="col-owner"><select class="owner-select" data-case="12196144212" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
-        <td class="col-date">2026-03-01</td>
-        <td class="col-date">2026-03-07</td>
-        <td class="col-asin"><span class="asin-code">B0B6GHYP1V</span><span class="asin-name">DETOX-EU</span></td>
-        <td class="col-issue">Product Suppressed - Safety</td>
-        <td><span class="bucket bucket-wa">Waiting on Amazon</span></td>
-        <td class="col-summary">DETOX-EU suppressed due to safety incident in Spain. Manufacturer contact info requirement under review. 6 messages.</td>
-        <td class="col-action"><div class="note-text" data-case="12196144212" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
-        <td class="col-notes"><div class="note-text" data-case="12196144212" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
-        <td class="col-num">6</td>
-        <td class="col-num days-ok">8</td>
-      </tr>
-
-      <tr data-case="12189296792" data-brand="QSTA" data-mkt="IT">
-        <td class="col-close"><input type="checkbox" class="close-check" data-case="12189296792" data-source="false" onchange="closeToggled(this)"></td>
-        <td class="col-case">12189296792</td>
-        <td class="col-parent"><span class="parent-link" data-case="12189296792" onclick="editParent(this)"></span></td>
-        <td>QSTA</td>
-        <td><span class="badge mkt-it">IT</span></td>
-        <td class="col-owner"><select class="owner-select" data-case="12189296792" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
-        <td class="col-date">2026-03-03</td>
-        <td class="col-date">2026-03-04</td>
-        <td class="col-asin"><span class="asin-code">B0BC4FT3XP</span><span class="asin-name">CUT</span></td>
-        <td class="col-issue">Restricted Products Appeal</td>
-        <td><span class="bucket bucket-us">Waiting on Us</span></td>
-        <td class="col-summary">CUT restricted products appeal in Italy. Two rejections — new appeal with stronger documentation required.</td>
-        <td class="col-action"><div class="note-text" data-case="12189296792" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
-        <td class="col-notes"><div class="note-text" data-case="12189296792" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
-        <td class="col-num">2</td>
-        <td class="col-num days-ok">6</td>
-      </tr>
-
-      <tr data-case="12193136902" data-brand="QSTA" data-mkt="IT">
-        <td class="col-close"><input type="checkbox" class="close-check" data-case="12193136902" data-source="false" onchange="closeToggled(this)"></td>
-        <td class="col-case">12193136902</td>
-        <td class="col-parent"><span class="parent-link" data-case="12193136902" onclick="editParent(this)"></span></td>
-        <td>QSTA</td>
-        <td><span class="badge mkt-it">IT</span></td>
-        <td class="col-owner"><select class="owner-select" data-case="12193136902" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
-        <td class="col-date">2026-03-03</td>
-        <td class="col-date">2026-03-03</td>
-        <td class="col-asin"><span class="asin-code">B0GKPPG3P6</span><span class="asin-name">LAX-2-BUNDLE-EU</span></td>
-        <td class="col-issue">Restricted Products Appeal</td>
-        <td><span class="bucket bucket-wa">Waiting on Amazon</span></td>
-        <td class="col-summary">LAX 2-Bundle EU reinstatement process started in Italy. Amazon confirmed they are reinstating the product detail page.</td>
-        <td class="col-action"><div class="note-text" data-case="12193136902" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
-        <td class="col-notes"><div class="note-text" data-case="12193136902" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
-        <td class="col-num">2</td>
-        <td class="col-num days-ok">6</td>
-      </tr>
-
-      <tr data-case="12196786792" data-brand="QSTA" data-mkt="ES">
-        <td class="col-close"><input type="checkbox" class="close-check" data-case="12196786792" data-source="false" onchange="closeToggled(this)"></td>
-        <td class="col-case">12196786792</td>
-        <td class="col-parent"><span class="parent-link" data-case="12196786792" onclick="editParent(this)"></span></td>
-        <td>QSTA</td>
-        <td><span class="badge mkt-es">ES</span></td>
-        <td class="col-owner"><select class="owner-select" data-case="12196786792" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
-        <td class="col-date">2026-03-04</td>
-        <td class="col-date">2026-03-04</td>
-        <td class="col-asin"><span class="asin-code">B0B6GHYP1V</span><span class="asin-name">DETOX-EU</span></td>
-        <td class="col-issue">Food and Product Safety</td>
-        <td><span class="bucket bucket-wa">Waiting on Amazon</span></td>
-        <td class="col-summary">DETOX-EU removed due to food safety violation in Spain. Reinstatement request under review by ES compliance team.</td>
-        <td class="col-action"><div class="note-text" data-case="12196786792" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
-        <td class="col-notes"><div class="note-text" data-case="12196786792" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
-        <td class="col-num">1</td>
-        <td class="col-num days-ok">5</td>
-      </tr>
-
-      <tr data-case="12199208622" data-brand="QSTA" data-mkt="DE">
-        <td class="col-close"><input type="checkbox" class="close-check" data-case="12199208622" data-source="false" onchange="closeToggled(this)"></td>
-        <td class="col-case">12199208622</td>
-        <td class="col-parent"><span class="parent-link" data-case="12199208622" onclick="editParent(this)"></span></td>
-        <td>QSTA</td>
-        <td><span class="badge mkt-de">DE</span></td>
-        <td class="col-owner"><select class="owner-select" data-case="12199208622" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
-        <td class="col-date">2026-03-04</td>
-        <td class="col-date">2026-03-09</td>
-        <td class="col-asin"><span class="asin-code">B0G8JPG7FF</span><span class="asin-name">INO-C-2-BUNDLE-EU</span></td>
-        <td class="col-issue">Escalation Review</td>
-        <td><span class="bucket bucket-wa">Waiting on Amazon</span></td>
-        <td class="col-summary">Premium team confirms updates impacted ASIN listing. 4 messages. Linked from VIP case #10995838672.</td>
-        <td class="col-action"><div class="note-text" data-case="12199208622" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
-        <td class="col-notes"><div class="note-text" data-case="12199208622" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
-        <td class="col-num">4</td>
-        <td class="col-num days-ok">5</td>
-      </tr>
-
-      <tr data-case="12202348262" data-brand="Hudson Chase" data-mkt="ES">
-        <td class="col-close"><input type="checkbox" class="close-check" data-case="12202348262" data-source="false" onchange="closeToggled(this)"></td>
-        <td class="col-case">12202348262</td>
-        <td class="col-parent"><span class="parent-link" data-case="12202348262" onclick="editParent(this)"></span></td>
-        <td>Hudson Chase</td>
-        <td><span class="badge mkt-es">ES</span></td>
-        <td class="col-owner"><select class="owner-select" data-case="12202348262" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
-        <td class="col-date">2026-03-05</td>
-        <td class="col-date">2026-03-05</td>
-        <td class="col-asin"><span class="asin-code">&mdash;</span></td>
-        <td class="col-issue">VAT Number Issue</td>
-        <td><span class="bucket bucket-wa">Waiting on Amazon</span></td>
-        <td class="col-summary">Hudson Chase Spanish VAT number issue. Amazon support investigating the VAT registration problem for ES marketplace.</td>
-        <td class="col-action"><div class="note-text" data-case="12202348262" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
-        <td class="col-notes"><div class="note-text" data-case="12202348262" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
-        <td class="col-num">3</td>
-        <td class="col-num days-warn">11</td>
-      </tr>
-
-      <tr data-case="12206260832" data-brand="QSTA" data-mkt="ES">
-        <td class="col-close"><input type="checkbox" class="close-check" data-case="12206260832" data-source="false" onchange="closeToggled(this)"></td>
-        <td class="col-case">12206260832</td>
-        <td class="col-parent"><span class="parent-link" data-case="12206260832" onclick="editParent(this)"></span></td>
-        <td>QSTA</td>
-        <td><span class="badge mkt-es">ES</span></td>
-        <td class="col-owner"><select class="owner-select" data-case="12206260832" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
-        <td class="col-date">2026-03-06</td>
-        <td class="col-date">2026-03-06</td>
-        <td class="col-asin"><span class="asin-code">&mdash;</span></td>
-        <td class="col-issue">Feed Upload Errors</td>
-        <td><span class="bucket bucket-wa">Waiting on Amazon</span></td>
-        <td class="col-summary">Feed upload errors for SKU E0-NG6A-BO8V in Spain. Amazon reviewing the issue.</td>
-        <td class="col-action"><div class="note-text" data-case="12206260832" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
-        <td class="col-notes"><div class="note-text" data-case="12206260832" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
-        <td class="col-num">1</td>
-        <td class="col-num days-ok">3</td>
-      </tr>
-
-      <tr data-case="12208889982" data-brand="QSTA" data-mkt="IT">
-        <td class="col-close"><input type="checkbox" class="close-check" data-case="12208889982" data-source="false" onchange="closeToggled(this)"></td>
-        <td class="col-case">12208889982</td>
-        <td class="col-parent"><span class="parent-link" data-case="12208889982" onclick="editParent(this)"></span></td>
-        <td>QSTA</td>
-        <td><span class="badge mkt-it">IT</span></td>
-        <td class="col-owner"><select class="owner-select" data-case="12208889982" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
-        <td class="col-date">2026-03-08</td>
-        <td class="col-date">2026-03-08</td>
-        <td class="col-asin"><span class="asin-code">B0B6GHYP1V</span><span class="asin-name">DETOX-EU</span></td>
-        <td class="col-issue">Product Safety Investigation</td>
-        <td><span class="bucket bucket-amz">Waiting on Amazon</span></td>
-        <td class="col-summary">Product label found compliant with regulations. Waiting on Amazon.</td>
-        <td class="col-action"><div class="note-text" data-case="12208889982" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
-        <td class="col-notes"><div class="note-text" data-case="12208889982" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
-        <td class="col-num">2</td>
-        <td class="col-num days-warn">8</td>
-      </tr>
-
-      <tr data-case="10195287522" data-brand="TCU" data-mkt="UK">
-        <td class="col-close"><input type="checkbox" class="close-check" data-case="10195287522" data-source="false" onchange="closeToggled(this)"></td>
-        <td class="col-case">10195287522</td>
-        <td class="col-parent"><span class="parent-link" data-case="10195287522" onclick="editParent(this)"></span></td>
-        <td>TCU</td>
-        <td><span class="badge mkt-uk">UK</span></td>
-        <td class="col-owner"><select class="owner-select" data-case="10195287522" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
-        <td class="col-date">2026-03-09</td>
-        <td class="col-date">2026-03-09</td>
-        <td class="col-asin"></td>
-        <td class="col-issue">General Product Safety Regulation</td>
-        <td><span class="bucket bucket-us">Waiting on Us</span></td>
-        <td class="col-summary">Listings removed — GPSR compliance action needed.</td>
-        <td class="col-action"><div class="note-text" data-case="10195287522" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
-        <td class="col-notes"><div class="note-text" data-case="10195287522" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
-        <td class="col-num">1</td>
-        <td class="col-num days-ok">0</td>
-      </tr>
-
-      <tr data-case="12212227522" data-brand="Vegan Vitality" data-mkt="IT">
-        <td class="col-close"><input type="checkbox" class="close-check" data-case="12212227522" data-source="false" onchange="closeToggled(this)"></td>
-        <td class="col-case">12212227522</td>
-        <td class="col-parent"><span class="parent-link" data-case="12212227522" onclick="editParent(this)"></span></td>
-        <td>Vegan Vitality</td>
-        <td><span class="badge mkt-it">IT</span></td>
-        <td class="col-owner"><select class="owner-select" data-case="12212227522" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
-        <td class="col-date">2026-03-09</td>
-        <td class="col-date">2026-03-09</td>
-        <td class="col-asin"></td>
-        <td class="col-issue">Italian VAT Verification</td>
-        <td><span class="bucket bucket-us">Waiting on Us</span></td>
-        <td class="col-summary">Reminder — more information needed to resolve case.</td>
-        <td class="col-action"><div class="note-text" data-case="12212227522" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
-        <td class="col-notes"><div class="note-text" data-case="12212227522" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
-        <td class="col-num">4</td>
-        <td class="col-num days-warn">7</td>
-      </tr>
-
-      <tr data-case="12212267962" data-brand="TCU" data-mkt="IT">
-        <td class="col-close"><input type="checkbox" class="close-check" data-case="12212267962" data-source="false" onchange="closeToggled(this)"></td>
-        <td class="col-case">12212267962</td>
-        <td class="col-parent"><span class="parent-link" data-case="12212267962" onclick="editParent(this)"></span></td>
-        <td>TCU</td>
-        <td><span class="badge mkt-it">IT</span></td>
-        <td class="col-owner"><select class="owner-select" data-case="12212267962" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
-        <td class="col-date">2026-03-09</td>
-        <td class="col-date">2026-03-11</td>
-        <td class="col-asin"></td>
-        <td class="col-issue">Italian VAT Verification</td>
-        <td><span class="bucket bucket-amz">Waiting on Amazon</span></td>
-        <td class="col-summary">Follow-up on VAT activation error received.</td>
-        <td class="col-action"><div class="note-text" data-case="12212267962" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
-        <td class="col-notes"><div class="note-text" data-case="12212267962" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
-        <td class="col-num">3</td>
-        <td class="col-num days-warn">7</td>
-      </tr>
-
-      <tr data-case="12221503582" data-brand="Vegan Vitality" data-mkt="UK">
-        <td class="col-close"><input type="checkbox" class="close-check" data-case="12221503582" data-source="false" onchange="closeToggled(this)"></td>
-        <td class="col-case">12221503582</td>
-        <td class="col-parent"><span class="parent-link" data-case="12221503582" onclick="editParent(this)"></span></td>
-        <td>Vegan Vitality</td>
-        <td><span class="badge mkt-uk">UK</span></td>
-        <td class="col-owner"><select class="owner-select" data-case="12221503582" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
-        <td class="col-date">2026-03-12</td>
-        <td class="col-date">2026-03-14</td>
-        <td class="col-asin"></td>
-        <td class="col-issue">Small Business Badge</td>
-        <td><span class="bucket bucket-us">Waiting on Us</span></td>
-        <td class="col-summary">Reminder — more information needed to resolve badge request.</td>
-        <td class="col-action"><div class="note-text" data-case="12221503582" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
-        <td class="col-notes"><div class="note-text" data-case="12221503582" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
-        <td class="col-num">2</td>
-        <td class="col-num days-ok">4</td>
-      </tr>
-
-      <tr data-case="12221793152" data-brand="Hudson Chase" data-mkt="UK">
-        <td class="col-close"><input type="checkbox" class="close-check" data-case="12221793152" data-source="false" onchange="closeToggled(this)"></td>
-        <td class="col-case">12221793152</td>
-        <td class="col-parent"><span class="parent-link" data-case="12221793152" onclick="editParent(this)"></span></td>
-        <td>Hudson Chase</td>
-        <td><span class="badge mkt-uk">UK</span></td>
-        <td class="col-owner"><select class="owner-select" data-case="12221793152" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
-        <td class="col-date">2026-03-12</td>
-        <td class="col-date">2026-03-14</td>
-        <td class="col-asin"></td>
-        <td class="col-issue">Small Business Badge</td>
-        <td><span class="bucket bucket-us">Waiting on Us</span></td>
-        <td class="col-summary">Badge assessed, more info needed from us.</td>
-        <td class="col-action"><div class="note-text" data-case="12221793152" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
-        <td class="col-notes"><div class="note-text" data-case="12221793152" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
-        <td class="col-num">3</td>
-        <td class="col-num days-ok">4</td>
-      </tr>
-
-      <tr data-case="12221998032" data-brand="TCU" data-mkt="UK">
-        <td class="col-close"><input type="checkbox" class="close-check" data-case="12221998032" data-source="false" onchange="closeToggled(this)"></td>
-        <td class="col-case">12221998032</td>
-        <td class="col-parent"><span class="parent-link" data-case="12221998032" onclick="editParent(this)"></span></td>
-        <td>TCU</td>
-        <td><span class="badge mkt-uk">UK</span></td>
-        <td class="col-owner"><select class="owner-select" data-case="12221998032" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
-        <td class="col-date">2026-03-12</td>
-        <td class="col-date">2026-03-14</td>
-        <td class="col-asin"></td>
-        <td class="col-issue">Small Business Badge</td>
-        <td><span class="bucket bucket-amz">Waiting on Amazon</span></td>
-        <td class="col-summary">Specialists alerted again about badge request.</td>
-        <td class="col-action"><div class="note-text" data-case="12221998032" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
-        <td class="col-notes"><div class="note-text" data-case="12221998032" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
-        <td class="col-num">4</td>
-        <td class="col-num days-ok">4</td>
-      </tr>
-
-      <tr data-case="12222315782" data-brand="QSTA" data-mkt="FR">
-        <td class="col-close"><input type="checkbox" class="close-check" data-case="12222315782" data-source="false" onchange="closeToggled(this)"></td>
-        <td class="col-case">12222315782</td>
-        <td class="col-parent"><span class="parent-link" data-case="12222315782" onclick="editParent(this)"></span></td>
-        <td>QSTA</td>
-        <td><span class="badge mkt-fr">FR</span></td>
-        <td class="col-owner"><select class="owner-select" data-case="12222315782" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
-        <td class="col-date">2026-03-12</td>
-        <td class="col-date">2026-03-14</td>
-        <td class="col-asin"></td>
-        <td class="col-issue">French VAT Number Warning</td>
-        <td><span class="bucket bucket-amz">Waiting on Amazon</span></td>
-        <td class="col-summary">Amazon responding about French VAT number on VIES warning.</td>
-        <td class="col-action"><div class="note-text" data-case="12222315782" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
-        <td class="col-notes"><div class="note-text" data-case="12222315782" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
-        <td class="col-num">2</td>
-        <td class="col-num days-ok">4</td>
-      </tr>
-
-      <tr data-case="12224270762" data-brand="QSTA" data-mkt="IT">
-        <td class="col-close"><input type="checkbox" class="close-check" data-case="12224270762" data-source="false" onchange="closeToggled(this)"></td>
-        <td class="col-case">12224270762</td>
-        <td class="col-parent"><span class="parent-link" data-case="12224270762" onclick="editParent(this)"></span></td>
-        <td>QSTA</td>
-        <td><span class="badge mkt-it">IT</span></td>
-        <td class="col-owner"><select class="owner-select" data-case="12224270762" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
-        <td class="col-date">2026-03-14</td>
-        <td class="col-date">2026-03-14</td>
-        <td class="col-asin"><span class="asin-code">B0BC4FT3XP</span><span class="asin-name">CUT</span></td>
-        <td class="col-issue">Image Compliance - Escalation</td>
-        <td><span class="bucket bucket-amz">Waiting on Amazon</span></td>
-        <td class="col-summary">Premium team overrode images on IT market for B0BC4FT3XP.</td>
-        <td class="col-action"><div class="note-text" data-case="12224270762" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
-        <td class="col-notes"><div class="note-text" data-case="12224270762" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
-        <td class="col-num">1</td>
-        <td class="col-num days-ok">2</td>
-      </tr>
-
-      <tr data-case="12223878512" data-brand="Vegan Vitality" data-mkt="ES">
-        <td class="col-close"><input type="checkbox" class="close-check" data-case="12223878512" data-source="false" onchange="closeToggled(this)"></td>
-        <td class="col-case">12223878512</td>
-        <td class="col-parent"><span class="parent-link" data-case="12223878512" onclick="editParent(this)"></span></td>
-        <td>Vegan Vitality</td>
-        <td><span class="badge mkt-es">ES</span></td>
-        <td class="col-owner"><select class="owner-select" data-case="12223878512" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
-        <td class="col-date">2026-03-14</td>
-        <td class="col-date">2026-03-14</td>
-        <td class="col-asin"><span class="asin-code">B07BRY1FRZ</span></td>
-        <td class="col-issue">FBA Stock Investigation</td>
-        <td><span class="bucket bucket-us">Waiting on Us</span></td>
-        <td class="col-summary">No defects found in FBA sample for B07BRY1FRZ. Review product condition guidelines.</td>
-        <td class="col-action"><div class="note-text" data-case="12223878512" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
-        <td class="col-notes"><div class="note-text" data-case="12223878512" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
-        <td class="col-num">1</td>
-        <td class="col-num days-ok">2</td>
-      </tr>
-
+      <!-- Rows rendered dynamically by renderTableRows() -->
     </tbody>
   </table>
 </div>
@@ -1841,84 +1485,7 @@ const MSG_DATA = {
       </tr>
     </thead>
     <tbody id="closed-tbody">
-      <tr class="empty-row" id="closed-empty" style="display:none"><td colspan="16">No closed cases yet</td></tr>
-
-      <tr data-case="12159445672" data-brand="QSTA" data-mkt="DE" data-closedate="2026-03-06">
-        <td class="col-close"><input type="checkbox" class="close-check" data-case="12159445672" data-source="true" onchange="closeToggled(this)" checked></td>
-        <td class="col-case">12159445672</td>
-        <td class="col-parent"><span class="parent-link" data-case="12159445672" onclick="editParent(this)"></span></td>
-        <td>QSTA</td>
-        <td><span class="badge mkt-de">DE</span></td>
-        <td class="col-owner"><select class="owner-select" data-case="12159445672" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
-        <td class="col-date">2026-02-23</td>
-        <td class="col-date">2026-02-26</td>
-        <td class="col-asin"><span class="asin-code">B0BM1WPXC5</span><span class="asin-name">LAX</span></td>
-        <td class="col-issue">Escalation Review</td>
-        <td><select class="close-status-select st-resolved" data-case="12159445672" onchange="closeStatusChanged(this)"><option value="Waiting on Us">Waiting on Us</option><option value="Waiting on Amazon">Waiting on Amazon</option><option value="Resolved" selected>Resolved</option><option value="Not Resolved">Not Resolved</option><option value="On Hold">On Hold</option></select></td>
-        <td class="col-summary">LAX escalation review in Germany. Amazon confirmed no restrictions on the listings. Case resolved.</td>
-        <td class="col-action"><div class="note-text" data-case="12159445672" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
-        <td class="col-notes"><div class="note-text" data-case="12159445672" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
-        <td class="col-num">3</td>
-        <td class="col-num days-ok">11</td>
-      </tr>
-
-      <tr data-case="19599539061" data-brand="QSTA" data-mkt="US" data-closedate="2026-03-06">
-        <td class="col-close"><input type="checkbox" class="close-check" data-case="19599539061" data-source="true" onchange="closeToggled(this)" checked></td>
-        <td class="col-case">19599539061</td>
-        <td class="col-parent"><span class="parent-link" data-case="19599539061" onclick="editParent(this)"></span></td>
-        <td>QSTA</td>
-        <td><span class="badge mkt-us">US</span></td>
-        <td class="col-owner"><select class="owner-select" data-case="19599539061" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
-        <td class="col-date">2026-03-05</td>
-        <td class="col-date">2026-03-05</td>
-        <td class="col-asin"><span class="asin-code">&mdash;</span></td>
-        <td class="col-issue">Queue Misassignment</td>
-        <td><select class="close-status-select st-resolved" data-case="19599539061" onchange="closeStatusChanged(this)"><option value="Waiting on Us">Waiting on Us</option><option value="Waiting on Amazon">Waiting on Amazon</option><option value="Resolved" selected>Resolved</option><option value="Not Resolved">Not Resolved</option><option value="On Hold">On Hold</option></select></td>
-        <td class="col-summary">Queue incorrectly assigned. Amazon apologized for the error. Auto-resolved.</td>
-        <td class="col-action"><div class="note-text" data-case="19599539061" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
-        <td class="col-notes"><div class="note-text" data-case="19599539061" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
-        <td class="col-num">3</td>
-        <td class="col-num days-ok">1</td>
-      </tr>
-
-      <tr data-case="12053445982" data-brand="QSTA" data-mkt="IT" data-closedate="2026-02-25">
-        <td class="col-close"><input type="checkbox" class="close-check" data-case="12053445982" data-source="true" onchange="closeToggled(this)" checked></td>
-        <td class="col-case">12053445982</td>
-        <td class="col-parent"><span class="parent-link" data-case="12053445982" onclick="editParent(this)"></span></td>
-        <td>QSTA</td>
-        <td><span class="badge mkt-it">IT</span></td>
-        <td class="col-owner"><select class="owner-select" data-case="12053445982" onchange="ownerChanged(this)"><option value="Unassigned" selected>Unassigned</option><option value="Vitali">Vitali</option><option value="Tom">Tom</option></select></td>
-        <td class="col-date">2026-02-21</td>
-        <td class="col-date">2026-02-25</td>
-        <td class="col-asin"><span class="asin-code">B0BC4FT3XP</span><span class="asin-name">CUT</span></td>
-        <td class="col-issue">Restricted Products Appeal</td>
-        <td><select class="close-status-select st-resolved" data-case="12053445982" onchange="closeStatusChanged(this)"><option value="Waiting on Us">Waiting on Us</option><option value="Waiting on Amazon">Waiting on Amazon</option><option value="Resolved" selected>Resolved</option><option value="Not Resolved">Not Resolved</option><option value="On Hold">On Hold</option></select></td>
-        <td class="col-summary">CUT restricted products appeal in Italy. Auto-closed after 4 days with no response.</td>
-        <td class="col-action"><div class="note-text" data-case="12053445982" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
-        <td class="col-notes"><div class="note-text" data-case="12053445982" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
-        <td class="col-num">4</td>
-        <td class="col-num days-ok">4</td>
-      </tr>
-
-      <tr data-case="12014653392" data-brand="QSTA" data-mkt="UK" data-closedate="2026-02-17">
-        <td class="col-close"><input type="checkbox" class="close-check" data-case="12014653392" data-source="true" onchange="closeToggled(this)" checked></td>
-        <td class="col-case">12014653392</td>
-        <td class="col-parent"><span class="parent-link" data-case="12014653392" onclick="editParent(this)"></span></td>
-        <td>QSTA</td>
-        <td><span class="badge mkt-uk">UK</span></td>
-        <td class="col-owner"><select class="owner-select" data-case="12014653392" onchange="ownerChanged(this)"><option value="Unassigned">Unassigned</option><option value="Vitali" selected>Vitali</option><option value="Tom">Tom</option></select></td>
-        <td class="col-date">2026-02-15</td>
-        <td class="col-date">2026-03-08</td>
-        <td class="col-asin"><span class="asin-code">&mdash;</span></td>
-        <td class="col-issue">VAT Invoice Reissue</td>
-        <td><select class="close-status-select st-resolved" data-case="12014653392" onchange="closeStatusChanged(this)"><option value="Waiting on Us">Waiting on Us</option><option value="Waiting on Amazon">Waiting on Amazon</option><option value="Resolved" selected>Resolved</option><option value="Not Resolved">Not Resolved</option><option value="On Hold">On Hold</option></select></td>
-        <td class="col-summary">VAT invoice reissue for UK. Manually closed while Amazon still investigating.</td>
-        <td class="col-action"><div class="note-text" data-case="12014653392" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
-        <td class="col-notes"><div class="note-text" data-case="12014653392" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
-        <td class="col-num">5</td>
-        <td class="col-num days-ok">2</td>
-      </tr>
-
+      <!-- Rows rendered dynamically by renderTableRows() -->
     </tbody>
   </table>
 </div>
@@ -2533,9 +2100,9 @@ const MSG_DATA = {
     db.ref('statuses/' + sel.dataset.case).set(sel.value);
   }
 
-  // Initial render
-  initStatusDropdowns();
-  initMsgTimeline();
+  // Initial render — load data from API
+  // initStatusDropdowns() and initMsgTimeline() are called by renderApp() after data loads
+  loadDataFromAPI();
 </script>
 
 <!-- Instructions Section -->
