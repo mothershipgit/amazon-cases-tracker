@@ -2089,9 +2089,12 @@ const _MSG_DATA_FALLBACK = {
   // Convert static bucket spans to status dropdowns in active table
   function initStatusDropdowns() {
     const STATUS_OPTIONS = ['Waiting on Us', 'Waiting on Amazon', 'Resolved', 'Not Resolved', 'On Hold'];
-    document.querySelectorAll('#active-tbody tr[data-case]:not(.msg-detail-row)').forEach(row => {
+    // Apply to both active AND closed tables
+    document.querySelectorAll('#active-tbody tr[data-case]:not(.msg-detail-row), #closed-tbody tr[data-case]:not(.msg-detail-row)').forEach(row => {
       const cell = row.cells[10]; // Status column
       if (!cell) return;
+      // Skip if already has a dropdown
+      if (cell.querySelector('.close-status-select')) return;
       const span = cell.querySelector('.bucket');
       if (!span) return;
       const currentVal = span.textContent.trim();
@@ -2116,7 +2119,9 @@ const _MSG_DATA_FALLBACK = {
   function statusChanged(sel) {
     if (_syncing) return;
     styleCloseStatus(sel);
-    db.ref('statuses/' + sel.dataset.case).set(sel.value);
+    db.ref('close_statuses/' + sel.dataset.case).set(sel.value);
+    // Update KPI counts
+    if (typeof updateKpiCounts === 'function') updateKpiCounts();
   }
 
   // Initial render — load data from API
