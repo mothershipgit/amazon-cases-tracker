@@ -1611,7 +1611,7 @@ const _MSG_DATA_FALLBACK = {
   <table>
     <thead>
       <tr>
-        <th class="col-close">Reopen</th>
+        <th class="col-close">Unclose</th>
         <th class="col-case">Case ID</th>
         <th class="col-parent">Parent</th>
         <th class="col-brand">Brand</th>
@@ -1821,6 +1821,74 @@ const _MSG_DATA_FALLBACK = {
         cb.checked = true;
         moveRow(cb.dataset.case, true);
       }
+    });
+  }
+
+  // ── Re-apply Firebase state to fresh DOM (after loadDataFromAPI re-renders) ──
+  function _triggerFirebaseSync() {
+    db.ref('owners').once('value', snap => {
+      const owners = snap.val() || {};
+      document.querySelectorAll('.owner-select').forEach(sel => {
+        if (owners[sel.dataset.case]) sel.value = owners[sel.dataset.case];
+      });
+      CASES.forEach(c => { if (owners[c.case_id]) c.owner = owners[c.case_id]; });
+      if (typeof buildAssigneeCharts === 'function') buildAssigneeCharts();
+    });
+    db.ref('closed').once('value', snap => {
+      _syncing = true;
+      const closed = snap.val() || {};
+      document.querySelectorAll('.close-check').forEach(cb => {
+        const caseId = cb.dataset.case;
+        const shouldBeChecked = closed[caseId] || cb.dataset.source === 'true';
+        if (cb.checked !== shouldBeChecked) {
+          cb.checked = shouldBeChecked;
+          moveRow(caseId, shouldBeChecked);
+        }
+      });
+      if (typeof initStatusDropdowns === 'function') initStatusDropdowns();
+      updateKpiCounts();
+      _syncing = false;
+      // After closed rows are moved, apply outcomes and other fields
+      db.ref('close_statuses').once('value', snap2 => {
+        const statuses = snap2.val() || {};
+        document.querySelectorAll('.close-status-select').forEach(sel => {
+          if (statuses[sel.dataset.case]) {
+            sel.value = statuses[sel.dataset.case];
+            styleCloseStatus(sel);
+          }
+        });
+      });
+    });
+    db.ref('statuses').once('value', snap => {
+      const statuses = snap.val() || {};
+      document.querySelectorAll('#active-tbody .close-status-select').forEach(sel => {
+        if (statuses[sel.dataset.case]) {
+          sel.value = statuses[sel.dataset.case];
+          styleCloseStatus(sel);
+        }
+      });
+    });
+    db.ref('notes').once('value', snap => {
+      const notes = snap.val() || {};
+      document.querySelectorAll('.note-text[data-field="notes"]').forEach(div => {
+        div.textContent = notes[div.dataset.case] || '';
+      });
+    });
+    db.ref('next_actions').once('value', snap => {
+      const actions = snap.val() || {};
+      document.querySelectorAll('.note-text[data-field="next_actions"]').forEach(div => {
+        div.textContent = actions[div.dataset.case] || '';
+      });
+    });
+    db.ref('parent_cases').once('value', snap => {
+      const parents = snap.val() || {};
+      document.querySelectorAll('.parent-link').forEach(span => {
+        const val = parents[span.dataset.case] || '';
+        span.textContent = val;
+        if (val) span.classList.add('has-parent');
+        else span.classList.remove('has-parent');
+      });
+      regroupRows();
     });
   }
 
