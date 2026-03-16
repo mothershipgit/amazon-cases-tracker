@@ -551,14 +551,14 @@ async function loadDataFromAPI() {
 }
 
 function renderApp() {
-  // Compute KPI values
-  const openCases   = CASES.filter(c => !c.close);
-  const closedCases = CASES.filter(c => c.close);
-  const kpiCases    = CASES.filter(c => !EXCLUDED_FROM_STATS.includes(c.case_id));
-  const kpiOpen     = kpiCases.filter(c => !c.close);
-  const kpiClosed   = kpiCases.filter(c => c.close);
-  const avgDaysOpen = kpiOpen.length ? Math.round(kpiOpen.reduce((s, c) => s + c.days_open, 0) / kpiOpen.length) : 0;
-  const totalMsgs   = kpiCases.reduce((s, c) => s + c.msgs, 0);
+  // Compute KPI values — update globals so chart builders can access them
+  openCases   = CASES.filter(c => !c.close);
+  closedCases = CASES.filter(c => c.close);
+  kpiCases    = CASES.filter(c => !EXCLUDED_FROM_STATS.includes(c.case_id));
+  kpiOpen     = kpiCases.filter(c => !c.close);
+  kpiClosed   = kpiCases.filter(c => c.close);
+  avgDaysOpen = kpiOpen.length ? Math.round(kpiOpen.reduce((s, c) => s + c.days_open, 0) / kpiOpen.length) : 0;
+  totalMsgs   = kpiCases.reduce((s, c) => s + c.msgs, 0);
   const avgDaysAll  = kpiCases.length ? Math.round(kpiCases.reduce((s, c) => s + c.days_open, 0) / kpiCases.length) : 0;
 
   document.getElementById('stat-open').textContent    = kpiOpen.length;
@@ -576,8 +576,8 @@ function renderApp() {
 
   // Rebuild charts & timelines after DOM is ready
   setTimeout(() => {
+    if (typeof populateFilters === 'function') populateFilters();
     if (typeof initStatusDropdowns === 'function') initStatusDropdowns();
-    if (typeof buildAssigneeCharts === 'function') buildAssigneeCharts();
     if (typeof buildAllCharts === 'function') buildAllCharts();
     if (typeof initMsgTimeline === 'function') initMsgTimeline();
     if (typeof applyFilters === 'function') applyFilters();
@@ -1302,7 +1302,13 @@ const _MSG_DATA_FALLBACK = {
     _assigneeOpenChart = makeSimpleBar('ch-assignee-open', kpiOpen, 'owner', PAL, { datalabels: true }, true);
   }
 
-  _chartInits.push(() => {
+  // Store chart builder as a named function so renderApp() can re-call it
+  function buildAllCharts() {
+    // Reset all chart canvases to avoid "Canvas is already in use" errors
+    document.querySelectorAll('.chart-wrap canvas').forEach(canvas => {
+      const existing = Chart.getChart(canvas);
+      if (existing) existing.destroy();
+    });
     buildAssigneeCharts();
     makeDoughnut('ch-workload-status', kpiOpen, 'status_bucket', {
       'Waiting on Us': '#e05252', 'Waiting on Amazon': '#5282e0',
@@ -1366,7 +1372,9 @@ const _MSG_DATA_FALLBACK = {
         }
       }
     });
-  });
+  }
+
+  _chartInits.push(() => { buildAllCharts(); });
 </script>
 
 
@@ -1378,15 +1386,18 @@ const _MSG_DATA_FALLBACK = {
   <button class="filter-reset" onclick="resetFilters()">Reset</button>
 </div>
 <script>
-  // Populate filter dropdowns
-  (function() {
-    const brands = [...new Set(openCases.map(c => c.brand))].sort();
-    const mkts   = [...new Set(openCases.map(c => c.marketplace))].sort();
+  // Populate filter dropdowns — called by renderApp()
+  function populateFilters() {
+    const brands = [...new Set(CASES.map(c => c.brand).filter(Boolean))].sort();
+    const mkts   = [...new Set(CASES.map(c => c.marketplace).filter(Boolean))].sort();
     const bSel = document.getElementById('filter-brand');
     const mSel = document.getElementById('filter-mkt');
+    // Clear existing options (keep "All")
+    bSel.innerHTML = '<option value="">All</option>';
+    mSel.innerHTML = '<option value="">All</option>';
     brands.forEach(b => { const o = document.createElement('option'); o.value = b; o.textContent = b; bSel.appendChild(o); });
     mkts.forEach(m => { const o = document.createElement('option'); o.value = m; o.textContent = m; mSel.appendChild(o); });
-  })();
+  }
 
   function applyFilters() {
     const brand = document.getElementById('filter-brand').value;
