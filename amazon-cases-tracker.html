@@ -526,16 +526,16 @@ const CASES = [
     case_id: '12122795542', brand: 'QSTA', marketplace: 'IT',
     asin: 'B0BC4FT3XP', asin_name: 'CUT',
     issue_type: 'Restricted Products Appeal',
-    status_bucket: 'Waiting on Us',
-    days_open: 28, msgs: 11, close: false, closed_date: null,
+    status_bucket: 'Waiting on Amazon',
+    days_open: 32, msgs: 12, close: false, closed_date: null,
     opened_date: '2026-02-12', owner: 'Vitali', outcome: null
   },
   {
     case_id: '10995838672', brand: 'QSTA', marketplace: 'UK',
     asin: 'B0BM1WPXC5', asin_name: 'LAX',
-    issue_type: 'Premium Support',
-    status_bucket: 'Waiting on Amazon',
-    days_open: 22, msgs: 27, close: false, closed_date: null,
+    issue_type: 'VIP Seller Relations',
+    status_bucket: 'Waiting on Us',
+    days_open: 26, msgs: 30, close: false, closed_date: null,
     opened_date: '2026-02-18', owner: 'Unassigned', outcome: null
   },
   {
@@ -543,7 +543,7 @@ const CASES = [
     asin: null, asin_name: null,
     issue_type: 'VAT Number Issue',
     status_bucket: 'Waiting on Amazon',
-    days_open: 7, msgs: 3, close: false, closed_date: null,
+    days_open: 11, msgs: 3, close: false, closed_date: null,
     opened_date: '2026-03-05', owner: 'Tom', outcome: null
   },
   {
@@ -551,7 +551,7 @@ const CASES = [
     asin: 'B0B6GHYP1V', asin_name: 'DETOX-EU',
     issue_type: 'Product Safety Investigation',
     status_bucket: 'Waiting on Amazon',
-    days_open: 4, msgs: 2, close: false, closed_date: null,
+    days_open: 8, msgs: 2, close: false, closed_date: null,
     opened_date: '2026-03-08', owner: 'Vitali', outcome: null
   },
   {
@@ -559,7 +559,7 @@ const CASES = [
     asin: null, asin_name: null,
     issue_type: 'Italian VAT Verification',
     status_bucket: 'Waiting on Us',
-    days_open: 3, msgs: 4, close: false, closed_date: null,
+    days_open: 7, msgs: 4, close: false, closed_date: null,
     opened_date: '2026-03-09', owner: 'Tom', outcome: null
   },
   {
@@ -567,23 +567,23 @@ const CASES = [
     asin: null, asin_name: null,
     issue_type: 'Italian VAT Verification',
     status_bucket: 'Waiting on Amazon',
-    days_open: 3, msgs: 3, close: false, closed_date: null,
+    days_open: 7, msgs: 3, close: false, closed_date: null,
     opened_date: '2026-03-09', owner: 'Tom', outcome: null
   },
   {
     case_id: '12221503582', brand: 'Vegan Vitality', marketplace: 'UK',
     asin: null, asin_name: null,
     issue_type: 'Small Business Badge',
-    status_bucket: 'Waiting on Amazon',
-    days_open: 0, msgs: 1, close: false, closed_date: null,
+    status_bucket: 'Waiting on Us',
+    days_open: 4, msgs: 2, close: false, closed_date: null,
     opened_date: '2026-03-12', owner: 'Unassigned', outcome: null
   },
   {
     case_id: '12221793152', brand: 'Hudson Chase', marketplace: 'UK',
     asin: null, asin_name: null,
     issue_type: 'Small Business Badge',
-    status_bucket: 'Waiting on Amazon',
-    days_open: 0, msgs: 1, close: false, closed_date: null,
+    status_bucket: 'Waiting on Us',
+    days_open: 4, msgs: 3, close: false, closed_date: null,
     opened_date: '2026-03-12', owner: 'Unassigned', outcome: null
   },
   {
@@ -591,16 +591,32 @@ const CASES = [
     asin: null, asin_name: null,
     issue_type: 'Small Business Badge',
     status_bucket: 'Waiting on Amazon',
-    days_open: 0, msgs: 1, close: false, closed_date: null,
+    days_open: 4, msgs: 4, close: false, closed_date: null,
     opened_date: '2026-03-12', owner: 'Unassigned', outcome: null
   },
   {
     case_id: '12222315782', brand: 'QSTA', marketplace: 'FR',
     asin: null, asin_name: null,
-    issue_type: 'New Case Created',
+    issue_type: 'French VAT Number Warning',
     status_bucket: 'Waiting on Amazon',
-    days_open: 0, msgs: 1, close: false, closed_date: null,
+    days_open: 4, msgs: 2, close: false, closed_date: null,
     opened_date: '2026-03-12', owner: 'Unassigned', outcome: null
+  },
+  {
+    case_id: '12224270762', brand: 'QSTA', marketplace: 'IT',
+    asin: 'B0BC4FT3XP', asin_name: 'CUT',
+    issue_type: 'Image Compliance - Escalation',
+    status_bucket: 'Waiting on Amazon',
+    days_open: 2, msgs: 1, close: false, closed_date: null,
+    opened_date: '2026-03-14', owner: 'Unassigned', outcome: null
+  },
+  {
+    case_id: '12223878512', brand: 'Vegan Vitality', marketplace: 'ES',
+    asin: 'B07BRY1FRZ', asin_name: null,
+    issue_type: 'FBA Stock Investigation',
+    status_bucket: 'Waiting on Us',
+    days_open: 2, msgs: 1, close: false, closed_date: null,
+    opened_date: '2026-03-14', owner: 'Unassigned', outcome: null
   },
   {
     case_id: '12139919272', brand: 'QSTA', marketplace: 'FR',
@@ -775,7 +791,8 @@ const MSG_DATA = {
     {ts: 1772706197, from: 'SAS Escalation', preview: 'Non-compliant claims still present on detail page — image URLs listed for removal.'},
     {ts: 1772707477, from: 'SAS Escalation', preview: 'Working with internal team to remove images. Once done, will escalate further.'},
     {ts: 1773061585, from: 'sas-escalation@amazon.co.uk', preview: 'Dear Selling Partner, We are awaiting updates from the Policy team and will revert back once we have an update.'},
-    {ts: 1773321689, from: 'sas-escalation@amazon.co.uk', preview: 'Please remove the following problematic images for possible reinstatement of B0BC4FT3XP.'}
+    {ts: 1773321689, from: 'sas-escalation@amazon.co.uk', preview: 'Please remove the following problematic images for possible reinstatement of B0BC4FT3XP.'},
+    {ts: 1773405907, from: 'sas-escalation@amazon.co.uk', preview: 'Hi Vitalii, Thank you for emailing SAS Escalations Support. We have escalated this internally and will respond once we get an update.'}
   ],
   '12202348262': [
     {ts: 1772714106, from: 'Amazon Seller Support', preview: 'Case opened to address your inquiry (Spanish marketplace).'},

@@ -1,22 +1,24 @@
 # Amazon Cases Tracker
 
 > Simplified view for Obsidian. Source of truth: `cases_core.md`
-> Last updated: 2026-03-12 | 9 active · 18 closed
+> Last updated: 2026-03-16 | 12 active · 18 closed
 
 ## Active Cases
 
 | Case ID | MKT | Issue Type | Status Bucket | Status Current | Days Open |
 |---------|-----|------------|---------------|----------------|-----------|
-| 12122795542 | IT | Restricted Products Appeal | Waiting on Us | Remove problematic images for possible reinstatement | 28 |
-| 10995838672 | UK | VIP Seller Relations | Waiting on Amazon | Internal team contacted for image removal | 22 |
-| 12202348262 | ES | VAT Number Issue | Waiting on Amazon | Grace period request being investigated | 7 |
-| 12208889982 | IT | Product Safety Investigation | Waiting on Amazon | Product label found compliant with regulations | 4 |
-| 12212227522 | IT | Italian VAT Verification | Waiting on Us | Reminder - more information needed to resolve case | 3 |
-| 12212267962 | IT | Italian VAT Verification | Waiting on Amazon | Follow-up on VAT activation error received | 3 |
-| 12221503582 | UK | Small Business Badge | Waiting on Amazon | Badge request received, documentation provided | 0 |
-| 12221793152 | UK | Small Business Badge | Waiting on Amazon | Badge request received, being processed | 0 |
-| 12221998032 | UK | Small Business Badge | Waiting on Amazon | Badge request received, being processed | 0 |
-| 12222315782 | FR | New Case Created | Waiting on Amazon | Case created, team will follow up | 0 |
+| 12122795542 | IT | Restricted Products Appeal | Waiting on Amazon | SAS Escalation - escalated internally | 32 |
+| 10995838672 | UK | VIP Seller Relations | Waiting on Us | Images overridden on IT, confirming removal | 26 |
+| 12202348262 | ES | VAT Number Issue | Waiting on Amazon | Grace period request being investigated | 11 |
+| 12208889982 | IT | Product Safety Investigation | Waiting on Amazon | Product label found compliant | 8 |
+| 12212227522 | IT | Italian VAT Verification | Waiting on Us | Reminder - more info needed | 7 |
+| 12212267962 | IT | Italian VAT Verification | Waiting on Amazon | Follow-up on VAT activation error | 7 |
+| 12221503582 | UK | Small Business Badge | Waiting on Us | Reminder - more info needed | 4 |
+| 12221793152 | UK | Small Business Badge | Waiting on Us | Badge assessed, more info needed | 4 |
+| 12221998032 | UK | Small Business Badge | Waiting on Amazon | Specialists alerted again | 4 |
+| 12222315782 | FR | French VAT Number Warning | Waiting on Amazon | Responding about FR VAT on VIES | 4 |
+| 12224270762 | IT | Image Compliance - Escalation | Waiting on Amazon | Premium team overrode images on IT | 2 |
+| 12223878512 | ES | FBA Stock Investigation | Waiting on Us | No defects found, review guidelines | 2 |
 
 ## Closed Cases
 
