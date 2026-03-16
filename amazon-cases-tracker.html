@@ -1605,6 +1605,8 @@ const _MSG_DATA_FALLBACK = {
           moveRow(caseId, shouldBeChecked);
         }
       });
+      // Re-init status dropdowns after rows have been moved
+      if (typeof initStatusDropdowns === 'function') initStatusDropdowns();
       updateKpiCounts();
       if (typeof rebuildAnalyticsIfOpen === 'function') rebuildAnalyticsIfOpen();
       _syncing = false;
@@ -1621,6 +1623,8 @@ const _MSG_DATA_FALLBACK = {
     db.ref('close_statuses').on('value', snap => {
       _syncing = true;
       const statuses = snap.val() || {};
+      // Ensure dropdowns exist first
+      if (typeof initStatusDropdowns === 'function') initStatusDropdowns();
       document.querySelectorAll('.close-status-select').forEach(sel => {
         if (statuses[sel.dataset.case]) {
           sel.value = statuses[sel.dataset.case];
