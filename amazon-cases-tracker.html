@@ -1155,6 +1155,9 @@ const _MSG_DATA_FALLBACK = {
     const closedRows = document.querySelectorAll('#closed-tbody tr[data-case]:not(.msg-detail-row)').length;
     document.getElementById('stat-open').textContent = activeRows;
     document.getElementById('stat-closed').textContent = closedRows;
+    // Keep meta line in sync with KPI cards
+    const meta = document.querySelector('.meta');
+    if (meta) meta.textContent = `${activeRows} active · ${closedRows} closed · Source: API`;
 
     // Count resolved / not resolved from outcome dropdowns
     let resolved = 0, notResolved = 0;
