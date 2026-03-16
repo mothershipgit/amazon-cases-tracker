@@ -50,6 +50,47 @@
     .btn-copy:hover { background: #f0f1f5; border-color: #bbbeca; }
     .btn-copy.copied { background: #e6f9ee; border-color: #8ecfa8; color: #156930; }
 
+    /* ── Refresh progress bar ────────────────────────────────────────── */
+    .refresh-progress {
+      display: none;
+      margin-bottom: 16px;
+      background: #fff;
+      border: 1px solid #dde0ea;
+      border-radius: 8px;
+      padding: 14px 18px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .refresh-progress.active { display: block; }
+    .refresh-progress .rp-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: #444;
+    }
+    .refresh-progress .rp-pct { color: #888; font-weight: 400; }
+    .refresh-progress .rp-track {
+      height: 6px;
+      background: #edeef2;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .refresh-progress .rp-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #4f8cff, #6c5ce7);
+      border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+    .refresh-progress.done .rp-fill {
+      background: linear-gradient(90deg, #27ae60, #2ecc71);
+    }
+    .refresh-progress.error .rp-fill {
+      background: linear-gradient(90deg, #e74c3c, #c0392b);
+    }
+
     /* ── Stat cards ──────────────────────────────────────────────────────── */
     .stats-row {
       display: grid;
@@ -519,6 +560,14 @@
   </div>
 </header>
 
+<div class="refresh-progress" id="refresh-progress">
+  <div class="rp-header">
+    <span class="rp-status">Connecting to server...</span>
+    <span class="rp-pct">0%</span>
+  </div>
+  <div class="rp-track"><div class="rp-fill"></div></div>
+</div>
+
 <!-- ═══ DATA (loaded from API) ═══════════════════════════════════════════════ -->
 <script>
 const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -650,26 +699,106 @@ function renderTableRows(tbodyId, cases) {
 async function triggerRefresh(btn) {
   btn.disabled = true;
   btn.textContent = 'Refreshing...';
+
+  const bar = document.getElementById('refresh-progress');
+  const fill = bar.querySelector('.rp-fill');
+  const statusEl = bar.querySelector('.rp-status');
+  const pctEl = bar.querySelector('.rp-pct');
+  bar.className = 'refresh-progress active';
+  let pct = 0;
+
+  function setProgress(val, label) {
+    pct = Math.min(val, 100);
+    fill.style.width = pct + '%';
+    pctEl.textContent = Math.round(pct) + '%';
+    if (label) statusEl.textContent = label;
+  }
+
+  // Animate progress smoothly between polls
+  let animId = null;
+  function animateTo(target, duration) {
+    const start = pct;
+    const startTime = performance.now();
+    function step(now) {
+      const elapsed = now - startTime;
+      const t = Math.min(elapsed / duration, 1);
+      setProgress(start + (target - start) * t);
+      if (t < 1) animId = requestAnimationFrame(step);
+    }
+    if (animId) cancelAnimationFrame(animId);
+    animId = requestAnimationFrame(step);
+  }
+
   try {
-    await fetch(`${API_URL}/api/refresh`, {
+    setProgress(5, 'Waking up server...');
+    const startRes = await fetch(`${API_URL}/api/refresh`, {
       method: 'POST',
       headers: { 'x-api-key': API_KEY }
     });
-    // Poll status
+    if (!startRes.ok && startRes.status === 409) {
+      setProgress(10, 'Refresh already running, waiting...');
+    } else {
+      setProgress(10, 'Fetching emails from Missive...');
+    }
+
+    // Poll status with animated progress
     let status = { in_progress: true };
-    while (status.in_progress) {
+    let polls = 0;
+    const maxPolls = 40; // ~2 min max
+    while (status.in_progress && polls < maxPolls) {
+      // Animate toward a target that approaches but never reaches 90%
+      const target = 10 + (80 * (1 - 1 / (polls / 2 + 1)));
+      animateTo(target, 2800);
+
+      if (polls === 1) setProgress(undefined, 'Processing conversations...');
+      if (polls === 3) setProgress(undefined, 'Classifying cases...');
+      if (polls === 6) setProgress(undefined, 'Updating database...');
+      if (polls === 10) setProgress(undefined, 'Still processing...');
+
       await new Promise(r => setTimeout(r, 3000));
       const res = await fetch(`${API_URL}/api/refresh/status`);
       status = await res.json();
+      polls++;
     }
-    // Reload data
+
+    if (animId) cancelAnimationFrame(animId);
+
+    // Load new data
+    setProgress(92, 'Loading updated cases...');
     await loadDataFromAPI();
+    setProgress(100, 'Done!');
+    bar.classList.add('done');
+
     btn.textContent = '\u2713 Updated!';
-    setTimeout(() => { btn.innerHTML = '&#x21BB; Refresh'; btn.disabled = false; }, 2000);
+    const result = status.last_result;
+    if (result) {
+      const parts = [];
+      if (result.newCases) parts.push(result.newCases + ' new case' + (result.newCases > 1 ? 's' : ''));
+      if (result.updatedCases) parts.push(result.updatedCases + ' updated');
+      if (result.newMessages) parts.push(result.newMessages + ' new msg' + (result.newMessages > 1 ? 's' : ''));
+      if (parts.length) statusEl.textContent = 'Done — ' + parts.join(', ');
+      else statusEl.textContent = 'Done — no new emails';
+    }
+
+    setTimeout(() => {
+      bar.className = 'refresh-progress';
+      fill.style.width = '0%';
+      btn.innerHTML = '&#x21BB; Refresh';
+      btn.disabled = false;
+    }, 3000);
+
   } catch (err) {
+    if (animId) cancelAnimationFrame(animId);
+    setProgress(100, 'Refresh failed: ' + err.message);
+    bar.classList.add('error');
     btn.textContent = 'Error';
     console.error('Refresh failed:', err);
-    setTimeout(() => { btn.innerHTML = '&#x21BB; Refresh'; btn.disabled = false; }, 3000);
+    setTimeout(() => {
+      bar.className = 'refresh-progress';
+      fill.style.width = '0%';
+      btn.innerHTML = '&#x21BB; Refresh';
+      btn.disabled = false;
+    }, 4000);
   }
 }
 
