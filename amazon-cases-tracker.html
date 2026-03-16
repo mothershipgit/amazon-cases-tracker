@@ -567,6 +567,14 @@ function renderApp() {
   document.getElementById('stat-days-all').textContent = avgDaysAll;
   document.getElementById('stat-msgs').textContent    = totalMsgs;
 
+  // Sort: VIP/Premium cases first, then by days_open descending
+  openCases.sort((a, b) => {
+    const aVip = (a.issue_type === 'VIP Seller Relations' || a.issue_type === 'Premium Support') ? 1 : 0;
+    const bVip = (b.issue_type === 'VIP Seller Relations' || b.issue_type === 'Premium Support') ? 1 : 0;
+    if (aVip !== bVip) return bVip - aVip;
+    return b.days_open - a.days_open;
+  });
+
   // Render table rows
   renderTableRows('active-tbody', openCases);
   renderTableRows('closed-tbody', closedCases);
