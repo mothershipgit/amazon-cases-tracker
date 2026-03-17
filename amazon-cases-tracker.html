@@ -400,6 +400,23 @@
       font-weight: 600;
     }
 
+    /* ── New email envelope indicator ──────────────────────────────── */
+    .new-email-icon {
+      color: #e05252;
+      cursor: pointer;
+      margin-right: 4px;
+      font-size: 13px;
+      display: inline-block;
+      vertical-align: middle;
+      animation: pulse-envelope 2s ease-in-out infinite;
+      title: "New email — click to acknowledge";
+    }
+    .new-email-icon:hover { color: #c03030; transform: scale(1.2); }
+    @keyframes pulse-envelope {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
     .closed-section { opacity: 0.6; }
     .closed-section table { background: #fafbfc; }
     .closed-section tbody tr { background: #fafbfc; }
@@ -579,6 +596,36 @@ const API_KEY = 'cases2026';
 let CASES = [];
 let MSG_DATA = {};
 const EXCLUDED_FROM_STATS = ['10995838672'];
+let _unseenCaseIds = new Set(); // cases with unacknowledged new emails
+let _seenEmails = {};           // Firebase seen_emails data
+let _currentUid = null;         // current Firebase auth UID
+
+function computeUnseenCases() {
+  _unseenCaseIds = new Set();
+  const uid = _currentUid || 'anonymous';
+  CASES.filter(c => !c.close).forEach(c => {
+    const seenTs = _seenEmails[c.case_id]?.[uid];
+    if (!seenTs) {
+      // Never acknowledged — show envelope
+      _unseenCaseIds.add(c.case_id);
+    } else {
+      // Compare seen timestamp against last_update_date
+      const lastUpdate = new Date(c.last_update_date).getTime();
+      if (lastUpdate > seenTs) {
+        _unseenCaseIds.add(c.case_id);
+      }
+    }
+  });
+}
+
+function acknowledgeCase(el) {
+  const caseId = el.dataset.case;
+  if (!caseId) return;
+  const uid = _currentUid || 'anonymous';
+  firebase.database().ref('seen_emails/' + caseId + '/' + uid).set(Date.now());
+  el.remove();
+  _unseenCaseIds.delete(caseId);
+}
 
 function updateLastRefreshLabel(ts) {
   const el = document.getElementById('last-refresh');
@@ -697,7 +744,7 @@ function renderTableRows(tbodyId, cases) {
 
     tr.innerHTML = `
       <td class="col-close"><input type="checkbox" class="close-check" data-case="${c.case_id}" data-source="${c.close}" onchange="closeToggled(this)"></td>
-      <td class="col-case">${c.case_id}</td>
+      <td class="col-case">${_unseenCaseIds.has(c.case_id) ? '<span class="new-email-icon" data-case="' + c.case_id + '" onclick="acknowledgeCase(this)" title="New email received">✉</span>' : ''}${c.case_id}</td>
       <td class="col-parent"><span class="parent-link" data-case="${c.case_id}" onclick="editParent(this)"></span></td>
       <td>${c.brand || ''}</td>
       <td><span class="badge ${mktClass}">${c.marketplace || ''}</span></td>
@@ -793,6 +840,25 @@ async function triggerRefresh(btn) {
     btn.textContent = '\u2713 Updated!';
     updateLastRefreshLabel(new Date().toISOString());
     const result = status.last_result;
+    // Mark updated cases as unseen (show envelope)
+    if (result && result.updatedCaseIds && result.updatedCaseIds.length) {
+      result.updatedCaseIds.forEach(id => _unseenCaseIds.add(id));
+      // Re-render envelope icons
+      document.querySelectorAll('.col-case').forEach(td => {
+        const tr = td.closest('tr');
+        if (!tr) return;
+        const caseId = tr.dataset.case;
+        if (_unseenCaseIds.has(caseId) && !td.querySelector('.new-email-icon')) {
+          const icon = document.createElement('span');
+          icon.className = 'new-email-icon';
+          icon.dataset.case = caseId;
+          icon.onclick = function() { acknowledgeCase(this); };
+          icon.title = 'New email received';
+          icon.textContent = '✉';
+          td.insertBefore(icon, td.firstChild);
+        }
+      });
+    }
     if (result) {
       const parts = [];
       if (result.newCases) parts.push(result.newCases + ' new case' + (result.newCases > 1 ? 's' : ''));
@@ -1840,6 +1906,33 @@ const _MSG_DATA_FALLBACK = {
       });
       _syncing = false;
       regroupRows();
+    });
+
+    // Sync seen_emails — per-user envelope acknowledgment
+    const authUser = firebase.auth().currentUser;
+    _currentUid = authUser ? authUser.uid : 'anonymous';
+    db.ref('seen_emails').on('value', snap => {
+      _seenEmails = snap.val() || {};
+      computeUnseenCases();
+      // Update envelope icons in DOM
+      document.querySelectorAll('.col-case').forEach(td => {
+        const tr = td.closest('tr');
+        if (!tr) return;
+        const caseId = tr.dataset.case;
+        if (!caseId) return;
+        const existing = td.querySelector('.new-email-icon');
+        if (_unseenCaseIds.has(caseId) && !existing) {
+          const icon = document.createElement('span');
+          icon.className = 'new-email-icon';
+          icon.dataset.case = caseId;
+          icon.onclick = function() { acknowledgeCase(this); };
+          icon.title = 'New email received';
+          icon.textContent = '✉';
+          td.insertBefore(icon, td.firstChild);
+        } else if (!_unseenCaseIds.has(caseId) && existing) {
+          existing.remove();
+        }
+      });
     });
 
     // Initial close state from HTML source
