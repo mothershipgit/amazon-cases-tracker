@@ -2514,6 +2514,15 @@ const _MSG_DATA_FALLBACK = {
     <li>A short summary of each message received from Amazon</li>
   </ul>
   <p style="margin-top:8px;">The summaries may not always be perfect, but they provide a quick timeline of events for the case.</p>
+
+  <h3 style="font-size: 0.95rem; margin-top: 22px; color: #1a1d26;">New Email Indicator ✉</h3>
+  <p>When new emails arrive for a case (after clicking <strong>Refresh</strong>), a pulsing red <strong>✉ envelope icon</strong> appears next to the Case ID.</p>
+  <ul style="margin: 8px 0 8px 24px;">
+    <li>The envelope means this case has received a new email that you haven't reviewed yet.</li>
+    <li><strong>Click the envelope</strong> to acknowledge it &mdash; the icon disappears, confirming you've seen the update.</li>
+    <li>Each user has their own acknowledgment state &mdash; Tom acknowledging does not affect Vitali's view, and vice versa.</li>
+    <li>On page reload, envelopes reappear for any case where a new email arrived after your last acknowledgment.</li>
+  </ul>
 </div>
 
 </div><!-- /app -->
