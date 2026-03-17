@@ -556,6 +556,7 @@
     <button class="btn-copy" onclick="triggerRefresh(this)" id="btn-refresh" title="Pull new emails from Missive and update cases">
       &#x21BB; Refresh
     </button>
+    <span id="last-refresh" style="font-size:11px;color:#999;margin-left:8px;white-space:nowrap"></span>
     <div class="user-bar" id="user-bar"></div>
   </div>
 </header>
@@ -579,6 +580,20 @@ let CASES = [];
 let MSG_DATA = {};
 const EXCLUDED_FROM_STATS = ['10995838672'];
 
+function updateLastRefreshLabel(ts) {
+  const el = document.getElementById('last-refresh');
+  if (!el || !ts) return;
+  const d = new Date(ts);
+  const now = new Date();
+  const diff = Math.floor((now - d) / 60000);
+  let ago;
+  if (diff < 1) ago = 'just now';
+  else if (diff < 60) ago = diff + 'm ago';
+  else if (diff < 1440) ago = Math.floor(diff / 60) + 'h ago';
+  else ago = Math.floor(diff / 1440) + 'd ago';
+  el.textContent = 'Last refresh: ' + d.toLocaleDateString('en-GB', { day:'2-digit', month:'short' }) + ' ' + d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' }) + ' (' + ago + ')';
+}
+
 async function loadDataFromAPI() {
   try {
     const [casesRes, msgsRes] = await Promise.all([
@@ -590,6 +605,12 @@ async function loadDataFromAPI() {
     // Derived fields
     CASES.forEach(c => { c.product = c.asin_name || c.asin || (c.issue_type || '\u2014'); });
     renderApp();
+    // Update last refresh timestamp
+    try {
+      const statsRes = await fetch(`${API_URL}/api/stats`);
+      const stats = await statsRes.json();
+      updateLastRefreshLabel(stats.last_refresh);
+    } catch(e) { /* ignore */ }
   } catch (err) {
     console.error('Failed to load data from API:', err);
     document.querySelector('.meta').textContent = 'Error loading data from API — check console';
@@ -770,6 +791,7 @@ async function triggerRefresh(btn) {
     bar.classList.add('done');
 
     btn.textContent = '\u2713 Updated!';
+    updateLastRefreshLabel(new Date().toISOString());
     const result = status.last_result;
     if (result) {
       const parts = [];
