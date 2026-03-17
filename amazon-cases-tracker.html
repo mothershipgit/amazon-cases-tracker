@@ -1457,6 +1457,8 @@ const _MSG_DATA_FALLBACK = {
   let _assigneeOpenChart = null;
 
   function buildAssigneeCharts() {
+    // Recompute kpiOpen to reflect latest Firebase owner/close state
+    kpiOpen = CASES.filter(c => !c.close && !EXCLUDED_FROM_STATS.includes(c.case_id));
     if (_assigneeOpenChart) _assigneeOpenChart.destroy();
     _assigneeOpenChart = makeSimpleBar('ch-assignee-open', kpiOpen, 'owner', PAL, { datalabels: true }, true);
   }
