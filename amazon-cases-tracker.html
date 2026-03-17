@@ -600,6 +600,18 @@ let _unseenCaseIds = new Set(); // cases with unacknowledged new emails
 let _seenEmails = {};           // Firebase seen_emails data
 let _currentUid = null;         // current Firebase auth UID
 
+function toggleClosedSection() {
+  const wrap = document.getElementById('closed-section-wrap');
+  const arrow = document.getElementById('closed-toggle-arrow');
+  if (wrap.style.display === 'none') {
+    wrap.style.display = '';
+    arrow.textContent = '▲';
+  } else {
+    wrap.style.display = 'none';
+    arrow.textContent = '▼';
+  }
+}
+
 function computeUnseenCases() {
   _unseenCaseIds = new Set();
   const uid = _currentUid || 'anonymous';
@@ -1699,8 +1711,8 @@ const _MSG_DATA_FALLBACK = {
 </div>
 
 <!-- ═══ CLOSED CASES TABLE ════════════════════════════════════════════════════ -->
-<h2>Closed Cases</h2>
-<div class="table-wrap closed-section">
+<h2 style="cursor:pointer;user-select:none;" onclick="toggleClosedSection(this)">Closed Cases <span style="font-size:0.7em;color:#999;margin-left:6px;" id="closed-toggle-arrow">▼</span></h2>
+<div class="table-wrap closed-section" id="closed-section-wrap" style="display:none;">
   <table>
     <thead>
       <tr>
