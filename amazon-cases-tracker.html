@@ -1819,6 +1819,10 @@ const _MSG_DATA_FALLBACK = {
     db.ref('closed').on('value', snap => {
       _syncing = true;
       const closed = snap.val() || {};
+      // Update CASES close state so charts reflect Firebase overrides
+      CASES.forEach(c => {
+        if (closed[c.case_id] !== undefined) c.close = !!closed[c.case_id];
+      });
       document.querySelectorAll('.close-check').forEach(cb => {
         const caseId = cb.dataset.case;
         const shouldBeChecked = closed[caseId] || cb.dataset.source === 'true';
@@ -1830,6 +1834,7 @@ const _MSG_DATA_FALLBACK = {
       // Re-init status dropdowns after rows have been moved
       if (typeof initStatusDropdowns === 'function') initStatusDropdowns();
       updateKpiCounts();
+      if (typeof buildAssigneeCharts === 'function') buildAssigneeCharts();
       if (typeof rebuildAnalyticsIfOpen === 'function') rebuildAnalyticsIfOpen();
       _syncing = false;
     });
