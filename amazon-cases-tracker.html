@@ -1534,11 +1534,37 @@ const _MSG_DATA_FALLBACK = {
 <script>
   let _assigneeOpenChart = null;
 
+  // Read live open-case data from the DOM so charts always match the visible table
+  function getLiveOpenCases() {
+    const rows = document.querySelectorAll('#active-tbody tr[data-case]:not(.msg-detail-row)');
+    const cases = [];
+    rows.forEach(row => {
+      const caseId = row.dataset.case;
+      if (EXCLUDED_FROM_STATS.includes(caseId)) return;
+      const ownerSel = row.querySelector('.owner-select');
+      const statusSel = row.querySelector('.close-status-select');
+      const c = CASES.find(x => String(x.case_id) === String(caseId)) || {};
+      cases.push({
+        ...c,
+        owner: ownerSel ? ownerSel.value : (c.owner || 'Unassigned'),
+        status_bucket: statusSel ? statusSel.value : (c.status_bucket || 'Unknown'),
+      });
+    });
+    return cases;
+  }
+
   function buildAssigneeCharts() {
-    // Recompute kpiOpen to reflect latest Firebase owner/close state
-    kpiOpen = CASES.filter(c => !c.close && !EXCLUDED_FROM_STATS.includes(c.case_id));
+    // Read from DOM so chart matches visible table state
+    kpiOpen = getLiveOpenCases();
     if (_assigneeOpenChart) _assigneeOpenChart.destroy();
     _assigneeOpenChart = makeSimpleBar('ch-assignee-open', kpiOpen, 'owner', PAL, { datalabels: true }, true);
+  }
+
+  // Debounce chart rebuilds so multiple Firebase syncs don't each trigger a full rebuild
+  let _chartRebuildTimer = null;
+  function scheduleChartRebuild() {
+    if (_chartRebuildTimer) clearTimeout(_chartRebuildTimer);
+    _chartRebuildTimer = setTimeout(() => { _chartRebuildTimer = null; buildAllCharts(); }, 150);
   }
 
   // Store chart builder as a named function so renderApp() can re-call it
@@ -1820,9 +1846,9 @@ const _MSG_DATA_FALLBACK = {
       document.querySelectorAll('.owner-select').forEach(sel => {
         if (owners[sel.dataset.case]) sel.value = owners[sel.dataset.case];
       });
-      // Update CASES array with Firebase owners and rebuild all charts
+      // Update CASES array with Firebase owners
       CASES.forEach(c => { if (owners[c.case_id]) c.owner = owners[c.case_id]; });
-      if (typeof buildAllCharts === 'function') buildAllCharts();
+      if (typeof scheduleChartRebuild === 'function') scheduleChartRebuild();
       if (typeof rebuildAnalyticsIfOpen === 'function') rebuildAnalyticsIfOpen();
       _syncing = false;
     });
@@ -1846,7 +1872,7 @@ const _MSG_DATA_FALLBACK = {
       // Re-init status dropdowns after rows have been moved
       if (typeof initStatusDropdowns === 'function') initStatusDropdowns();
       updateKpiCounts();
-      if (typeof buildAllCharts === 'function') buildAllCharts();
+      if (typeof scheduleChartRebuild === 'function') scheduleChartRebuild();
       if (typeof rebuildAnalyticsIfOpen === 'function') rebuildAnalyticsIfOpen();
       _syncing = false;
     });
@@ -1962,17 +1988,27 @@ const _MSG_DATA_FALLBACK = {
   }
 
   // ── Re-apply Firebase state to fresh DOM (after loadDataFromAPI re-renders) ──
+  // All reads run in parallel via Promise.all, then charts rebuild once at the end.
   function _triggerFirebaseSync() {
-    db.ref('owners').once('value', snap => {
-      const owners = snap.val() || {};
+    _syncing = true;
+    Promise.all([
+      db.ref('owners').once('value'),
+      db.ref('closed').once('value'),
+      db.ref('close_statuses').once('value'),
+      db.ref('statuses').once('value'),
+      db.ref('notes').once('value'),
+      db.ref('next_actions').once('value'),
+      db.ref('parent_cases').once('value'),
+    ]).then(([ownersSnap, closedSnap, closeStatusSnap, statusSnap, notesSnap, actionsSnap, parentsSnap]) => {
+      // 1. Owners
+      const owners = ownersSnap.val() || {};
       document.querySelectorAll('.owner-select').forEach(sel => {
         if (owners[sel.dataset.case]) sel.value = owners[sel.dataset.case];
       });
       CASES.forEach(c => { if (owners[c.case_id]) c.owner = owners[c.case_id]; });
-    });
-    db.ref('closed').once('value', snap => {
-      _syncing = true;
-      const closed = snap.val() || {};
+
+      // 2. Closed state — move rows between tables
+      const closed = closedSnap.val() || {};
       CASES.forEach(c => { if (closed[c.case_id] !== undefined) c.close = !!closed[c.case_id]; });
       document.querySelectorAll('.close-check').forEach(cb => {
         const caseId = cb.dataset.case;
@@ -1983,44 +2019,39 @@ const _MSG_DATA_FALLBACK = {
         }
       });
       if (typeof initStatusDropdowns === 'function') initStatusDropdowns();
-      updateKpiCounts();
-      if (typeof buildAllCharts === 'function') buildAllCharts();
-      if (typeof rebuildAnalyticsIfOpen === 'function') rebuildAnalyticsIfOpen();
-      _syncing = false;
-      // After closed rows are moved, apply outcomes and other fields
-      db.ref('close_statuses').once('value', snap2 => {
-        const statuses = snap2.val() || {};
-        document.querySelectorAll('.close-status-select').forEach(sel => {
-          if (statuses[sel.dataset.case]) {
-            sel.value = statuses[sel.dataset.case];
-            styleCloseStatus(sel);
-          }
-        });
+
+      // 3. Close statuses (outcome dropdowns in closed table)
+      const closeStatuses = closeStatusSnap.val() || {};
+      document.querySelectorAll('.close-status-select').forEach(sel => {
+        if (closeStatuses[sel.dataset.case]) {
+          sel.value = closeStatuses[sel.dataset.case];
+          styleCloseStatus(sel);
+        }
       });
-    });
-    db.ref('statuses').once('value', snap => {
-      const statuses = snap.val() || {};
+
+      // 4. Active table statuses
+      const statuses = statusSnap.val() || {};
       document.querySelectorAll('#active-tbody .close-status-select').forEach(sel => {
         if (statuses[sel.dataset.case]) {
           sel.value = statuses[sel.dataset.case];
           styleCloseStatus(sel);
         }
       });
-    });
-    db.ref('notes').once('value', snap => {
-      const notes = snap.val() || {};
+
+      // 5. Notes
+      const notes = notesSnap.val() || {};
       document.querySelectorAll('.note-text[data-field="notes"]').forEach(div => {
         div.textContent = notes[div.dataset.case] || '';
       });
-    });
-    db.ref('next_actions').once('value', snap => {
-      const actions = snap.val() || {};
+
+      // 6. Next actions
+      const actions = actionsSnap.val() || {};
       document.querySelectorAll('.note-text[data-field="next_actions"]').forEach(div => {
         div.textContent = actions[div.dataset.case] || '';
       });
-    });
-    db.ref('parent_cases').once('value', snap => {
-      const parents = snap.val() || {};
+
+      // 7. Parent cases
+      const parents = parentsSnap.val() || {};
       document.querySelectorAll('.parent-link').forEach(span => {
         const val = parents[span.dataset.case] || '';
         span.textContent = val;
@@ -2028,6 +2059,12 @@ const _MSG_DATA_FALLBACK = {
         else span.classList.remove('has-parent');
       });
       regroupRows();
+
+      // 8. Rebuild everything once — all data is now in the DOM
+      updateKpiCounts();
+      if (typeof buildAllCharts === 'function') buildAllCharts();
+      if (typeof rebuildAnalyticsIfOpen === 'function') rebuildAnalyticsIfOpen();
+      _syncing = false;
     });
   }
 
