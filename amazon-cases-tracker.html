@@ -1820,9 +1820,9 @@ const _MSG_DATA_FALLBACK = {
       document.querySelectorAll('.owner-select').forEach(sel => {
         if (owners[sel.dataset.case]) sel.value = owners[sel.dataset.case];
       });
-      // Update CASES array with Firebase owners and rebuild assignee charts
+      // Update CASES array with Firebase owners and rebuild all charts
       CASES.forEach(c => { if (owners[c.case_id]) c.owner = owners[c.case_id]; });
-      if (typeof buildAssigneeCharts === 'function') buildAssigneeCharts();
+      if (typeof buildAllCharts === 'function') buildAllCharts();
       if (typeof rebuildAnalyticsIfOpen === 'function') rebuildAnalyticsIfOpen();
       _syncing = false;
     });
@@ -1846,7 +1846,7 @@ const _MSG_DATA_FALLBACK = {
       // Re-init status dropdowns after rows have been moved
       if (typeof initStatusDropdowns === 'function') initStatusDropdowns();
       updateKpiCounts();
-      if (typeof buildAssigneeCharts === 'function') buildAssigneeCharts();
+      if (typeof buildAllCharts === 'function') buildAllCharts();
       if (typeof rebuildAnalyticsIfOpen === 'function') rebuildAnalyticsIfOpen();
       _syncing = false;
     });
@@ -1969,11 +1969,11 @@ const _MSG_DATA_FALLBACK = {
         if (owners[sel.dataset.case]) sel.value = owners[sel.dataset.case];
       });
       CASES.forEach(c => { if (owners[c.case_id]) c.owner = owners[c.case_id]; });
-      if (typeof buildAssigneeCharts === 'function') buildAssigneeCharts();
     });
     db.ref('closed').once('value', snap => {
       _syncing = true;
       const closed = snap.val() || {};
+      CASES.forEach(c => { if (closed[c.case_id] !== undefined) c.close = !!closed[c.case_id]; });
       document.querySelectorAll('.close-check').forEach(cb => {
         const caseId = cb.dataset.case;
         const shouldBeChecked = closed[caseId] || cb.dataset.source === 'true';
@@ -1984,6 +1984,8 @@ const _MSG_DATA_FALLBACK = {
       });
       if (typeof initStatusDropdowns === 'function') initStatusDropdowns();
       updateKpiCounts();
+      if (typeof buildAllCharts === 'function') buildAllCharts();
+      if (typeof rebuildAnalyticsIfOpen === 'function') rebuildAnalyticsIfOpen();
       _syncing = false;
       // After closed rows are moved, apply outcomes and other fields
       db.ref('close_statuses').once('value', snap2 => {
