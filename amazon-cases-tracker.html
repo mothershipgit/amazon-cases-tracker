@@ -2457,34 +2457,19 @@ const _MSG_DATA_FALLBACK = {
       if (c.opened_date) caseOpenedTs[c.case_id] = new Date(c.opened_date + 'T00:00:00Z').getTime() / 1000;
     });
 
-    document.querySelectorAll('#active-tbody tr[data-case]').forEach(row => {
-      const caseId = row.dataset.case;
-      let msgs = MSG_DATA[caseId];
-      if (!msgs || msgs.length === 0) return;
+    function buildTimeline(row, toggleCell, caseId, msgs) {
+      if (!toggleCell || toggleCell.querySelector('.msg-toggle')) return;
+      const toggle = document.createElement('span');
+      toggle.className = 'msg-toggle';
+      toggle.textContent = '\u25B6';
+      toggle.title = msgs.length + ' Amazon message' + (msgs.length > 1 ? 's' : '');
+      toggle.onclick = function(e) { e.stopPropagation(); toggleMsgRow(caseId); };
+      const badge = document.createElement('span');
+      badge.className = 'msg-count-badge';
+      badge.textContent = msgs.length;
+      toggleCell.insertBefore(toggle, toggleCell.firstChild);
+      toggleCell.appendChild(badge);
 
-      // Filter out messages from before the case was opened
-      const openTs = caseOpenedTs[caseId];
-      if (openTs) {
-        msgs = msgs.filter(m => m.ts >= openTs - 86400); // 1 day grace
-      }
-      if (msgs.length === 0) return;
-
-      // Add expand toggle to case ID cell
-      const caseCell = row.querySelector('.col-case');
-      if (caseCell && !caseCell.querySelector('.msg-toggle')) {
-        const toggle = document.createElement('span');
-        toggle.className = 'msg-toggle';
-        toggle.textContent = '\u25B6';
-        toggle.title = msgs.length + ' Amazon message' + (msgs.length > 1 ? 's' : '');
-        toggle.onclick = function(e) { e.stopPropagation(); toggleMsgRow(caseId); };
-        const badge = document.createElement('span');
-        badge.className = 'msg-count-badge';
-        badge.textContent = msgs.length;
-        caseCell.insertBefore(toggle, caseCell.firstChild);
-        caseCell.appendChild(badge);
-      }
-
-      // Create detail row if not exists
       if (!document.getElementById('msg-row-' + caseId)) {
         const detailRow = document.createElement('tr');
         detailRow.id = 'msg-row-' + caseId;
@@ -2492,11 +2477,8 @@ const _MSG_DATA_FALLBACK = {
         detailRow.dataset.parentCase = caseId;
         const td = document.createElement('td');
         td.colSpan = row.children.length;
-
         const timeline = document.createElement('div');
         timeline.className = 'msg-timeline';
-
-        // Sort messages oldest first
         const sorted = [...msgs].sort((a, b) => a.ts - b.ts);
         sorted.forEach(m => {
           const entry = document.createElement('div');
@@ -2509,11 +2491,32 @@ const _MSG_DATA_FALLBACK = {
             '<span class="msg-preview">' + m.preview + '</span>';
           timeline.appendChild(entry);
         });
-
         td.appendChild(timeline);
         detailRow.appendChild(td);
         row.after(detailRow);
       }
+    }
+
+    // Active cases — toggle on Case ID column
+    document.querySelectorAll('#active-tbody tr[data-case]').forEach(row => {
+      const caseId = row.dataset.case;
+      let msgs = MSG_DATA[caseId];
+      if (!msgs || msgs.length === 0) return;
+      const openTs = caseOpenedTs[caseId];
+      if (openTs) msgs = msgs.filter(m => m.ts >= openTs - 86400);
+      if (msgs.length === 0) return;
+      buildTimeline(row, row.querySelector('.col-case'), caseId, msgs);
+    });
+
+    // FBA Issues — toggle on Summary column (cell 6)
+    document.querySelectorAll('#fba-tbody tr[data-case]').forEach(row => {
+      const caseId = row.dataset.case;
+      let msgs = MSG_DATA[caseId];
+      if (!msgs || msgs.length === 0) return;
+      const openTs = caseOpenedTs[caseId];
+      if (openTs) msgs = msgs.filter(m => m.ts >= openTs - 86400);
+      if (msgs.length === 0) return;
+      buildTimeline(row, row.cells[6], caseId, msgs);
     });
   }
 
