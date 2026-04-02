@@ -2533,11 +2533,10 @@ const _MSG_DATA_FALLBACK = {
   // Convert static bucket spans to status dropdowns in active table
   function initStatusDropdowns() {
     const STATUS_OPTIONS = ['Waiting on Us', 'Waiting on Amazon', 'Resolved', 'Not Resolved', 'On Hold'];
-    // Apply to both active AND closed tables
-    document.querySelectorAll('#active-tbody tr[data-case]:not(.msg-detail-row), #closed-tbody tr[data-case]:not(.msg-detail-row)').forEach(row => {
-      const cell = row.cells[10]; // Status column
+
+    function applyToRow(row, cellIndex) {
+      const cell = row.cells[cellIndex];
       if (!cell) return;
-      // Skip if already has a dropdown
       if (cell.querySelector('.close-status-select')) return;
       const span = cell.querySelector('.bucket');
       if (!span) return;
@@ -2557,6 +2556,15 @@ const _MSG_DATA_FALLBACK = {
       cell.innerHTML = '';
       cell.appendChild(sel);
       styleCloseStatus(sel);
+    }
+
+    // Active + Closed tables — status at cell 10
+    document.querySelectorAll('#active-tbody tr[data-case]:not(.msg-detail-row), #closed-tbody tr[data-case]:not(.msg-detail-row)').forEach(row => {
+      applyToRow(row, 10);
+    });
+    // FBA Issues table — status at cell 7
+    document.querySelectorAll('#fba-tbody tr[data-case]').forEach(row => {
+      applyToRow(row, 7);
     });
   }
 
