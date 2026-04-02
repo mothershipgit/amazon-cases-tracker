@@ -678,9 +678,10 @@ async function loadDataFromAPI() {
 
 function renderApp() {
   // Compute KPI values — update globals so chart builders can access them
-  openCases   = CASES.filter(c => !c.close);
-  closedCases = CASES.filter(c => c.close);
-  kpiCases    = CASES.filter(c => !EXCLUDED_FROM_STATS.includes(c.case_id));
+  openCases   = CASES.filter(c => !c.close && c.case_type !== 'fba_issue');
+  closedCases = CASES.filter(c => c.close && c.case_type !== 'fba_issue');
+  fbaIssues   = CASES.filter(c => !c.close && c.case_type === 'fba_issue');
+  kpiCases    = CASES.filter(c => !EXCLUDED_FROM_STATS.includes(c.case_id) && c.case_type !== 'fba_issue');
   kpiOpen     = kpiCases.filter(c => !c.close);
   kpiClosed   = kpiCases.filter(c => c.close);
   avgDaysOpen = kpiOpen.length ? Math.round(kpiOpen.reduce((s, c) => s + c.days_open, 0) / kpiOpen.length) : 0;
@@ -704,9 +705,11 @@ function renderApp() {
   // Render table rows
   renderTableRows('active-tbody', openCases);
   renderTableRows('closed-tbody', closedCases);
+  renderFbaIssueRows('fba-tbody', fbaIssues);
 
   // Update meta line
-  document.querySelector('.meta').textContent = `${openCases.length} active · ${closedCases.length} closed · Source: API`;
+  const fbaLabel = fbaIssues.length ? ` · ${fbaIssues.length} FBA` : '';
+  document.querySelector('.meta').textContent = `${openCases.length} active · ${closedCases.length} closed${fbaLabel} · Source: API`;
 
   // Rebuild charts & timelines after DOM is ready
   setTimeout(() => {
@@ -771,6 +774,43 @@ function renderTableRows(tbodyId, cases) {
       <td class="col-notes"><div class="note-text" data-case="${c.case_id}" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
       <td class="col-num">${c.msgs}</td>
       <td class="col-num ${daysClass}">${c.days_open}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderFbaIssueRows(tbodyId, cases) {
+  const tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
+  tbody.querySelectorAll('tr[data-case]').forEach(r => r.remove());
+  const countEl = document.getElementById('fba-count');
+  if (countEl) countEl.textContent = cases.length;
+  // Show/hide the FBA section
+  const fbaSection = document.getElementById('fba-section');
+  if (fbaSection) fbaSection.style.display = cases.length ? '' : 'none';
+
+  cases.forEach(c => {
+    const tr = document.createElement('tr');
+    tr.setAttribute('data-case', c.case_id);
+    tr.setAttribute('data-brand', c.brand || '');
+    tr.setAttribute('data-mkt', c.marketplace || '');
+    const mktClass = c.marketplace ? `mkt-${c.marketplace.toLowerCase()}` : '';
+    const bucketMap = { 'Waiting on Us': 'bucket-us', 'Waiting on Amazon': 'bucket-amz', 'Resolved': 'bucket-ok', 'Not Resolved': 'bucket-nr', 'On Hold': 'bucket-hold' };
+    const bucketClass = bucketMap[c.status_bucket] || '';
+    const ownerOptions = ['Unassigned', 'Vitali', 'Tom', 'Natasha', 'Leticia', 'Francesco'].map(o =>
+      `<option value="${o}"${c.owner === o ? ' selected' : ''}>${o}</option>`
+    ).join('');
+    tr.innerHTML = `
+      <td class="col-close"><input type="checkbox" class="close-check" data-case="${c.case_id}" data-source="${c.close}" onchange="closeToggled(this)"></td>
+      <td class="col-brand">${c.brand || ''}</td>
+      <td><span class="badge ${mktClass}">${c.marketplace || ''}</span></td>
+      <td class="col-owner"><select class="owner-select" data-case="${c.case_id}" onchange="ownerChanged(this)">${ownerOptions}</select></td>
+      <td class="col-date">${c.opened_date || ''}</td>
+      <td class="col-date">${c.last_update_date || ''}</td>
+      <td class="col-summary">${c.summary || c.status_current || ''}</td>
+      <td><span class="bucket ${bucketClass}">${c.status_bucket || ''}</span></td>
+      <td class="col-action"><div class="note-text" data-case="${c.case_id}" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>
+      <td class="col-notes"><div class="note-text" data-case="${c.case_id}" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>
     `;
     tbody.appendChild(tr);
   });
@@ -1152,7 +1192,7 @@ if (typeof _CASES_FALLBACK !== 'undefined' && _CASES_FALLBACK.length > 0 && CASE
   CASES.forEach(c => { c.product = c.asin_name || c.asin || (c.issue_type || '\u2014'); });
 }
 // These are now computed inside renderApp() — kept as placeholders for initial load
-let openCases = [], closedCases = [], kpiCases = [], kpiOpen = [], kpiClosed = [];
+let openCases = [], closedCases = [], fbaIssues = [], kpiCases = [], kpiOpen = [], kpiClosed = [];
 let avgDaysOpen = 0, totalMsgs = 0;
 
 // MSG_DATA is now loaded from API — see loadDataFromAPI()
@@ -1257,7 +1297,9 @@ const _MSG_DATA_FALLBACK = {
     document.getElementById('stat-closed').textContent = closedRows;
     // Keep meta line in sync with KPI cards
     const meta = document.querySelector('.meta');
-    if (meta) meta.textContent = `${activeRows} active · ${closedRows} closed · Source: API`;
+    const fbaRows = document.querySelectorAll('#fba-tbody tr[data-case]').length;
+    const fbaLabel = fbaRows ? ` · ${fbaRows} FBA` : '';
+    if (meta) meta.textContent = `${activeRows} active · ${closedRows} closed${fbaLabel} · Source: API`;
 
     // Count resolved / not resolved from outcome dropdowns
     let resolved = 0, notResolved = 0;
@@ -1736,6 +1778,33 @@ const _MSG_DATA_FALLBACK = {
   </table>
 </div>
 
+<!-- ═══ FBA ISSUES TABLE ═════════════════════════════════════════════════════ -->
+<div id="fba-section" style="display:none;">
+  <h2 style="margin-top:28px; background:linear-gradient(90deg,#ff9800,#fb8c00); color:#fff; padding:10px 18px; border-radius:8px; font-size:0.95rem; letter-spacing:0.5px;">
+    FBA Issues <span style="font-weight:400; opacity:0.85; margin-left:8px;" id="fba-count">0</span>
+  </h2>
+  <div class="table-wrap">
+    <table id="fba-table">
+      <thead>
+        <tr>
+          <th class="col-close">Close</th>
+          <th class="col-brand">Brand</th>
+          <th>MKT</th>
+          <th class="col-owner">Owner</th>
+          <th class="col-date">Opened</th>
+          <th class="col-date">Last Update</th>
+          <th class="col-summary">Subject / Summary</th>
+          <th>Status</th>
+          <th class="col-action">Next Action</th>
+          <th class="col-notes">Notes</th>
+        </tr>
+      </thead>
+      <tbody id="fba-tbody">
+      </tbody>
+    </table>
+  </div>
+</div>
+
 <!-- ═══ CLOSED CASES TABLE ════════════════════════════════════════════════════ -->
 <h2 style="cursor:pointer;user-select:none;" onclick="toggleClosedSection(this)">Closed Cases <span style="font-size:0.7em;color:#999;margin-left:6px;" id="closed-toggle-arrow">▼</span></h2>
 <div class="table-wrap closed-section" id="closed-section-wrap" style="display:none;">
@@ -2100,13 +2169,15 @@ const _MSG_DATA_FALLBACK = {
   function moveRow(caseId, toClose) {
     const row = document.querySelector('tr[data-case="' + caseId + '"]');
     if (!row) return;
-    const activeTbody = document.getElementById('active-tbody');
+    const c = CASES.find(x => String(x.case_id) === String(caseId));
+    const isFba = c && c.case_type === 'fba_issue';
+    const sourceTbody = isFba ? document.getElementById('fba-tbody') : document.getElementById('active-tbody');
     const closedTbody = document.getElementById('closed-tbody');
     const emptyRow    = document.getElementById('closed-empty');
 
     if (toClose) {
       // Switch dropdown to closed-table handler and default to Resolved
-      const bucketCell = row.cells[10];
+      const bucketCell = isFba ? row.cells[7] : row.cells[10];
       const sel = bucketCell && bucketCell.querySelector('.close-status-select');
       if (sel) {
         sel.setAttribute('onchange', 'closeStatusChanged(this)');
@@ -2117,17 +2188,16 @@ const _MSG_DATA_FALLBACK = {
       closedTbody.appendChild(row);
       if (emptyRow) emptyRow.style.display = 'none';
     } else {
-      // Switch dropdown back to active-table handler and restore original status
-      const bucketCell = row.cells[10];
+      // Switch dropdown back and restore original status
+      const bucketCell = isFba ? row.cells[7] : row.cells[10];
       const sel = bucketCell && bucketCell.querySelector('.close-status-select');
       if (sel) {
         sel.setAttribute('onchange', 'statusChanged(this)');
-        const c = CASES.find(x => x.case_id === caseId);
         sel.value = c ? c.status_bucket : 'Waiting on Amazon';
         styleCloseStatus(sel);
       }
       if (!_syncing) db.ref('close_statuses/' + caseId).remove();
-      activeTbody.appendChild(row);
+      sourceTbody.appendChild(row);
       const remaining = closedTbody.querySelectorAll('tr:not(#closed-empty)').length;
       if (remaining === 0 && emptyRow) emptyRow.style.display = '';
     }
