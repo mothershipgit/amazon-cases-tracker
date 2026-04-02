@@ -446,6 +446,18 @@
     .owner-select:focus { outline: none; border-color: #5282e0; }
     .owner-select option[value="Unassigned"] { color: #aaa; }
 
+    .issue-select {
+      font-size: 0.72rem;
+      padding: 3px 5px;
+      border: 1px solid #dde0ea;
+      border-radius: 4px;
+      background: #fff;
+      color: #444;
+      cursor: pointer;
+      width: 100%;
+    }
+    .issue-select:focus { outline: none; border-color: #5282e0; }
+
     /* ── Login overlay ──────────────────────────────────────────────────── */
     .login-overlay {
       position: fixed;
@@ -748,7 +760,24 @@ function renderTableRows(tbodyId, cases) {
       : 'bucket-wa';
     const daysClass = c.days_open >= 14 ? 'days-urgent' : c.days_open >= 7 ? 'days-warn' : 'days-ok';
     const isVip = c.issue_type === 'Premium Support' || c.issue_type === 'VIP Seller Relations';
-    const issueHtml = isVip ? `<span class="issue-vip">${c.issue_type || ''}</span>` : (c.issue_type || '');
+    const ISSUE_CATEGORIES = [
+      'Other',
+      'VAT', 'GPSR Compliance', 'Image Compliance', 'Business Compliance',
+      'Listing Compliance', 'Logistics', 'Product Safety', 'Restricted Products',
+      'Regulatory Compliance', 'IP Violation', 'IP Complaint',
+      'Authenticity Complaint', 'Product Condition Complaint',
+      'Listing Policy Violation', 'Reviews Policy Violation', 'Policy Violation',
+      'Premium Support', 'Escalation',
+    ];
+    const currentIssue = c.issue_type || 'Other';
+    const issueOptions = ISSUE_CATEGORIES.map(cat =>
+      `<option value="${cat}"${cat === currentIssue ? ' selected' : ''}>${cat}</option>`
+    ).join('');
+    // If current value not in list, add it as first option
+    const extraOption = ISSUE_CATEGORIES.includes(currentIssue) ? '' : `<option value="${currentIssue}" selected>${currentIssue}</option>`;
+    const issueHtml = isVip
+      ? `<span class="issue-vip">${c.issue_type || ''}</span>`
+      : `<select class="issue-select" data-case="${c.case_id}" onchange="issueTypeChanged(this)">${extraOption}${issueOptions}</select>`;
     const asinHtml = c.asin
       ? `<span class="asin-code">${c.asin}</span>${c.asin_name ? `<span class="asin-name">${c.asin_name}</span>` : ''}`
       : '';
@@ -1995,6 +2024,21 @@ const _MSG_DATA_FALLBACK = {
       _syncing = false;
     });
 
+    // Sync issue type overrides
+    db.ref('issue_types').on('value', snap => {
+      _syncing = true;
+      const types = snap.val() || {};
+      document.querySelectorAll('.issue-select').forEach(sel => {
+        if (types[sel.dataset.case]) {
+          sel.value = types[sel.dataset.case];
+          // Update CASES array
+          const c = CASES.find(x => String(x.case_id) === String(sel.dataset.case));
+          if (c) c.issue_type = types[sel.dataset.case];
+        }
+      });
+      _syncing = false;
+    });
+
     // Sync next actions
     db.ref('next_actions').on('value', snap => {
       _syncing = true;
@@ -2069,7 +2113,8 @@ const _MSG_DATA_FALLBACK = {
       db.ref('notes').once('value'),
       db.ref('next_actions').once('value'),
       db.ref('parent_cases').once('value'),
-    ]).then(([ownersSnap, closedSnap, closeStatusSnap, statusSnap, notesSnap, actionsSnap, parentsSnap]) => {
+      db.ref('issue_types').once('value'),
+    ]).then(([ownersSnap, closedSnap, closeStatusSnap, statusSnap, notesSnap, actionsSnap, parentsSnap, issueTypesSnap]) => {
       // 1. Owners
       const owners = ownersSnap.val() || {};
       document.querySelectorAll('.owner-select').forEach(sel => {
@@ -2130,7 +2175,17 @@ const _MSG_DATA_FALLBACK = {
       });
       regroupRows();
 
-      // 8. Rebuild everything once — all data is now in the DOM
+      // 8. Issue type overrides
+      const issueTypes = issueTypesSnap.val() || {};
+      document.querySelectorAll('.issue-select').forEach(sel => {
+        if (issueTypes[sel.dataset.case]) {
+          sel.value = issueTypes[sel.dataset.case];
+          const c = CASES.find(x => String(x.case_id) === String(sel.dataset.case));
+          if (c) c.issue_type = issueTypes[sel.dataset.case];
+        }
+      });
+
+      // 9. Rebuild everything once — all data is now in the DOM
       updateKpiCounts();
       if (typeof buildAllCharts === 'function') buildAllCharts();
       if (typeof rebuildAnalyticsIfOpen === 'function') rebuildAnalyticsIfOpen();
@@ -2142,6 +2197,14 @@ const _MSG_DATA_FALLBACK = {
   function ownerChanged(sel) {
     if (_syncing) return;
     db.ref('owners/' + sel.dataset.case).set(sel.value);
+  }
+
+  function issueTypeChanged(sel) {
+    if (_syncing) return;
+    db.ref('issue_types/' + sel.dataset.case).set(sel.value);
+    // Update CASES array so charts reflect the change
+    const c = CASES.find(x => String(x.case_id) === String(sel.dataset.case));
+    if (c) c.issue_type = sel.value;
   }
 
   // ── Close toggle ──────────────────────────────────────────────────────
