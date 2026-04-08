@@ -1457,12 +1457,8 @@ const _MSG_DATA_FALLBACK = {
     if (!isOpen) {
       header.classList.add('open');
       body.classList.add('open');
-      // Lazy-init charts on first open
-      const bodyId = body.id;
-      if (!body.dataset.inited) {
-        body.dataset.inited = '1';
-        initAccordionCharts(bodyId);
-      }
+      body.dataset.inited = '1';
+      initAccordionCharts(body.id);
     }
   }
 
