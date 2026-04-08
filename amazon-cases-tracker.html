@@ -275,6 +275,10 @@
     .mkt-de { background: #fef9e0; color: #996600; }
     .mkt-es { background: #fff0e0; color: #cc5500; }
     .mkt-us { background: #f0e8ff; color: #6622bb; }
+    .mkt-select {
+      font-size: 11px; padding: 2px 4px; border-radius: 4px; border: 1px solid #ddd;
+      cursor: pointer; font-weight: 600; min-width: 42px;
+    }
 
     .bucket {
       display: inline-block;
@@ -731,6 +735,7 @@ function renderApp() {
   setTimeout(() => {
     if (typeof populateFilters === 'function') populateFilters();
     if (typeof initStatusDropdowns === 'function') initStatusDropdowns();
+    document.querySelectorAll('.mkt-select').forEach(sel => styleMktSelect(sel));
     if (typeof buildAllCharts === 'function') buildAllCharts();
     if (typeof initMsgTimeline === 'function') initMsgTimeline();
     if (typeof applyFilters === 'function') applyFilters();
@@ -796,7 +801,7 @@ function renderTableRows(tbodyId, cases) {
       <td class="col-case">${c.case_type === 'notification' ? '<span class="badge" style="background:#f59e0b;color:#fff;font-size:0.6rem;margin-right:4px;vertical-align:middle;">NOTIF</span>' : ''}${_unseenCaseIds.has(c.case_id) ? '<span class="new-email-icon" data-case="' + c.case_id + '" onclick="acknowledgeCase(this)" title="New email received">✉</span>' : ''}${c.case_id}</td>
       <td class="col-parent"><span class="parent-link" data-case="${c.case_id}" onclick="editParent(this)"></span></td>
       <td>${c.brand || ''}</td>
-      <td><span class="badge ${mktClass}">${c.marketplace || ''}</span></td>
+      <td>${(() => { const MKT_OPTIONS = ['','DE','FR','IT','ES','UK','US']; const curMkt = c.marketplace || ''; const mktOpts = MKT_OPTIONS.map(m => '<option value="'+m+'"'+(m===curMkt?' selected':'')+'>'+m+'</option>').join(''); const extraMkt = MKT_OPTIONS.includes(curMkt) ? '' : '<option value="'+curMkt+'" selected>'+curMkt+'</option>'; return '<select class="mkt-select" data-case="'+c.case_id+'" onchange="marketplaceChanged(this)">'+extraMkt+mktOpts+'</select>'; })()}</td>
       <td class="col-owner"><select class="owner-select" data-case="${c.case_id}" onchange="ownerChanged(this)">${ownerOptions}</select></td>
       <td class="col-date">${c.opened_date || ''}</td>
       <td class="col-date">${c.last_update_date || ''}</td>
@@ -837,7 +842,7 @@ function renderFbaIssueRows(tbodyId, cases) {
     tr.innerHTML = `
       <td class="col-close"><input type="checkbox" class="close-check" data-case="${c.case_id}" data-source="${c.close}" onchange="closeToggled(this)"></td>
       <td class="col-brand">${c.brand || ''}</td>
-      <td><span class="badge ${mktClass}">${c.marketplace || ''}</span></td>
+      <td>${(() => { const MKT_OPTIONS = ['','DE','FR','IT','ES','UK','US']; const curMkt = c.marketplace || ''; const mktOpts = MKT_OPTIONS.map(m => '<option value="'+m+'"'+(m===curMkt?' selected':'')+'>'+m+'</option>').join(''); const extraMkt = MKT_OPTIONS.includes(curMkt) ? '' : '<option value="'+curMkt+'" selected>'+curMkt+'</option>'; return '<select class="mkt-select" data-case="'+c.case_id+'" onchange="marketplaceChanged(this)">'+extraMkt+mktOpts+'</select>'; })()}</td>
       <td class="col-owner"><select class="owner-select" data-case="${c.case_id}" onchange="ownerChanged(this)">${ownerOptions}</select></td>
       <td class="col-date">${c.opened_date || ''}</td>
       <td class="col-date">${c.last_update_date || ''}</td>
@@ -2047,6 +2052,23 @@ const _MSG_DATA_FALLBACK = {
       _syncing = false;
     });
 
+    // Sync marketplaces
+    db.ref('marketplaces').on('value', snap => {
+      _syncing = true;
+      const mkts = snap.val() || {};
+      document.querySelectorAll('.mkt-select').forEach(sel => {
+        if (mkts[sel.dataset.case]) {
+          sel.value = mkts[sel.dataset.case];
+          styleMktSelect(sel);
+          const c = CASES.find(x => String(x.case_id) === String(sel.dataset.case));
+          if (c) c.marketplace = mkts[sel.dataset.case];
+          const row = sel.closest('tr');
+          if (row) row.setAttribute('data-mkt', mkts[sel.dataset.case]);
+        }
+      });
+      _syncing = false;
+    });
+
     // Sync next actions
     db.ref('next_actions').on('value', snap => {
       _syncing = true;
@@ -2122,7 +2144,8 @@ const _MSG_DATA_FALLBACK = {
       db.ref('next_actions').once('value'),
       db.ref('parent_cases').once('value'),
       db.ref('issue_types').once('value'),
-    ]).then(([ownersSnap, closedSnap, closeStatusSnap, statusSnap, notesSnap, actionsSnap, parentsSnap, issueTypesSnap]) => {
+      db.ref('marketplaces').once('value'),
+    ]).then(([ownersSnap, closedSnap, closeStatusSnap, statusSnap, notesSnap, actionsSnap, parentsSnap, issueTypesSnap, mktSnap]) => {
       // 1. Owners
       const owners = ownersSnap.val() || {};
       document.querySelectorAll('.owner-select').forEach(sel => {
@@ -2193,7 +2216,20 @@ const _MSG_DATA_FALLBACK = {
         }
       });
 
-      // 9. Rebuild everything once — all data is now in the DOM
+      // 9. Marketplace overrides
+      const mkts = mktSnap.val() || {};
+      document.querySelectorAll('.mkt-select').forEach(sel => {
+        if (mkts[sel.dataset.case]) {
+          sel.value = mkts[sel.dataset.case];
+          styleMktSelect(sel);
+          const c = CASES.find(x => String(x.case_id) === String(sel.dataset.case));
+          if (c) c.marketplace = mkts[sel.dataset.case];
+          const row = sel.closest('tr');
+          if (row) row.setAttribute('data-mkt', mkts[sel.dataset.case]);
+        }
+      });
+
+      // 10. Rebuild everything once — all data is now in the DOM
       updateKpiCounts();
       if (typeof buildAllCharts === 'function') buildAllCharts();
       if (typeof rebuildAnalyticsIfOpen === 'function') rebuildAnalyticsIfOpen();
@@ -2213,6 +2249,23 @@ const _MSG_DATA_FALLBACK = {
     // Update CASES array so charts reflect the change
     const c = CASES.find(x => String(x.case_id) === String(sel.dataset.case));
     if (c) c.issue_type = sel.value;
+  }
+
+  function marketplaceChanged(sel) {
+    if (_syncing) return;
+    db.ref('marketplaces/' + sel.dataset.case).set(sel.value);
+    styleMktSelect(sel);
+    const c = CASES.find(x => String(x.case_id) === String(sel.dataset.case));
+    if (c) c.marketplace = sel.value;
+    // Update row data-mkt for filter compatibility
+    const row = sel.closest('tr');
+    if (row) row.setAttribute('data-mkt', sel.value);
+  }
+
+  function styleMktSelect(sel) {
+    sel.className = 'mkt-select';
+    const cls = sel.value ? `mkt-${sel.value.toLowerCase()}` : '';
+    if (cls) sel.classList.add(cls);
   }
 
   // ── Close toggle ──────────────────────────────────────────────────────
