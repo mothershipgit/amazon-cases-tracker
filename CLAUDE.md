@@ -110,9 +110,11 @@ The Windows Task Scheduler (`AmazonCasesDailyUpdate`) is **obsolete** — can be
 - **`amazon_msgs_count`**: permanent historical counter, never decrements
 - **Close workflow**: tick checkbox → row moves to Closed table + Outcome dropdown injected (default: Resolved) + date stamped → Firebase syncs `closed`, `close_dates`, `close_statuses`
 - **KPI counters**: `updateKpiCounts()` recalculates Open/Closed from actual table rows after every close toggle and Firebase sync
-- **Notification cases**: Emails from `donotreply@amazon.com` / `do-not-reply@amazon.com` with no case ID are captured as `case_type: 'notification'` with sequential ID format `NOTIF-001`, `NOTIF-002`, etc. Marketplace inferred from email body (country names, amazon.XX/sellercentral URLs, language detection). ASIN extracted from full email body (not just preview). Excluded from KPI stats. Shown in main Active Cases table with amber NOTIF badge. Intended as parent cases — when a real case is opened to address the notification, link it as a child.
-- **Investigation status**: Added as a status option (purple) alongside Waiting on Us/Amazon, Resolved, Not Resolved, On Hold.
-- **Marketplace dropdown**: Marketplace column is an editable dropdown (DE/FR/IT/ES/UK/US) persisted via Firebase `marketplaces/{case_id}`. Overrides backend-detected marketplace. Color-coded per marketplace.
+- **Notification cases**: Emails from `donotreply@amazon.com` / `do-not-reply@amazon.com` with no case ID are captured as `case_type: 'notification'` with deterministic ID format `NOTIF-{last6charsOfConvUUID}` (stable across rebuilds). Marketplace inferred from full email body via `/messages/{id}` endpoint (country names, amazon.XX/sellercentral URLs, language detection). ASIN extracted from full body. Included in KPI stats and assignee charts. Shown in main Active Cases table with amber NOTIF badge. Intended as parent cases — when a real case is opened to address the notification, link it as a child.
+- **Marketplace dropdown**: Marketplace column is an editable dropdown (DE/FR/IT/ES/UK/US) persisted via Firebase `marketplaces/{case_id}`. Overrides backend-detected marketplace. Color-coded per marketplace. Changes trigger chart rebuild.
+- **Issue type categories**: KYC and Investigation are issue types (not statuses). Full list: Other, VAT, GPSR Compliance, Image Compliance, Business Compliance, Listing Compliance, Logistics, Product Safety, Restricted Products, Regulatory Compliance, IP Violation, IP Complaint, Authenticity Complaint, Product Condition Complaint, Listing Policy Violation, Reviews Policy Violation, Policy Violation, Premium Support, Escalation, Notification, KYC, Investigation.
+- **Charts read from DOM**: Analytics charts (`getLiveSubset`) sync issue_type and marketplace from DOM dropdowns before building, ensuring Firebase overrides are reflected. Accordion charts rebuild every time opened (not lazy-init once).
+- **Issue Type per Product chart**: Only shows cases that have an ASIN — cases without ASIN are excluded to prevent issue types appearing as product names.
 
 ## Firebase Keys (Realtime Database)
 | Key | Type | Purpose |
@@ -120,7 +122,7 @@ The Windows Task Scheduler (`AmazonCasesDailyUpdate`) is **obsolete** — can be
 | `owners/{case_id}` | string | Assignee per case (Unassigned/Tom/Vitali) |
 | `closed/{case_id}` | boolean | Closed state |
 | `close_dates/{case_id}` | string | Close date (YYYY-MM-DD) |
-| `close_statuses/{case_id}` | string | Outcome: Resolved/Not Resolved/On Hold/Waiting on Amazon/Waiting on Us/Investigation |
+| `close_statuses/{case_id}` | string | Outcome: Resolved/Not Resolved/On Hold/Waiting on Amazon/Waiting on Us |
 | `notes/{case_id}` | string | Free-text notes |
 | `next_actions/{case_id}` | string | Next action text |
 | `parent_cases/{case_id}` | string | Parent case ID |
