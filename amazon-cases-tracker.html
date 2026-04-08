@@ -294,6 +294,7 @@
     .bucket-nr   { background: #fdecea; color: #bb2211; }
     .bucket-hold { background: #fff3e0; color: #bb6600; }
     .bucket-invest { background: #f3e8ff; color: #7c3aed; }
+    .bucket-kyc    { background: #fef3c7; color: #92400e; }
     .close-status-select {
       font-size: 11px; padding: 3px 6px; border-radius: 4px; border: 1px solid #ddd;
       cursor: pointer; font-weight: 600; background: #fff;
@@ -304,6 +305,7 @@
     .close-status-select.st-waitamazon { background: #e8f0fe; color: #1a55bb; border-color: #b6d4fe; }
     .close-status-select.st-waitus     { background: #fdecea; color: #bb2211; border-color: #f5c6cb; }
     .close-status-select.st-invest    { background: #f3e8ff; color: #7c3aed; border-color: #d8b4fe; }
+    .close-status-select.st-kyc       { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
     .issue-vip   { background: #e6f9ee; color: #156930; padding: 2px 7px; border-radius: 4px; font-weight: 600; font-size: 0.78rem; white-space: nowrap; display: inline-block; }
 
     .days-urgent { color: #bb2211; font-weight: 700; }
@@ -767,6 +769,7 @@ function renderTableRows(tbodyId, cases) {
       : c.status_bucket === 'Not Resolved' ? 'bucket-nr'
       : c.status_bucket === 'On Hold' ? 'bucket-hold'
       : c.status_bucket === 'Investigation' ? 'bucket-invest'
+      : c.status_bucket === 'KYC' ? 'bucket-kyc'
       : 'bucket-wa';
     const daysClass = c.days_open >= 14 ? 'days-urgent' : c.days_open >= 7 ? 'days-warn' : 'days-ok';
     const isVip = c.issue_type === 'Premium Support' || c.issue_type === 'VIP Seller Relations';
@@ -834,7 +837,7 @@ function renderFbaIssueRows(tbodyId, cases) {
     tr.setAttribute('data-brand', c.brand || '');
     tr.setAttribute('data-mkt', c.marketplace || '');
     const mktClass = c.marketplace ? `mkt-${c.marketplace.toLowerCase()}` : '';
-    const bucketMap = { 'Waiting on Us': 'bucket-us', 'Waiting on Amazon': 'bucket-amz', 'Resolved': 'bucket-ok', 'Not Resolved': 'bucket-nr', 'On Hold': 'bucket-hold', 'Investigation': 'bucket-invest' };
+    const bucketMap = { 'Waiting on Us': 'bucket-us', 'Waiting on Amazon': 'bucket-amz', 'Resolved': 'bucket-ok', 'Not Resolved': 'bucket-nr', 'On Hold': 'bucket-hold', 'Investigation': 'bucket-invest', 'KYC': 'bucket-kyc' };
     const bucketClass = bucketMap[c.status_bucket] || '';
     const ownerOptions = ['Unassigned', 'Vitali', 'Tom', 'Natasha', 'Leticia', 'Francesco'].map(o =>
       `<option value="${o}"${c.owner === o ? ' selected' : ''}>${o}</option>`
@@ -2247,7 +2250,11 @@ const _MSG_DATA_FALLBACK = {
     db.ref('issue_types/' + sel.dataset.case).set(sel.value);
     // Update CASES array so charts reflect the change
     const c = CASES.find(x => String(x.case_id) === String(sel.dataset.case));
-    if (c) c.issue_type = sel.value;
+    if (c) {
+      c.issue_type = sel.value;
+      c.product = c.asin_name || c.asin || (c.issue_type || '\u2014');
+    }
+    if (typeof rebuildAnalyticsIfOpen === 'function') rebuildAnalyticsIfOpen();
   }
 
   function marketplaceChanged(sel) {
@@ -2259,6 +2266,7 @@ const _MSG_DATA_FALLBACK = {
     // Update row data-mkt for filter compatibility
     const row = sel.closest('tr');
     if (row) row.setAttribute('data-mkt', sel.value);
+    if (typeof rebuildAnalyticsIfOpen === 'function') rebuildAnalyticsIfOpen();
   }
 
   function styleMktSelect(sel) {
@@ -2338,7 +2346,7 @@ const _MSG_DATA_FALLBACK = {
 
   function styleCloseStatus(sel) {
     sel.className = 'close-status-select';
-    const map = { 'Resolved': 'st-resolved', 'Not Resolved': 'st-notresolved', 'On Hold': 'st-onhold', 'Waiting on Amazon': 'st-waitamazon', 'Waiting on Us': 'st-waitus', 'Investigation': 'st-invest' };
+    const map = { 'Resolved': 'st-resolved', 'Not Resolved': 'st-notresolved', 'On Hold': 'st-onhold', 'Waiting on Amazon': 'st-waitamazon', 'Waiting on Us': 'st-waitus', 'Investigation': 'st-invest', 'KYC': 'st-kyc' };
     if (map[sel.value]) sel.classList.add(map[sel.value]);
   }
 
@@ -2659,7 +2667,7 @@ const _MSG_DATA_FALLBACK = {
 
   // Convert static bucket spans to status dropdowns in active table
   function initStatusDropdowns() {
-    const STATUS_OPTIONS = ['Waiting on Us', 'Waiting on Amazon', 'Resolved', 'Not Resolved', 'On Hold', 'Investigation'];
+    const STATUS_OPTIONS = ['Waiting on Us', 'Waiting on Amazon', 'Resolved', 'Not Resolved', 'On Hold', 'Investigation', 'KYC'];
 
     function applyToRow(row, cellIndex) {
       const cell = row.cells[cellIndex];
@@ -2699,8 +2707,8 @@ const _MSG_DATA_FALLBACK = {
     if (_syncing) return;
     styleCloseStatus(sel);
     db.ref('close_statuses/' + sel.dataset.case).set(sel.value);
-    // Update KPI counts
     if (typeof updateKpiCounts === 'function') updateKpiCounts();
+    if (typeof rebuildAnalyticsIfOpen === 'function') rebuildAnalyticsIfOpen();
   }
 
   // Initial render — load data from API
