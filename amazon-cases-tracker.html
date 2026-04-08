@@ -2044,12 +2044,15 @@ const _MSG_DATA_FALLBACK = {
       document.querySelectorAll('.issue-select').forEach(sel => {
         if (types[sel.dataset.case]) {
           sel.value = types[sel.dataset.case];
-          // Update CASES array
           const c = CASES.find(x => String(x.case_id) === String(sel.dataset.case));
-          if (c) c.issue_type = types[sel.dataset.case];
+          if (c) {
+            c.issue_type = types[sel.dataset.case];
+            c.product = c.asin_name || c.asin || (c.issue_type || '\u2014');
+          }
         }
       });
       _syncing = false;
+      if (typeof rebuildAnalyticsIfOpen === 'function') rebuildAnalyticsIfOpen();
     });
 
     // Sync marketplaces
@@ -2212,7 +2215,10 @@ const _MSG_DATA_FALLBACK = {
         if (issueTypes[sel.dataset.case]) {
           sel.value = issueTypes[sel.dataset.case];
           const c = CASES.find(x => String(x.case_id) === String(sel.dataset.case));
-          if (c) c.issue_type = issueTypes[sel.dataset.case];
+          if (c) {
+            c.issue_type = issueTypes[sel.dataset.case];
+            c.product = c.asin_name || c.asin || (c.issue_type || '\u2014');
+          }
         }
       });
 
