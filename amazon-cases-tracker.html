@@ -1513,7 +1513,10 @@ const _MSG_DATA_FALLBACK = {
   // Stacked bar that returns instance
   function makeStackedBarReturn(canvasId, subset, primaryKey, groupKey) {
     const primaries = [...new Set(subset.map(c => c[primaryKey] || 'Unknown'))];
-    const groups    = [...new Set(subset.map(c => c[groupKey] || 'Unknown'))];
+    // Sort groups by total occurrences descending (most common first in legend)
+    const groupCounts = {};
+    subset.forEach(c => { const g = c[groupKey] || 'Unknown'; groupCounts[g] = (groupCounts[g] || 0) + 1; });
+    const groups = Object.entries(groupCounts).sort((a, b) => b[1] - a[1]).map(e => e[0]);
     const datasets  = groups.map((g, i) => ({
       label: g,
       data: primaries.map(p => subset.filter(c => (c[primaryKey]||'Unknown') === p && (c[groupKey]||'Unknown') === g).length),
