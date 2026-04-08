@@ -1472,11 +1472,25 @@ const _MSG_DATA_FALLBACK = {
   }
 
   function getLiveSubset(prefix) {
-    // Read current open/closed state from DOM (Firebase may have moved rows)
+    // Read current state from DOM — dropdowns are the source of truth
     const openIds = new Set();
     const closedIds = new Set();
     document.querySelectorAll('#active-tbody tr[data-case]:not(.msg-detail-row)').forEach(r => openIds.add(r.dataset.case));
     document.querySelectorAll('#closed-tbody tr[data-case]:not(.msg-detail-row)').forEach(r => closedIds.add(r.dataset.case));
+
+    // Sync issue_type and marketplace from DOM dropdowns into CASES
+    document.querySelectorAll('.issue-select').forEach(sel => {
+      const c = CASES.find(x => String(x.case_id) === String(sel.dataset.case));
+      if (c && sel.value) {
+        c.issue_type = sel.value;
+        c.product = c.asin_name || c.asin || (c.issue_type || '\u2014');
+      }
+    });
+    document.querySelectorAll('.mkt-select').forEach(sel => {
+      const c = CASES.find(x => String(x.case_id) === String(sel.dataset.case));
+      if (c && sel.value) c.marketplace = sel.value;
+    });
+
     if (prefix === 'total') return kpiCases;
     if (prefix === 'open')  return kpiCases.filter(c => openIds.has(String(c.case_id)));
     if (prefix === 'closed') return kpiCases.filter(c => closedIds.has(String(c.case_id)));
