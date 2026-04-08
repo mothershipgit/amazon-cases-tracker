@@ -1507,7 +1507,7 @@ const _MSG_DATA_FALLBACK = {
     destroyAnCharts('an-' + prefix);
     _anCharts['an-' + prefix + '-brand']   = makeStackedBarReturn('an-' + prefix + '-brand', subset, 'brand', 'issue_type');
     _anCharts['an-' + prefix + '-mkt']     = makeStackedBarReturn('an-' + prefix + '-mkt', subset, 'marketplace', 'issue_type');
-    _anCharts['an-' + prefix + '-product'] = makeStackedBarReturn('an-' + prefix + '-product', subset, 'product', 'issue_type');
+    _anCharts['an-' + prefix + '-product'] = makeStackedBarReturn('an-' + prefix + '-product', subset.filter(c => c.asin), 'product', 'issue_type');
   }
 
   // Stacked bar that returns instance
