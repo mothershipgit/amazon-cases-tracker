@@ -699,7 +699,7 @@ function renderApp() {
   openCases   = CASES.filter(c => !c.close && c.case_type !== 'fba_issue');
   closedCases = CASES.filter(c => c.close && c.case_type !== 'fba_issue');
   fbaIssues   = CASES.filter(c => !c.close && c.case_type === 'fba_issue');
-  kpiCases    = CASES.filter(c => !EXCLUDED_FROM_STATS.includes(c.case_id) && c.case_type !== 'fba_issue' && c.case_type !== 'notification');
+  kpiCases    = CASES.filter(c => !EXCLUDED_FROM_STATS.includes(c.case_id) && c.case_type !== 'fba_issue');
   kpiOpen     = kpiCases.filter(c => !c.close);
   kpiClosed   = kpiCases.filter(c => c.close);
   avgDaysOpen = kpiOpen.length ? Math.round(kpiOpen.reduce((s, c) => s + c.days_open, 0) / kpiOpen.length) : 0;
@@ -1625,7 +1625,6 @@ const _MSG_DATA_FALLBACK = {
       const caseId = row.dataset.case;
       if (EXCLUDED_FROM_STATS.includes(caseId)) return;
       const c = CASES.find(x => String(x.case_id) === String(caseId)) || {};
-      if (c.case_type === 'notification') return;
       const ownerSel = row.querySelector('.owner-select');
       const statusSel = row.querySelector('.close-status-select');
       cases.push({
