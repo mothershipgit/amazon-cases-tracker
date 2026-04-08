@@ -289,6 +289,7 @@
     .bucket-res  { background: #e6f9ee; color: #156930; }
     .bucket-nr   { background: #fdecea; color: #bb2211; }
     .bucket-hold { background: #fff3e0; color: #bb6600; }
+    .bucket-invest { background: #f3e8ff; color: #7c3aed; }
     .close-status-select {
       font-size: 11px; padding: 3px 6px; border-radius: 4px; border: 1px solid #ddd;
       cursor: pointer; font-weight: 600; background: #fff;
@@ -298,6 +299,7 @@
     .close-status-select.st-onhold     { background: #fff3e0; color: #bb6600; border-color: #ffe0b2; }
     .close-status-select.st-waitamazon { background: #e8f0fe; color: #1a55bb; border-color: #b6d4fe; }
     .close-status-select.st-waitus     { background: #fdecea; color: #bb2211; border-color: #f5c6cb; }
+    .close-status-select.st-invest    { background: #f3e8ff; color: #7c3aed; border-color: #d8b4fe; }
     .issue-vip   { background: #e6f9ee; color: #156930; padding: 2px 7px; border-radius: 4px; font-weight: 600; font-size: 0.78rem; white-space: nowrap; display: inline-block; }
 
     .days-urgent { color: #bb2211; font-weight: 700; }
@@ -693,7 +695,7 @@ function renderApp() {
   openCases   = CASES.filter(c => !c.close && c.case_type !== 'fba_issue');
   closedCases = CASES.filter(c => c.close && c.case_type !== 'fba_issue');
   fbaIssues   = CASES.filter(c => !c.close && c.case_type === 'fba_issue');
-  kpiCases    = CASES.filter(c => !EXCLUDED_FROM_STATS.includes(c.case_id) && c.case_type !== 'fba_issue');
+  kpiCases    = CASES.filter(c => !EXCLUDED_FROM_STATS.includes(c.case_id) && c.case_type !== 'fba_issue' && c.case_type !== 'notification');
   kpiOpen     = kpiCases.filter(c => !c.close);
   kpiClosed   = kpiCases.filter(c => c.close);
   avgDaysOpen = kpiOpen.length ? Math.round(kpiOpen.reduce((s, c) => s + c.days_open, 0) / kpiOpen.length) : 0;
@@ -721,7 +723,9 @@ function renderApp() {
 
   // Update meta line
   const fbaLabel = fbaIssues.length ? ` · ${fbaIssues.length} FBA` : '';
-  document.querySelector('.meta').textContent = `${openCases.length} active · ${closedCases.length} closed${fbaLabel} · Source: API`;
+  const notifCount = CASES.filter(c => !c.close && c.case_type === 'notification').length;
+  const notifLabel = notifCount ? ` · ${notifCount} Notifications` : '';
+  document.querySelector('.meta').textContent = `${openCases.length} active · ${closedCases.length} closed${fbaLabel}${notifLabel} · Source: API`;
 
   // Rebuild charts & timelines after DOM is ready
   setTimeout(() => {
@@ -757,6 +761,7 @@ function renderTableRows(tbodyId, cases) {
       : c.status_bucket === 'Resolved' ? 'bucket-ok'
       : c.status_bucket === 'Not Resolved' ? 'bucket-nr'
       : c.status_bucket === 'On Hold' ? 'bucket-hold'
+      : c.status_bucket === 'Investigation' ? 'bucket-invest'
       : 'bucket-wa';
     const daysClass = c.days_open >= 14 ? 'days-urgent' : c.days_open >= 7 ? 'days-warn' : 'days-ok';
     const isVip = c.issue_type === 'Premium Support' || c.issue_type === 'VIP Seller Relations';
@@ -767,7 +772,7 @@ function renderTableRows(tbodyId, cases) {
       'Regulatory Compliance', 'IP Violation', 'IP Complaint',
       'Authenticity Complaint', 'Product Condition Complaint',
       'Listing Policy Violation', 'Reviews Policy Violation', 'Policy Violation',
-      'Premium Support', 'Escalation',
+      'Premium Support', 'Escalation', 'Notification',
     ];
     const currentIssue = c.issue_type || 'Other';
     const issueOptions = ISSUE_CATEGORIES.map(cat =>
@@ -788,7 +793,7 @@ function renderTableRows(tbodyId, cases) {
 
     tr.innerHTML = `
       <td class="col-close"><input type="checkbox" class="close-check" data-case="${c.case_id}" data-source="${c.close}" onchange="closeToggled(this)"></td>
-      <td class="col-case">${_unseenCaseIds.has(c.case_id) ? '<span class="new-email-icon" data-case="' + c.case_id + '" onclick="acknowledgeCase(this)" title="New email received">✉</span>' : ''}${c.case_id}</td>
+      <td class="col-case">${c.case_type === 'notification' ? '<span class="badge" style="background:#f59e0b;color:#fff;font-size:0.6rem;margin-right:4px;vertical-align:middle;">NOTIF</span>' : ''}${_unseenCaseIds.has(c.case_id) ? '<span class="new-email-icon" data-case="' + c.case_id + '" onclick="acknowledgeCase(this)" title="New email received">✉</span>' : ''}${c.case_id}</td>
       <td class="col-parent"><span class="parent-link" data-case="${c.case_id}" onclick="editParent(this)"></span></td>
       <td>${c.brand || ''}</td>
       <td><span class="badge ${mktClass}">${c.marketplace || ''}</span></td>
@@ -824,7 +829,7 @@ function renderFbaIssueRows(tbodyId, cases) {
     tr.setAttribute('data-brand', c.brand || '');
     tr.setAttribute('data-mkt', c.marketplace || '');
     const mktClass = c.marketplace ? `mkt-${c.marketplace.toLowerCase()}` : '';
-    const bucketMap = { 'Waiting on Us': 'bucket-us', 'Waiting on Amazon': 'bucket-amz', 'Resolved': 'bucket-ok', 'Not Resolved': 'bucket-nr', 'On Hold': 'bucket-hold' };
+    const bucketMap = { 'Waiting on Us': 'bucket-us', 'Waiting on Amazon': 'bucket-amz', 'Resolved': 'bucket-ok', 'Not Resolved': 'bucket-nr', 'On Hold': 'bucket-hold', 'Investigation': 'bucket-invest' };
     const bucketClass = bucketMap[c.status_bucket] || '';
     const ownerOptions = ['Unassigned', 'Vitali', 'Tom', 'Natasha', 'Leticia', 'Francesco'].map(o =>
       `<option value="${o}"${c.owner === o ? ' selected' : ''}>${o}</option>`
@@ -1328,7 +1333,9 @@ const _MSG_DATA_FALLBACK = {
     const meta = document.querySelector('.meta');
     const fbaRows = document.querySelectorAll('#fba-tbody tr[data-case]').length;
     const fbaLabel = fbaRows ? ` · ${fbaRows} FBA` : '';
-    if (meta) meta.textContent = `${activeRows} active · ${closedRows} closed${fbaLabel} · Source: API`;
+    const notifRows = CASES ? CASES.filter(c => !c.close && c.case_type === 'notification').length : 0;
+    const notifLabel = notifRows ? ` · ${notifRows} Notifications` : '';
+    if (meta) meta.textContent = `${activeRows} active · ${closedRows} closed${fbaLabel}${notifLabel} · Source: API`;
 
     // Count resolved / not resolved from outcome dropdowns
     let resolved = 0, notResolved = 0;
@@ -1612,9 +1619,10 @@ const _MSG_DATA_FALLBACK = {
     rows.forEach(row => {
       const caseId = row.dataset.case;
       if (EXCLUDED_FROM_STATS.includes(caseId)) return;
+      const c = CASES.find(x => String(x.case_id) === String(caseId)) || {};
+      if (c.case_type === 'notification') return;
       const ownerSel = row.querySelector('.owner-select');
       const statusSel = row.querySelector('.close-status-select');
-      const c = CASES.find(x => String(x.case_id) === String(caseId)) || {};
       cases.push({
         ...c,
         owner: ownerSel ? ownerSel.value : (c.owner || 'Unassigned'),
@@ -2278,7 +2286,7 @@ const _MSG_DATA_FALLBACK = {
 
   function styleCloseStatus(sel) {
     sel.className = 'close-status-select';
-    const map = { 'Resolved': 'st-resolved', 'Not Resolved': 'st-notresolved', 'On Hold': 'st-onhold', 'Waiting on Amazon': 'st-waitamazon', 'Waiting on Us': 'st-waitus' };
+    const map = { 'Resolved': 'st-resolved', 'Not Resolved': 'st-notresolved', 'On Hold': 'st-onhold', 'Waiting on Amazon': 'st-waitamazon', 'Waiting on Us': 'st-waitus', 'Investigation': 'st-invest' };
     if (map[sel.value]) sel.classList.add(map[sel.value]);
   }
 
@@ -2599,7 +2607,7 @@ const _MSG_DATA_FALLBACK = {
 
   // Convert static bucket spans to status dropdowns in active table
   function initStatusDropdowns() {
-    const STATUS_OPTIONS = ['Waiting on Us', 'Waiting on Amazon', 'Resolved', 'Not Resolved', 'On Hold'];
+    const STATUS_OPTIONS = ['Waiting on Us', 'Waiting on Amazon', 'Resolved', 'Not Resolved', 'On Hold', 'Investigation'];
 
     function applyToRow(row, cellIndex) {
       const cell = row.cells[cellIndex];

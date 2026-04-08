@@ -5,20 +5,57 @@
 ---
 
 ## Purpose
-Track Amazon Seller Support cases across all brands. Receive email notifications via Missive, log to cases_core.md, display in HTML dashboard, deploy to GitHub Pages.
+Track Amazon Seller Support cases across all brands. Backend API pulls emails from Missive, stores in SQLite, serves to HTML dashboard via REST API.
+
+## Architecture (as of 2026-03-16)
+
+**Old:** Static HTML with embedded data, Claude manually edits HTML on every email pull.
+**New:** Backend API (Railway) + Dynamic HTML (GitHub Pages). Dashboard loads data via `fetch()`.
+
+```
+┌──────────────────────────────┐     ┌──────────────────────────────────┐
+│  Frontend (GitHub Pages)     │     │  Backend (Railway)               │
+│  amazon-cases-tracker.html   │     │  amazon-cases-backend            │
+│                              │     │                                  │
+│  fetch /api/cases            │◄───►│  GET /api/cases                  │
+│  fetch /api/messages         │     │  GET /api/messages               │
+│  POST /api/refresh           │     │  POST /api/refresh               │
+│  Firebase (user state)       │     │  Missive API (direct HTTP)       │
+│  Charts.js                   │     │  SQLite (cases.db)               │
+│  Google Auth                 │     │  node-cron (daily 10AM UTC)      │
+└──────────────────────────────┘     └──────────────────────────────────┘
+```
 
 ## File Structure
 ```
 Amazon Cases/
 ├── CLAUDE.md                    # This file — project memory
-├── cases_core.md                # Source of truth — all case data (16 columns)
-├── amazon-cases-tracker.html    # Combined tracker + dashboard (Charts.js)
+├── cases_core.md                # Archive — no longer source of truth (SQLite is)
+├── amazon-cases-tracker.html    # Dashboard HTML (data loaded from API)
 ├── Amazon Cases Tracker.md      # Obsidian view (simplified table)
-├── asin-names.json              # ASIN → product name lookup (71 ASINs)
+├── asin-names.json              # ASIN → product name lookup
 ├── brand-accounts.json          # Email → Brand mapping
-└── data/
-    ├── amazon-cases-meta.json   # Processed email IDs (idempotency)
-    └── msg-timeline.json        # Persistent message timeline (survives Missive deletions)
+├── data/
+│   ├── amazon-cases-meta.json   # Archive — migrated to SQLite
+│   └── msg-timeline.json        # Archive — migrated to SQLite
+└── backend/                     # API backend (separate GitHub repo)
+    ├── server.js                # Express entry point
+    ├── .env                     # MISSIVE_API_TOKEN, API_KEY
+    ├── db/
+    │   ├── database.js          # sql.js wrapper
+    │   ├── schema.sql           # 4 tables: cases, messages, conversations, refresh_log
+    │   ├── migrate.js           # One-time migration from .md/.json files
+    │   └── cases.db             # SQLite database
+    ├── routes/
+    │   ├── cases.js             # GET /api/cases, GET /api/cases/:id
+    │   ├── messages.js          # GET /api/messages, GET /api/messages/:id
+    │   └── refresh.js           # POST /api/refresh, GET /api/refresh/status
+    ├── services/
+    │   ├── missive.js           # Direct Missive HTTP API client
+    │   └── caseProcessor.js     # Email parsing, classification, dedup, normalizeIssueType
+    └── config/
+        ├── brands.js            # Email→Brand mapping, marketplace inference
+        └── asinNames.js         # ASIN→product name lookup
 ```
 
 ## Brands Tracked
@@ -33,41 +70,47 @@ Amazon Cases/
 `close | case_id | brand | marketplace | asin_summary | issue_type | status_bucket | status_current | opened_date | days_open | closed_date | last_update_date | amazon_msgs_count | owner | next_action_due | next_action`
 
 ## GitHub & Deployment
+
+### Frontend (Dashboard HTML)
 - **Repo:** `https://github.com/mothershipgit/amazon-cases-tracker`
 - **Live URL:** `https://mothershipgit.github.io/amazon-cases-tracker/`
 - **Branch:** `main`
-- **Excluded from repo:** `brand-accounts.json`, `data/` (contain email addresses / IDs)
-- **Push command:** `git add cases_core.md amazon-cases-tracker.html && git commit -m "..." && git push origin main`
 
-## Daily Automation (Task Scheduler)
-- **Task name:** `AmazonCasesDailyUpdate`
-- **Schedule:** every day at 10:00 AM
-- **Entry point:** `C:\AmazonUpdate\run.bat` (wrapper, no spaces in path)
-- **Main script:** `daily-update.ps1` (in this folder)
+### Backend (API)
+- **Repo:** `https://github.com/mothershipgit/amazon-cases-backend`
+- **Live URL:** `https://amazon-cases-backend-production.up.railway.app`
+- **Railway:** Separate service, Hobby plan (sleep-on-idle enabled)
+- **Daily cron:** node-cron at 10:00 AM UTC (CRON_ENABLED=true)
 
-**What the daily run does:**
-1. `git pull` — picks up any manual changes pushed elsewhere
-2. Claude checks Missive for new Amazon case emails
-3. Updates `cases_core.md` + regenerates `amazon-cases-tracker.html`
-4. `git commit + push` if anything changed
-5. Writes log to `daily-update.log`
-
-**To re-register task** (if Windows reinstalled etc.):
+### Environment Variables (Railway)
 ```
-schtasks /create /tn "AmazonCasesDailyUpdate" /tr "C:\AmazonUpdate\run.bat" /sc daily /st 07:00 /f
+NIXPACKS_NODE_VERSION=22
+PORT=3002
+API_KEY=cases2026
+MISSIVE_API_TOKEN=<token>
+CRON_ENABLED=true
 ```
 
-**To check task status:**
-```powershell
-Get-ScheduledTaskInfo -TaskName AmazonCasesDailyUpdate
-```
+## Daily Automation
+**Old:** Windows Task Scheduler → Claude CLI → edits HTML → git push
+**New:** Railway node-cron → backend calls Missive API → updates SQLite automatically
+
+The Windows Task Scheduler (`AmazonCasesDailyUpdate`) is **obsolete** — can be disabled.
 
 ## Key Decisions
+- **Data via API** — HTML no longer has embedded CASES/MSG_DATA arrays. Data loaded via fetch() from backend API.
+- **Table rows dynamically generated** — renderTableRows() builds rows from API data. No static <tr> in HTML.
+- **Refresh button** — triggers POST /api/refresh → pulls Missive emails → polls status → reloads data.
+- **Issue type normalization** — backend normalizeIssueType() consolidates categories (all VAT→"VAT", all safety→"Product Safety", etc.)
+- **VIP case pinned** — VIP Seller Relations/Premium Support always sorted to top of active table.
+- **SQLite is source of truth** — cases_core.md is now an archive, not actively updated.
+- **MSG_DATA from API** — stored in SQLite messages table, served via GET /api/messages.
 - **All UI state synced via Firebase Realtime Database** — no localStorage
 - **Email detection**: always fetch all Missive messages, filter by processed ID list (deletion-safe)
 - **`amazon_msgs_count`**: permanent historical counter, never decrements
 - **Close workflow**: tick checkbox → row moves to Closed table + Outcome dropdown injected (default: Resolved) + date stamped → Firebase syncs `closed`, `close_dates`, `close_statuses`
 - **KPI counters**: `updateKpiCounts()` recalculates Open/Closed from actual table rows after every close toggle and Firebase sync
+- **Notification cases**: Emails from `donotreply@amazon.com` / `do-not-reply@amazon.com` with no case ID are captured as `case_type: 'notification'` with ID format `NOTIF-{conversationId}`. Marketplace inferred from email body (country names + language detection). Excluded from KPI stats. Shown in main Active Cases table with amber NOTIF badge. Intended as parent cases — when a real case is opened to address the notification, link it as a child.
 
 ## Firebase Keys (Realtime Database)
 | Key | Type | Purpose |
