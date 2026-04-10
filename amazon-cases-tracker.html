@@ -701,7 +701,7 @@ function renderApp() {
   openCases   = CASES.filter(c => !c.close && c.case_type !== 'fba_issue');
   closedCases = CASES.filter(c => c.close && c.case_type !== 'fba_issue');
   fbaIssues   = CASES.filter(c => !c.close && c.case_type === 'fba_issue');
-  kpiCases    = CASES.filter(c => !EXCLUDED_FROM_STATS.includes(c.case_id) && c.case_type !== 'fba_issue');
+  kpiCases    = CASES.filter(c => !EXCLUDED_FROM_STATS.includes(c.case_id) && c.case_type !== 'fba_issue' && !c.auto_dismissed);
   kpiOpen     = kpiCases.filter(c => !c.close);
   kpiClosed   = kpiCases.filter(c => c.close);
   avgDaysOpen = kpiOpen.length ? Math.round(kpiOpen.reduce((s, c) => s + c.days_open, 0) / kpiOpen.length) : 0;
@@ -729,7 +729,7 @@ function renderApp() {
 
   // Update meta line
   const fbaLabel = fbaIssues.length ? ` · ${fbaIssues.length} FBA` : '';
-  const notifCount = CASES.filter(c => !c.close && c.case_type === 'notification').length;
+  const notifCount = CASES.filter(c => !c.close && c.case_type === 'notification' && !c.auto_dismissed).length;
   const notifLabel = notifCount ? ` · ${notifCount} Notifications` : '';
   document.querySelector('.meta').textContent = `${openCases.length} active · ${closedCases.length} closed${fbaLabel}${notifLabel} · Source: API`;
 
@@ -761,6 +761,7 @@ function renderTableRows(tbodyId, cases) {
     tr.setAttribute('data-case', c.case_id);
     tr.setAttribute('data-brand', c.brand || '');
     tr.setAttribute('data-mkt', c.marketplace || '');
+    if (c.auto_dismissed) tr.setAttribute('data-auto-dismissed', '1');
 
     const mktClass = c.marketplace ? `mkt-${c.marketplace.toLowerCase()}` : '';
     const bucketClass = c.status_bucket === 'Waiting on Us' ? 'bucket-us'
@@ -799,7 +800,7 @@ function renderTableRows(tbodyId, cases) {
 
     tr.innerHTML = `
       <td class="col-close"><input type="checkbox" class="close-check" data-case="${c.case_id}" data-source="${c.close}" onchange="closeToggled(this)"></td>
-      <td class="col-case">${c.case_type === 'notification' ? '<span class="badge" style="background:#f59e0b;color:#fff;font-size:0.6rem;margin-right:4px;vertical-align:middle;">NOTIF</span>' : ''}${_unseenCaseIds.has(c.case_id) ? '<span class="new-email-icon" data-case="' + c.case_id + '" onclick="acknowledgeCase(this)" title="New email received">✉</span>' : ''}${c.case_id}</td>
+      <td class="col-case">${c.case_type === 'notification' ? '<span class="badge" style="background:#f59e0b;color:#fff;font-size:0.6rem;margin-right:4px;vertical-align:middle;">NOTIF</span>' : ''}${c.auto_dismissed ? '<span class="badge" style="background:#6b7280;color:#fff;font-size:0.6rem;margin-right:4px;vertical-align:middle;">AUTO</span>' : ''}${_unseenCaseIds.has(c.case_id) ? '<span class="new-email-icon" data-case="' + c.case_id + '" onclick="acknowledgeCase(this)" title="New email received">✉</span>' : ''}${c.case_id}</td>
       <td class="col-parent"><span class="parent-link" data-case="${c.case_id}" onclick="editParent(this)"></span></td>
       <td>${c.brand || ''}</td>
       <td>${(() => { const MKT_OPTIONS = ['','DE','FR','IT','ES','UK','US']; const curMkt = c.marketplace || ''; const mktOpts = MKT_OPTIONS.map(m => '<option value="'+m+'"'+(m===curMkt?' selected':'')+'>'+m+'</option>').join(''); const extraMkt = MKT_OPTIONS.includes(curMkt) ? '' : '<option value="'+curMkt+'" selected>'+curMkt+'</option>'; return '<select class="mkt-select" data-case="'+c.case_id+'" onchange="marketplaceChanged(this)">'+extraMkt+mktOpts+'</select>'; })()}</td>
@@ -1331,21 +1332,21 @@ const _MSG_DATA_FALLBACK = {
   // They will be populated once loadDataFromAPI() completes
 
   function updateKpiCounts() {
-    const activeRows = document.querySelectorAll('#active-tbody tr[data-case]:not(.msg-detail-row)').length;
-    const closedRows = document.querySelectorAll('#closed-tbody tr[data-case]:not(.msg-detail-row)').length;
+    const activeRows = document.querySelectorAll('#active-tbody tr[data-case]:not(.msg-detail-row):not([data-auto-dismissed])').length;
+    const closedRows = document.querySelectorAll('#closed-tbody tr[data-case]:not(.msg-detail-row):not([data-auto-dismissed])').length;
     document.getElementById('stat-open').textContent = activeRows;
     document.getElementById('stat-closed').textContent = closedRows;
     // Keep meta line in sync with KPI cards
     const meta = document.querySelector('.meta');
     const fbaRows = document.querySelectorAll('#fba-tbody tr[data-case]').length;
     const fbaLabel = fbaRows ? ` · ${fbaRows} FBA` : '';
-    const notifRows = CASES ? CASES.filter(c => !c.close && c.case_type === 'notification').length : 0;
+    const notifRows = CASES ? CASES.filter(c => !c.close && c.case_type === 'notification' && !c.auto_dismissed).length : 0;
     const notifLabel = notifRows ? ` · ${notifRows} Notifications` : '';
     if (meta) meta.textContent = `${activeRows} active · ${closedRows} closed${fbaLabel}${notifLabel} · Source: API`;
 
     // Count resolved / not resolved from outcome dropdowns
     let resolved = 0, notResolved = 0;
-    document.querySelectorAll('#closed-tbody .close-status-select').forEach(sel => {
+    document.querySelectorAll('#closed-tbody tr[data-case]:not([data-auto-dismissed]) .close-status-select').forEach(sel => {
       if (sel.value === 'Resolved') resolved++;
       else if (sel.value === 'Not Resolved') notResolved++;
     });
@@ -1639,6 +1640,7 @@ const _MSG_DATA_FALLBACK = {
       const caseId = row.dataset.case;
       if (EXCLUDED_FROM_STATS.includes(caseId)) return;
       const c = CASES.find(x => String(x.case_id) === String(caseId)) || {};
+      if (c.auto_dismissed) return;
       const ownerSel = row.querySelector('.owner-select');
       const statusSel = row.querySelector('.close-status-select');
       cases.push({
