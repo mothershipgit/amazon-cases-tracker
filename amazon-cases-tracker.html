@@ -1747,6 +1747,7 @@ const _MSG_DATA_FALLBACK = {
 <div class="filter-bar">
   <label>Brand: <select id="filter-brand" class="filter-select" onchange="applyFilters()"><option value="">All</option></select></label>
   <label>MKT: <select id="filter-mkt" class="filter-select" onchange="applyFilters()"><option value="">All</option></select></label>
+  <label>Owner: <select id="filter-owner" class="filter-select" onchange="applyFilters()"><option value="">All</option></select></label>
   <button class="filter-reset" onclick="resetFilters()">Reset</button>
 </div>
 <script>
@@ -1754,24 +1755,31 @@ const _MSG_DATA_FALLBACK = {
   function populateFilters() {
     const brands = [...new Set(CASES.map(c => c.brand).filter(Boolean))].sort();
     const mkts   = [...new Set(CASES.map(c => c.marketplace).filter(Boolean))].sort();
+    const owners = ['Unassigned', 'Vitali', 'Tom', 'Natasha', 'Leticia', 'Francesco'];
     const bSel = document.getElementById('filter-brand');
     const mSel = document.getElementById('filter-mkt');
+    const oSel = document.getElementById('filter-owner');
     // Clear existing options (keep "All")
     bSel.innerHTML = '<option value="">All</option>';
     mSel.innerHTML = '<option value="">All</option>';
+    oSel.innerHTML = '<option value="">All</option>';
     brands.forEach(b => { const o = document.createElement('option'); o.value = b; o.textContent = b; bSel.appendChild(o); });
     mkts.forEach(m => { const o = document.createElement('option'); o.value = m; o.textContent = m; mSel.appendChild(o); });
+    owners.forEach(w => { const o = document.createElement('option'); o.value = w; o.textContent = w; oSel.appendChild(o); });
   }
 
   function applyFilters() {
     const brand = document.getElementById('filter-brand').value;
     const mkt   = document.getElementById('filter-mkt').value;
+    const owner = document.getElementById('filter-owner').value;
     const rows = document.querySelectorAll('#active-tbody tr');
 
     // First pass: determine which parent cases are visible
     const visibleParents = new Set();
     rows.forEach(row => {
-      const matches = (!brand || row.dataset.brand === brand) && (!mkt || row.dataset.mkt === mkt);
+      const ownerSel = row.querySelector('.owner-select');
+      const rowOwner = ownerSel ? ownerSel.value : '';
+      const matches = (!brand || row.dataset.brand === brand) && (!mkt || row.dataset.mkt === mkt) && (!owner || rowOwner === owner);
       if (matches) visibleParents.add(row.dataset.case);
     });
 
@@ -1779,7 +1787,9 @@ const _MSG_DATA_FALLBACK = {
     const visibleCases = new Set();
     rows.forEach(row => {
       if (row.classList.contains('msg-detail-row')) return; // handle separately
-      const matches = (!brand || row.dataset.brand === brand) && (!mkt || row.dataset.mkt === mkt);
+      const ownerSel = row.querySelector('.owner-select');
+      const rowOwner = ownerSel ? ownerSel.value : '';
+      const matches = (!brand || row.dataset.brand === brand) && (!mkt || row.dataset.mkt === mkt) && (!owner || rowOwner === owner);
       const parentSpan = row.querySelector('.parent-link');
       const parentId = parentSpan ? parentSpan.textContent.trim() : '';
       const followsParent = parentId && visibleParents.has(parentId);
@@ -1802,6 +1812,7 @@ const _MSG_DATA_FALLBACK = {
   function resetFilters() {
     document.getElementById('filter-brand').value = '';
     document.getElementById('filter-mkt').value = '';
+    document.getElementById('filter-owner').value = '';
     applyFilters();
   }
 </script>
@@ -2438,10 +2449,17 @@ const _MSG_DATA_FALLBACK = {
     const roots = rows.filter(r => !parentMap[r.dataset.case]);
     const children = rows.filter(r => parentMap[r.dataset.case]);
 
+    // Get cell sort value — use selected value for dropdowns, textContent otherwise
+    function cellValue(row, col) {
+      const cell = row.children[col];
+      const sel = cell && cell.querySelector('select');
+      return sel ? sel.value : (cell ? cell.textContent.trim() : '');
+    }
+
     // Sort roots by column value
     roots.sort((a, b) => {
-      const aVal = a.children[colIndex].textContent.trim();
-      const bVal = b.children[colIndex].textContent.trim();
+      const aVal = cellValue(a, colIndex);
+      const bVal = cellValue(b, colIndex);
       const cmp = aVal.localeCompare(bVal, undefined, { numeric: true });
       return newDir === 'asc' ? cmp : -cmp;
     });
