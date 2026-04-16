@@ -2053,7 +2053,8 @@ function buildAllCharts() {
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'end', font: { weight: 600, size: 11 }, color: '#555' } },
+      plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'end', font: { weight: 700, size: 13 }, color: '#1a1d26', formatter: v => v } },
+      layout: { padding: { top: 20 } },
       scales: {
         x: { grid: { display: false }, border: { display: false } },
         y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 }, grid: { color: '#f0f1f5' }, border: { display: false } }
