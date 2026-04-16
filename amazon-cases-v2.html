@@ -1,0 +1,2712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Amazon Cases Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <style>
+/* ══════════════════════════════════════════════════════════════════════════════
+   CSS DESIGN SYSTEM
+   ══════════════════════════════════════════════════════════════════════════════ */
+:root {
+  --bg-page: #f7f8fc;
+  --bg-card: #ffffff;
+  --bg-table-header: #eef0f6;
+  --text-primary: #1a1d26;
+  --text-secondary: #555;
+  --text-muted: #8c8fa3;
+  --border-light: #e2e5f0;
+  --border-medium: #d0d4e3;
+  --color-open: #dc3545;
+  --color-closed: #156930;
+  --color-resolved: #28a745;
+  --color-not-resolved: #dc3545;
+  --color-amazon: #1a55bb;
+  --color-hold: #e09b00;
+  --color-info: #5282e0;
+  --shadow-card: 0 1px 4px rgba(0,0,0,0.06);
+  --shadow-elevated: 0 2px 10px rgba(0,0,0,0.10);
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --sp-xs: 4px;
+  --sp-sm: 8px;
+  --sp-md: 16px;
+  --sp-lg: 24px;
+  --sp-xl: 32px;
+  --fs-xs: 0.68rem;
+  --fs-sm: 0.78rem;
+  --fs-base: 0.85rem;
+  --fs-md: 0.95rem;
+  --fs-lg: 1.1rem;
+  --fs-xl: 1.4rem;
+  --fs-kpi: 2.2rem;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  padding: var(--sp-xl) var(--sp-lg);
+}
+
+/* ── Header ───────────────────────────────────────────────────────────────── */
+header {
+  margin-bottom: var(--sp-lg);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-md);
+}
+h1 { font-size: var(--fs-xl); color: var(--text-primary); margin-bottom: 2px; }
+.meta { font-size: var(--fs-sm); color: var(--text-muted); }
+h2 {
+  font-size: 0.72rem;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 28px 0 10px;
+}
+.header-actions { display: flex; gap: var(--sp-sm); align-items: center; flex-wrap: wrap; }
+
+/* ── Buttons ──────────────────────────────────────────────────────────────── */
+.btn-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: #444;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn-copy:hover { background: #f0f1f5; border-color: #bbbeca; }
+.btn-copy.copied { background: #e6f9ee; border-color: #8ecfa8; color: var(--color-closed); }
+
+/* ── Refresh progress bar ─────────────────────────────────────────────────── */
+.refresh-progress {
+  display: none;
+  margin-bottom: var(--sp-md);
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  box-shadow: var(--shadow-card);
+}
+.refresh-progress.active { display: block; }
+.refresh-progress .rp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--sp-sm);
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #444;
+}
+.refresh-progress .rp-pct { color: #888; font-weight: 400; }
+.refresh-progress .rp-track {
+  height: 6px;
+  background: #edeef2;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.refresh-progress .rp-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #4f8cff, #6c5ce7);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+.refresh-progress.done .rp-fill { background: linear-gradient(90deg, #27ae60, #2ecc71); }
+.refresh-progress.error .rp-fill { background: linear-gradient(90deg, #e74c3c, #c0392b); }
+
+/* ── Tab bar ──────────────────────────────────────────────────────────────── */
+.tab-bar {
+  display: flex;
+  gap: 0;
+  margin-bottom: var(--sp-lg);
+  border-bottom: 2px solid var(--border-light);
+}
+.tab-btn {
+  padding: 10px 24px;
+  font-size: var(--fs-base);
+  font-weight: 600;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: color 0.15s, border-color 0.15s;
+}
+.tab-btn:hover { color: var(--text-primary); }
+.tab-btn.active { color: var(--color-info); border-bottom-color: var(--color-info); }
+.tab-badge {
+  display: inline-block;
+  font-size: var(--fs-xs);
+  background: #e8f0fe;
+  color: #3366aa;
+  border-radius: 10px;
+  padding: 1px 7px;
+  margin-left: 6px;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+/* ── Stat cards ───────────────────────────────────────────────────────────── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+  margin-bottom: var(--sp-xs);
+}
+.stat-card {
+  background: var(--bg-card);
+  border-radius: 10px;
+  padding: var(--sp-md) 18px;
+  box-shadow: var(--shadow-card);
+}
+.stat-label { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.07em; color: #aaa; margin-bottom: var(--sp-xs); }
+.stat-value { font-size: var(--fs-kpi); font-weight: 700; line-height: 1; }
+.stat-sub { font-size: 0.7rem; color: #bbb; margin-top: 3px; }
+.stat-open .stat-value { color: var(--color-open); }
+.stat-closed .stat-value { color: var(--color-closed); }
+.stat-resolved .stat-value { color: var(--color-resolved); }
+.stat-days .stat-value { color: var(--text-primary); }
+.stat-msgs .stat-value { color: #2277cc; }
+.stat-rate .stat-value { color: var(--color-resolved); }
+
+/* ── Charts ───────────────────────────────────────────────────────────────── */
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 14px;
+}
+.chart-card {
+  background: var(--bg-card);
+  border-radius: 10px;
+  padding: 18px 20px 14px;
+  box-shadow: var(--shadow-card);
+}
+.chart-card.featured {
+  border: 2px solid var(--color-info);
+  box-shadow: var(--shadow-elevated);
+}
+.chart-title {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 14px;
+}
+.chart-title.featured-title { color: var(--color-info); font-size: var(--fs-sm); }
+.chart-sub {
+  font-size: var(--fs-xs);
+  color: #bbb;
+  margin-top: -10px;
+  margin-bottom: 12px;
+}
+.chart-wrap { position: relative; height: 220px; }
+.chart-wrap-lg { position: relative; height: 350px; }
+
+/* ── Analytics Accordion ──────────────────────────────────────────────────── */
+.analytics-section { margin: 24px 0; }
+.accordion-group { display: flex; flex-direction: column; gap: 0; margin-bottom: 18px; }
+.accordion-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 18px; cursor: pointer; border: none; width: 100%;
+  font-size: 0.82rem; font-weight: 600; letter-spacing: 0.04em;
+  text-transform: uppercase; color: #fff; border-radius: var(--radius-md); margin-bottom: 2px;
+  transition: opacity 0.15s;
+}
+.accordion-header:hover { opacity: 0.9; }
+.accordion-header .arrow { transition: transform 0.2s; font-size: 0.7rem; }
+.accordion-header.open .arrow { transform: rotate(90deg); }
+.acc-total { background: #1a2744; }
+.acc-open { background: #c97c00; }
+.acc-closed { background: var(--color-closed); }
+.accordion-body { display: none; padding: var(--sp-md) 0; }
+.accordion-body.open { display: block; }
+.acc-charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 2fr;
+  gap: 14px;
+}
+@media (max-width: 1100px) {
+  .acc-charts-row { grid-template-columns: 1fr 1fr; }
+  .acc-chart-half { grid-column: 1 / -1; }
+}
+@media (max-width: 700px) {
+  .acc-charts-row { grid-template-columns: 1fr; }
+}
+
+/* ── Filters ──────────────────────────────────────────────────────────────── */
+.filter-bar {
+  display: flex;
+  gap: var(--sp-md);
+  margin-bottom: 12px;
+  align-items: center;
+  background: #e8f0fe;
+  padding: 12px var(--sp-md);
+  border-radius: var(--radius-md);
+}
+.filter-bar label {
+  font-size: 0.72rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.filter-select {
+  font-size: var(--fs-sm);
+  padding: 5px 8px;
+  border: 1px solid var(--border-light);
+  border-radius: 5px;
+  background: var(--bg-card);
+  color: #444;
+  cursor: pointer;
+}
+.filter-select:focus { outline: none; border-color: var(--color-info); }
+.filter-reset {
+  font-size: 0.72rem;
+  color: var(--color-info);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+.filter-reset:hover { text-decoration: underline; }
+
+/* ── Tables ───────────────────────────────────────────────────────────────── */
+.table-wrap { width: 100%; overflow-x: auto; border-radius: var(--radius-md); box-shadow: var(--shadow-card); }
+
+table { width: 100%; border-collapse: collapse; font-size: 0.8rem; background: var(--bg-card); min-width: 1400px; }
+th {
+  background: var(--bg-table-header);
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 9px 10px;
+  text-align: left;
+  border-bottom: 1px solid #e4e6ef;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+}
+td {
+  padding: 9px 10px;
+  border-bottom: 1px solid #f0f1f5;
+  vertical-align: top;
+  line-height: 1.4;
+}
+tbody tr:hover td { background: #f8f9fd; }
+tbody tr:last-child td { border-bottom: none; }
+
+/* Sort indicators */
+th.sortable { cursor: pointer; user-select: none; }
+th.sortable::after { content: ' \25B2\25BC'; font-size: 0.5rem; color: #ccc; margin-left: 3px; }
+th.sortable:hover::after { color: #888; }
+th.sort-asc::after { content: ' \25B2'; font-size: 0.55rem; color: var(--text-primary); }
+th.sort-desc::after { content: ' \25BC'; font-size: 0.55rem; color: var(--text-primary); }
+
+/* Column widths */
+.col-close { width: 48px; text-align: center; }
+input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-color: #2277cc; margin-top: 2px; }
+.col-case { width: 110px; font-family: monospace; font-size: 0.75rem; color: var(--text-secondary); }
+.col-parent { width: 110px; }
+.col-brand { width: 100px; }
+.col-asin { width: 150px; }
+.col-issue { min-width: 140px; }
+.col-date { width: 90px; white-space: nowrap; color: #888; font-size: 0.75rem; }
+.col-num { width: 60px; text-align: center; }
+.col-summary { min-width: 200px; font-size: 0.75rem; color: var(--text-secondary); line-height: 1.5; }
+.col-owner { width: 90px; }
+.col-notes { min-width: 160px; }
+.col-action { min-width: 140px; }
+
+/* ── ASIN display ─────────────────────────────────────────────────────────── */
+.asin-code { font-family: monospace; font-size: 0.7rem; color: #888; display: block; }
+.asin-name { font-size: 0.72rem; color: var(--text-secondary); display: block; margin-top: 1px; font-weight: 600; }
+.asin-select {
+  font-size: 0.7rem;
+  padding: 2px 4px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: #444;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 3px;
+}
+.asin-select:focus { outline: none; border-color: var(--color-info); }
+
+/* ── Badges ───────────────────────────────────────────────────────────────── */
+.badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+.badge-notif { background: #f59e0b; color: #fff; }
+.badge-fba { background: #ff9800; color: #fff; }
+.badge-auto { background: #6b7280; color: #fff; }
+
+/* ── Marketplace colors ───────────────────────────────────────────────────── */
+.mkt-fr { background: #ddeeff; color: #1a66bb; }
+.mkt-it { background: #fdecea; color: #bb2211; }
+.mkt-uk { background: #e6f9ee; color: #156930; }
+.mkt-de { background: #fef9e0; color: #996600; }
+.mkt-es { background: #fff0e0; color: #cc5500; }
+.mkt-us { background: #f0e8ff; color: #6622bb; }
+.mkt-select {
+  font-size: 11px; padding: 2px 4px; border-radius: var(--radius-sm); border: 1px solid #ddd;
+  cursor: pointer; font-weight: 600; min-width: 42px;
+}
+
+/* ── Status badges/dropdowns ──────────────────────────────────────────────── */
+.bucket {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.bucket-us { background: #fdecea; color: #bb2211; }
+.bucket-amz { background: #e8f0fe; color: #1a55bb; }
+.bucket-res { background: #e6f9ee; color: #156930; }
+.bucket-nr { background: #fdecea; color: #bb2211; }
+.bucket-hold { background: #fff3e0; color: #bb6600; }
+.bucket-invest { background: #f3e8ff; color: #7c3aed; }
+
+.close-status-select {
+  font-size: 11px; padding: 3px 6px; border-radius: var(--radius-sm); border: 1px solid #ddd;
+  cursor: pointer; font-weight: 600; background: var(--bg-card);
+}
+.close-status-select.st-resolved { background: #e6f9ee; color: #156930; border-color: #b7e4c7; }
+.close-status-select.st-notresolved { background: #fdecea; color: #bb2211; border-color: #f5c6cb; }
+.close-status-select.st-onhold { background: #fff3e0; color: #bb6600; border-color: #ffe0b2; }
+.close-status-select.st-waitamazon { background: #e8f0fe; color: #1a55bb; border-color: #b6d4fe; }
+.close-status-select.st-waitus { background: #fdecea; color: #bb2211; border-color: #f5c6cb; }
+.close-status-select.st-invest { background: #f3e8ff; color: #7c3aed; border-color: #d8b4fe; }
+.issue-vip { background: #e6f9ee; color: #156930; padding: 2px 7px; border-radius: var(--radius-sm); font-weight: 600; font-size: var(--fs-sm); white-space: nowrap; display: inline-block; }
+
+/* ── Days coloring ────────────────────────────────────────────────────────── */
+.days-urgent { color: #bb2211; font-weight: 700; }
+.days-warn { color: #996600; font-weight: 600; }
+.days-ok { color: #888; }
+
+/* ── Owner & Issue selects ────────────────────────────────────────────────── */
+.owner-select {
+  font-size: 0.72rem; padding: 3px 5px; border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm); background: var(--bg-card); color: #444; cursor: pointer; width: 100%;
+}
+.owner-select:focus { outline: none; border-color: var(--color-info); }
+.owner-select option[value="Unassigned"] { color: #aaa; }
+.issue-select {
+  font-size: 0.72rem; padding: 3px 5px; border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm); background: var(--bg-card); color: #444; cursor: pointer; width: 100%;
+}
+.issue-select:focus { outline: none; border-color: var(--color-info); }
+
+/* ── Parent-case grouping ─────────────────────────────────────────────────── */
+tr.grouped-parent td { background: #f0f9f2; }
+tr.grouped-parent:hover td { background: #e6f5ea; }
+tr.grouped-child td { background: #f5fbf6; padding-left: 26px; }
+tr.grouped-child:hover td { background: #ecf7ee; }
+tr.grouped-child td:first-child { padding-left: 10px; }
+tr.grouped-child .col-case { position: relative; }
+tr.grouped-child .col-case::before { content: '\21B3'; color: #7cb88a; margin-right: 4px; font-size: 0.85rem; }
+.parent-link {
+  font-family: monospace; font-size: 0.72rem; color: #7cb88a; cursor: pointer;
+  padding: 2px 6px; border: 1px dashed #cde6d2; border-radius: var(--radius-sm);
+  display: inline-block; min-width: 40px; text-align: center;
+}
+.parent-link:hover { border-color: #7cb88a; background: #f0f9f2; }
+.parent-link:empty::before { content: '+'; color: #bbb; font-size: 0.8rem; }
+.parent-link.has-parent { border-style: solid; border-color: #7cb88a; background: #f0f9f2; font-weight: 600; }
+
+/* ── Message timeline ─────────────────────────────────────────────────────── */
+.msg-toggle {
+  display: inline-block; width: 16px; font-size: 0.65rem; color: #aaa;
+  cursor: pointer; user-select: none; vertical-align: middle; margin-right: 2px;
+}
+.msg-toggle:hover { color: var(--color-info); }
+.msg-toggle.open { color: var(--color-info); }
+tr.msg-detail-row { display: none; }
+tr.msg-detail-row.open { display: table-row; }
+tr.msg-detail-row > td {
+  padding: 0 16px 12px 32px; background: #f8f9fc; border-bottom: 1px solid #eee;
+}
+.msg-timeline { display: flex; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto; padding: 10px 0 2px; }
+.msg-entry { display: flex; align-items: flex-start; gap: 10px; font-size: 0.74rem; line-height: 1.4; }
+.msg-date { flex-shrink: 0; font-family: monospace; font-size: var(--fs-xs); color: #888; min-width: 74px; padding-top: 1px; }
+.msg-from { flex-shrink: 0; font-weight: 600; color: var(--text-secondary); min-width: 160px; max-width: 200px; font-size: 0.72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.msg-preview { color: #666; flex: 1; }
+.msg-count-badge {
+  display: inline-block; font-size: 0.6rem; background: #e8f0fe; color: #3366aa;
+  border-radius: 8px; padding: 1px 5px; margin-left: 4px; vertical-align: middle; font-weight: 600;
+}
+
+/* ── New email envelope ───────────────────────────────────────────────────── */
+.new-email-icon {
+  color: #e05252; cursor: pointer; margin-right: 4px; font-size: 13px;
+  display: inline-block; vertical-align: middle;
+  animation: pulse-envelope 2s ease-in-out infinite;
+}
+.new-email-icon:hover { color: #c03030; transform: scale(1.2); }
+@keyframes pulse-envelope {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ── Closed section ───────────────────────────────────────────────────────── */
+.closed-section { opacity: 0.6; }
+.closed-section table { background: #fafbfc; }
+.closed-section tbody tr { background: #fafbfc; }
+.closed-section tbody tr:hover td { background: #f3f4f8; }
+.empty-row td { color: #ccc; font-style: italic; text-align: center; padding: 18px; }
+
+/* ── Editable cells ───────────────────────────────────────────────────────── */
+.note-text {
+  padding: 4px 6px; min-height: 24px; border: 1px solid transparent;
+  border-radius: var(--radius-sm); font-size: 0.75rem; color: var(--text-secondary);
+  white-space: pre-wrap; word-break: break-word; cursor: text;
+}
+.note-text:hover { border-color: var(--border-light); background: #fafbfc; }
+.note-text:empty::before { content: attr(data-placeholder); color: #ccc; font-style: italic; }
+.note-input {
+  width: 100%; min-height: 48px; padding: 4px 6px; border: 1px solid var(--color-info);
+  border-radius: var(--radius-sm); font-size: 0.75rem; font-family: inherit; color: #444;
+  resize: vertical; background: var(--bg-card); box-shadow: 0 0 0 2px rgba(82,130,224,0.15);
+}
+.note-input:focus { outline: none; }
+
+/* ── Login overlay ────────────────────────────────────────────────────────── */
+.login-overlay {
+  position: fixed; inset: 0; background: var(--bg-page);
+  display: flex; align-items: center; justify-content: center; z-index: 1000;
+}
+.login-box {
+  background: var(--bg-card); border-radius: var(--radius-lg); padding: 40px 48px;
+  box-shadow: var(--shadow-elevated); text-align: center; max-width: 400px;
+}
+.login-box h1 { margin-bottom: 8px; }
+.login-box p { color: #888; font-size: var(--fs-base); margin-bottom: 24px; }
+.btn-google {
+  display: inline-flex; align-items: center; gap: 10px; padding: 10px 24px;
+  background: var(--bg-card); border: 1px solid var(--border-light); border-radius: 6px;
+  font-size: 0.9rem; font-weight: 500; color: #444; cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.btn-google:hover { background: #f8f9fd; box-shadow: var(--shadow-card); }
+.btn-google svg { width: 18px; height: 18px; }
+
+/* ── User bar ─────────────────────────────────────────────────────────────── */
+.user-bar { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: #888; }
+.user-bar img { width: 24px; height: 24px; border-radius: 50%; }
+.btn-signout {
+  padding: 4px 10px; background: none; border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm); font-size: 0.7rem; color: #888; cursor: pointer;
+}
+.btn-signout:hover { background: #f0f1f5; }
+
+/* ── Notification table (narrower) ────────────────────────────────────────── */
+#tab-notifications table { min-width: 900px; }
+
+/* ── Collapsed section toggle ─────────────────────────────────────────────── */
+.section-toggle { cursor: pointer; user-select: none; }
+  </style>
+</head>
+<body>
+
+<!-- ===== LOGIN OVERLAY ===================================================== -->
+<div id="login-overlay" class="login-overlay">
+  <div class="login-box">
+    <h1>Amazon Cases Tracker</h1>
+    <p>Sign in with your Google account to access the tracker.</p>
+    <button class="btn-google" onclick="signIn()">
+      <svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+      Sign in with Google
+    </button>
+  </div>
+</div>
+
+<!-- ===== APP (hidden until signed in) ====================================== -->
+<div id="app" style="display:none">
+
+<!-- ===== HEADER ============================================================ -->
+<header>
+  <div>
+    <h1>Amazon Cases Tracker</h1>
+    <div class="meta" id="meta-line">Loading data from API...</div>
+  </div>
+  <div class="header-actions">
+    <button class="btn-copy" onclick="copyAssignments(this)" title="Copy all assignments as JSON">&#128203; Copy Assignments</button>
+    <button class="btn-copy" onclick="triggerRefresh(this)" id="btn-refresh" title="Pull new emails from Missive">&#x21BB; Refresh</button>
+    <span id="last-refresh" style="font-size:11px;color:#999;margin-left:8px;white-space:nowrap"></span>
+    <div class="user-bar" id="user-bar"></div>
+  </div>
+</header>
+
+<div class="refresh-progress" id="refresh-progress">
+  <div class="rp-header">
+    <span class="rp-status">Connecting to server...</span>
+    <span class="rp-pct">0%</span>
+  </div>
+  <div class="rp-track"><div class="rp-fill"></div></div>
+</div>
+
+<!-- ===== TAB BAR =========================================================== -->
+<div class="tab-bar">
+  <button class="tab-btn active" data-tab="cases" onclick="switchTab('cases')">Cases <span class="tab-badge" id="tab-cases-badge">0</span></button>
+  <button class="tab-btn" data-tab="notifications" onclick="switchTab('notifications')">Notifications <span class="tab-badge" id="tab-notif-badge">0</span></button>
+</div>
+
+<!-- ===== CASES TAB ========================================================= -->
+<div id="tab-cases">
+
+<!-- KPIs -->
+<div class="stats-row">
+  <div class="stat-card stat-open">
+    <div class="stat-label">Open Cases</div>
+    <div class="stat-value" id="stat-open">&mdash;</div>
+    <div class="stat-sub">active right now</div>
+  </div>
+  <div class="stat-card stat-closed">
+    <div class="stat-label">Closed</div>
+    <div class="stat-value" id="stat-closed">&mdash;</div>
+    <div class="stat-sub">all closed</div>
+  </div>
+  <div class="stat-card stat-days">
+    <div class="stat-label">Avg Days Open</div>
+    <div class="stat-value" id="stat-days">&mdash;</div>
+    <div class="stat-sub">active cases only</div>
+  </div>
+  <div class="stat-card stat-msgs">
+    <div class="stat-label">Total Msgs</div>
+    <div class="stat-value" id="stat-msgs">&mdash;</div>
+    <div class="stat-sub">across all cases</div>
+  </div>
+  <div class="stat-card stat-rate">
+    <div class="stat-label">Resolved Rate</div>
+    <div class="stat-value" id="stat-rate">&mdash;</div>
+    <div class="stat-sub" id="stat-rate-sub"></div>
+  </div>
+</div>
+
+<!-- Team Workload -->
+<h2 style="background:#e8f0fe; padding:8px 14px; border-radius:6px; display:inline-block;">Team &amp; Workload</h2>
+<div class="charts-grid">
+  <div class="chart-card">
+    <div class="chart-title">Open Cases by Assignee</div>
+    <div class="chart-sub">Currently active per person</div>
+    <div class="chart-wrap"><canvas id="ch-assignee-open"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Workload by Status</div>
+    <div class="chart-sub">Open cases by status</div>
+    <div class="chart-wrap"><canvas id="ch-workload-status"></canvas></div>
+  </div>
+</div>
+
+<!-- Filter Bar -->
+<h2>Active Cases</h2>
+<div class="filter-bar" id="cases-filter-bar">
+  <label>Brand: <select id="filter-brand" class="filter-select" onchange="applyFilters('cases')"><option value="">All</option></select></label>
+  <label>MKT: <select id="filter-mkt" class="filter-select" onchange="applyFilters('cases')"><option value="">All</option></select></label>
+  <label>Owner: <select id="filter-owner" class="filter-select" onchange="applyFilters('cases')"><option value="">All</option></select></label>
+  <button class="filter-reset" onclick="resetFilters('cases')">Reset</button>
+</div>
+
+<!-- Active Cases Table -->
+<div class="table-wrap">
+  <table id="active-table">
+    <thead><tr>
+      <th class="col-close">Close</th>
+      <th class="col-case">Case ID</th>
+      <th class="col-parent">Parent</th>
+      <th class="col-summary">Summary</th>
+      <th class="col-brand sortable" onclick="sortTable(this,'active-tbody')">Brand</th>
+      <th class="sortable" onclick="sortTable(this,'active-tbody')">MKT</th>
+      <th class="col-owner sortable" onclick="sortTable(this,'active-tbody')">Owner</th>
+      <th class="col-date sortable" onclick="sortTable(this,'active-tbody')">Opened</th>
+      <th class="col-date sortable" onclick="sortTable(this,'active-tbody')">Last Update</th>
+      <th class="col-asin">ASIN / Product</th>
+      <th class="col-issue">Issue Type</th>
+      <th>Status</th>
+      <th class="col-action">Next Action</th>
+      <th class="col-notes">Notes</th>
+      <th class="col-num">Msgs</th>
+      <th class="col-num sortable" onclick="sortTable(this,'active-tbody')">Days</th>
+    </tr></thead>
+    <tbody id="active-tbody"></tbody>
+  </table>
+</div>
+
+<!-- FBA Section -->
+<div id="fba-section" style="display:none;">
+  <h2 style="margin-top:28px; background:linear-gradient(90deg,#ff9800,#fb8c00); color:#fff; padding:10px 18px; border-radius:8px; font-size:0.95rem; letter-spacing:0.5px;">
+    FBA Issues <span style="font-weight:400; opacity:0.85; margin-left:8px;" id="fba-count">0</span>
+  </h2>
+  <div class="table-wrap">
+    <table id="fba-table">
+      <thead><tr>
+        <th class="col-close">Close</th>
+        <th class="col-case">Case ID</th>
+        <th class="col-parent">Parent</th>
+        <th class="col-summary">Summary</th>
+        <th class="col-brand">Brand</th>
+        <th>MKT</th>
+        <th class="col-owner">Owner</th>
+        <th class="col-date">Opened</th>
+        <th class="col-date">Last Update</th>
+        <th class="col-asin">ASIN / Product</th>
+        <th class="col-issue">Issue Type</th>
+        <th>Status</th>
+        <th class="col-action">Next Action</th>
+        <th class="col-notes">Notes</th>
+        <th class="col-num">Msgs</th>
+        <th class="col-num">Days</th>
+      </tr></thead>
+      <tbody id="fba-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Closed Cases -->
+<h2 class="section-toggle" onclick="toggleSection('closed-cases-wrap','closed-cases-arrow')">Closed Cases <span style="font-size:0.7em;color:#999;margin-left:6px;" id="closed-cases-arrow">&#9660;</span></h2>
+<div class="table-wrap closed-section" id="closed-cases-wrap" style="display:none;">
+  <table>
+    <thead><tr>
+      <th class="col-close">Unclose</th>
+      <th class="col-case">Case ID</th>
+      <th class="col-parent">Parent</th>
+      <th class="col-summary">Summary</th>
+      <th class="col-brand">Brand</th>
+      <th>MKT</th>
+      <th class="col-owner">Owner</th>
+      <th class="col-date">Opened</th>
+      <th class="col-date">Last Update</th>
+      <th class="col-asin">ASIN / Product</th>
+      <th class="col-issue">Issue Type</th>
+      <th>Outcome</th>
+      <th class="col-action">Next Action</th>
+      <th class="col-notes">Notes</th>
+      <th class="col-num">Msgs</th>
+      <th class="col-num">Days</th>
+    </tr></thead>
+    <tbody id="closed-tbody"></tbody>
+  </table>
+</div>
+
+<!-- Charts Section -->
+<h2>Charts</h2>
+<div style="margin-bottom:14px;">
+  <div class="chart-card featured">
+    <div class="chart-title featured-title">Monthly Cases</div>
+    <div class="chart-sub">Cases opened per month (open + closed)</div>
+    <div class="chart-wrap-lg"><canvas id="ch-monthly"></canvas></div>
+  </div>
+</div>
+<div class="charts-grid">
+  <div class="chart-card">
+    <div class="chart-title">Cases Created Daily</div>
+    <div class="chart-sub">Last 30 days (open + closed)</div>
+    <div class="chart-wrap"><canvas id="ch-daily"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Workload by Issue (OPEN)</div>
+    <div class="chart-sub">Open cases by issue type</div>
+    <div class="chart-wrap"><canvas id="ch-workload-issue"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Workload by Issue (ALL)</div>
+    <div class="chart-sub">All cases by issue type</div>
+    <div class="chart-wrap"><canvas id="ch-workload-issue-all"></canvas></div>
+  </div>
+</div>
+
+<!-- Analytics Accordions -->
+<div class="analytics-section">
+<h2>Analytics</h2>
+<div class="accordion-group" id="acc-group-main">
+  <div class="accordion-header acc-total" onclick="toggleAccordion(this,'acc-group-main')">
+    <span>Total Cases</span><span class="arrow">&#9654;</span>
+  </div>
+  <div class="accordion-body" id="acc-body-total">
+    <div class="acc-charts-row">
+      <div class="chart-card"><div class="chart-title">Issue per Brand (ALL)</div><div class="chart-wrap" style="height:300px;"><canvas id="an-total-brand"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Issue per MKT (ALL)</div><div class="chart-wrap" style="height:300px;"><canvas id="an-total-mkt"></canvas></div></div>
+      <div class="chart-card acc-chart-half"><div class="chart-title">Issue per Product (ALL)</div><div class="chart-wrap" style="height:300px;"><canvas id="an-total-product"></canvas></div></div>
+    </div>
+  </div>
+
+  <div class="accordion-header acc-open" onclick="toggleAccordion(this,'acc-group-main')">
+    <span>Open Cases</span><span class="arrow">&#9654;</span>
+  </div>
+  <div class="accordion-body" id="acc-body-open">
+    <div class="acc-charts-row">
+      <div class="chart-card"><div class="chart-title">Issue per Brand (OPEN)</div><div class="chart-wrap" style="height:300px;"><canvas id="an-open-brand"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Issue per MKT (OPEN)</div><div class="chart-wrap" style="height:300px;"><canvas id="an-open-mkt"></canvas></div></div>
+      <div class="chart-card acc-chart-half"><div class="chart-title">Issue per Product (OPEN)</div><div class="chart-wrap" style="height:300px;"><canvas id="an-open-product"></canvas></div></div>
+    </div>
+  </div>
+
+  <div class="accordion-header acc-closed" onclick="toggleAccordion(this,'acc-group-main')">
+    <span>Closed Cases</span><span class="arrow">&#9654;</span>
+  </div>
+  <div class="accordion-body" id="acc-body-closed">
+    <div class="acc-charts-row">
+      <div class="chart-card"><div class="chart-title">Issue per Brand (CLOSED)</div><div class="chart-wrap" style="height:300px;"><canvas id="an-closed-brand"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Issue per MKT (CLOSED)</div><div class="chart-wrap" style="height:300px;"><canvas id="an-closed-mkt"></canvas></div></div>
+      <div class="chart-card acc-chart-half"><div class="chart-title">Issue per Product (CLOSED)</div><div class="chart-wrap" style="height:300px;"><canvas id="an-closed-product"></canvas></div></div>
+    </div>
+  </div>
+</div>
+</div>
+
+</div><!-- /tab-cases -->
+
+<!-- ===== NOTIFICATIONS TAB ================================================= -->
+<div id="tab-notifications" style="display:none">
+
+<!-- Notification KPIs -->
+<div class="stats-row">
+  <div class="stat-card stat-open">
+    <div class="stat-label">Active Notifications</div>
+    <div class="stat-value" id="stat-notif-active">&mdash;</div>
+    <div class="stat-sub">requiring attention</div>
+  </div>
+  <div class="stat-card stat-closed">
+    <div class="stat-label">Auto-dismissed</div>
+    <div class="stat-value" id="stat-notif-auto">&mdash;</div>
+    <div class="stat-sub">resolved automatically</div>
+  </div>
+  <div class="stat-card stat-days">
+    <div class="stat-label">Total</div>
+    <div class="stat-value" id="stat-notif-total">&mdash;</div>
+    <div class="stat-sub">all notifications</div>
+  </div>
+</div>
+
+<!-- Notification Filters -->
+<h2>Active Notifications</h2>
+<div class="filter-bar" id="notif-filter-bar">
+  <label>Brand: <select id="notif-filter-brand" class="filter-select" onchange="applyFilters('notifications')"><option value="">All</option></select></label>
+  <label>MKT: <select id="notif-filter-mkt" class="filter-select" onchange="applyFilters('notifications')"><option value="">All</option></select></label>
+  <button class="filter-reset" onclick="resetFilters('notifications')">Reset</button>
+</div>
+
+<!-- Active Notifications Table -->
+<div class="table-wrap">
+  <table id="notif-active-table">
+    <thead><tr>
+      <th class="col-close">Close</th>
+      <th class="col-case">Case ID</th>
+      <th class="col-brand sortable" onclick="sortTable(this,'notif-active-tbody')">Brand</th>
+      <th class="sortable" onclick="sortTable(this,'notif-active-tbody')">MKT</th>
+      <th class="col-summary">Subject</th>
+      <th class="col-issue">Issue Type</th>
+      <th class="col-date sortable" onclick="sortTable(this,'notif-active-tbody')">Opened</th>
+      <th>Status</th>
+      <th class="col-num sortable" onclick="sortTable(this,'notif-active-tbody')">Days</th>
+    </tr></thead>
+    <tbody id="notif-active-tbody"></tbody>
+  </table>
+</div>
+
+<!-- Closed/Auto-dismissed Notifications -->
+<h2 class="section-toggle" onclick="toggleSection('closed-notif-wrap','closed-notif-arrow')">Closed / Auto-dismissed <span style="font-size:0.7em;color:#999;margin-left:6px;" id="closed-notif-arrow">&#9660;</span></h2>
+<div class="table-wrap closed-section" id="closed-notif-wrap" style="display:none;">
+  <table>
+    <thead><tr>
+      <th class="col-close">Unclose</th>
+      <th class="col-case">Case ID</th>
+      <th class="col-brand">Brand</th>
+      <th>MKT</th>
+      <th class="col-summary">Subject</th>
+      <th class="col-issue">Issue Type</th>
+      <th class="col-date">Opened</th>
+      <th>Outcome</th>
+      <th class="col-num">Days</th>
+    </tr></thead>
+    <tbody id="notif-closed-tbody"></tbody>
+  </table>
+</div>
+
+</div><!-- /tab-notifications -->
+
+</div><!-- /app -->
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     JAVASCRIPT
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<script>
+/* ══════════════════════════════════════════════════════════════════════════════
+   MODULE: CONSTANTS & CONFIG
+   ══════════════════════════════════════════════════════════════════════════════ */
+const localhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const API_URL = localhost ? 'http://localhost:3002' : 'https://amazon-cases-backend-production.up.railway.app';
+const API_KEY = 'cases2026';
+
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDDuBOndDZ7BXmMDY8AqzLoSNBf2r4rseU",
+  authDomain: "cases-tracker-dc2f2.firebaseapp.com",
+  databaseURL: "https://cases-tracker-dc2f2-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "cases-tracker-dc2f2",
+  storageBucket: "cases-tracker-dc2f2.firebasestorage.app",
+  messagingSenderId: "694983914978",
+  appId: "1:694983914978:web:6ca811e7bfc31a0487b5bb"
+};
+
+const ALLOWED_EMAILS = [
+  'tom@themothership.ai', 'vitali@themothership.ai', 'natasha@themothership.ai',
+  'leticia@themothership.ai', 'hello@themothership.ai', 'francesco@themothership.ai'
+];
+
+const OWNERS = ['Unassigned', 'Vitali', 'Tom', 'Natasha', 'Leticia', 'Francesco'];
+const MKT_OPTIONS = ['', 'DE', 'FR', 'IT', 'ES', 'UK', 'US'];
+const STATUS_OPTIONS = ['Waiting on Us', 'Waiting on Amazon', 'Resolved', 'Not Resolved', 'On Hold'];
+const CLOSE_STATUS_OPTIONS = ['Resolved', 'Not Resolved', 'On Hold', 'Waiting on Amazon', 'Waiting on Us', 'Investigation'];
+const EXCLUDED_FROM_STATS = ['10995838672'];
+const PAL = ['#e05252','#5282e0','#52c97c','#e09b52','#aa52e0','#52c9c9','#e0527c','#7ce052','#c9a052','#5252e0'];
+
+const ISSUE_CATEGORIES = [
+  'Other', 'VAT', 'GPSR Compliance', 'Image Compliance', 'Business Compliance',
+  'Listing Compliance', 'Logistics', 'Product Safety', 'Restricted Products',
+  'Regulatory Compliance', 'IP Violation', 'IP Complaint',
+  'Authenticity Complaint', 'Product Condition Complaint',
+  'Listing Policy Violation', 'Reviews Policy Violation', 'Policy Violation',
+  'Premium Support', 'Escalation', 'Notification', 'KYC', 'Investigation'
+];
+
+const ASIN_NAMES = {
+  "B0BT9YZW9V": "MENOSITOL", "B0B69PBQFN": "INOSITOL-CAPS",
+  "B0BNJQC5MM": "INOSITOL-CAPS-DE", "B0CKRG3GK9": "INOSITOL-CAPS-UK",
+  "B0CKRGHXYC": "INOSITOL-POWDER", "B0BC4FT3XP": "CUT",
+  "B0BZ4ZC5Z5": "CUT-BCKP", "B0F8BT5QN7": "CUT-v.2",
+  "B0BPR47H5S": "LEAN", "B0F7Z1HFT7": "LEAN-v.2",
+  "B0F7Z2GT2R": "BLOCK", "B0BVPFRV8K": "BLOCK-v.2",
+  "B0BM1WPXC5": "LAX", "B0BSVFRCP4": "DETOX-UK",
+  "B0B6GHYP1V": "DETOX-EU", "B0CNT6PM1V": "ASHWAGANDHA",
+  "B0C1ZZCW1V": "NOOTROPIC", "B0BH37FCZQ": "BRNR21-DE-FR-IT",
+  "B0B6GH8RL3": "BRNR21-ES-UK", "B0G8JPG7FF": "INO-C-2-BUNDLE-EU",
+  "B0GKPJJTZW": "MENO-2-BUNDLE-EU", "B0GKPPG3P6": "LAX-2-BUNDLE-EU",
+  "B0GKPWNYZV": "CUT+LEAN-2-BUNDLE", "B0BSNX7TZR": "MENOSITOL-US",
+  "B0DJPG1XZ5": "INOSITOL-CAPS-US", "B0CMD733QC": "INOSITOL-POWDER-US",
+  "B0FM5QWZ9Q": "INOSITOL-CAPS-90-US", "B0FB9N84B8": "INO-C-2-BUNDLE-US",
+  "B0FB9PC19F": "INO-C-3-BUNDLE-US", "B0GMYGR5Z9": "LAX-2-BUNDLE-IT",
+  "B078XG8VVW": "JS60", "B078XGWQ9M": "JS120",
+  "B078XHF8GM": "JS300", "B07JQSC2P9": "Y&A120",
+  "B07JQQYW3Y": "Y&A300", "B0DG618J6J": "ProbioticChews",
+  "B0DJFJQN1G": "JointChews", "B081B45LWS": "Collagen",
+  "B07BRY1FRZ": "Omega 3", "B07MK5BBGN": "Multivitamins",
+  "B086DLNN34": "Immune", "B07TV5TM5Z": "Mushroom Cmplx",
+  "B0DSQ433BM": "Mushroom Cmplx-DE", "B08BG9144N": "Apple Cider",
+  "B00ACJTO1K": "Lions Mane", "B0D31VY9LK": "Ashwagandha",
+  "B0DD1JPLQ4": "Gingko Biloba", "B0D8TWKP4F": "Turmeric",
+  "B0DJTJ11PG": "Berberine", "B0FNFSMCWB": "Berberine Pouch",
+  "B0GK9D733T": "Omega x2", "B0GK9B1N8R": "Multi+Omega Bundle",
+  "B00ACJTOZ6": "Vitamin D3+K2 US", "B0C3YBJVW5": "SLIM-PURE-DETOX"
+};
+
+// Build sorted ASIN options for dropdown
+const ASIN_OPTIONS_SORTED = Object.entries(ASIN_NAMES)
+  .map(([asin, name]) => ({ asin, name }))
+  .sort((a, b) => a.name.localeCompare(b.name));
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   MODULE: STATE
+   ══════════════════════════════════════════════════════════════════════════════ */
+let CASES = [];
+let MSG_DATA = {};
+let openCases = [], closedCases = [], fbaIssues = [];
+let kpiCases = [], kpiOpen = [], kpiClosed = [];
+let notifActive = [], notifClosed = [];
+let _unseenCaseIds = new Set();
+let _seenEmails = {};
+let _currentUid = null;
+let _syncing = false;
+let _chartRebuildTimer = null;
+let _assigneeOpenChart = null;
+const _anCharts = {};
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   MODULE: TAB SWITCHING
+   ══════════════════════════════════════════════════════════════════════════════ */
+function switchTab(tabName) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabName));
+  document.getElementById('tab-cases').style.display = tabName === 'cases' ? '' : 'none';
+  document.getElementById('tab-notifications').style.display = tabName === 'notifications' ? '' : 'none';
+}
+
+function updateTabBadges() {
+  const casesCount = document.querySelectorAll('#active-tbody tr[data-case]:not(.msg-detail-row):not([data-auto-dismissed])').length;
+  const notifCount = document.querySelectorAll('#notif-active-tbody tr[data-case]:not([data-auto-dismissed])').length;
+  document.getElementById('tab-cases-badge').textContent = casesCount;
+  document.getElementById('tab-notif-badge').textContent = notifCount;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   MODULE: SECTION TOGGLE
+   ══════════════════════════════════════════════════════════════════════════════ */
+function toggleSection(wrapId, arrowId) {
+  const wrap = document.getElementById(wrapId);
+  const arrow = document.getElementById(arrowId);
+  if (wrap.style.display === 'none') {
+    wrap.style.display = '';
+    arrow.innerHTML = '&#9650;';
+  } else {
+    wrap.style.display = 'none';
+    arrow.innerHTML = '&#9660;';
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   MODULE: DATA LOADING
+   ══════════════════════════════════════════════════════════════════════════════ */
+async function loadDataFromAPI() {
+  try {
+    const [casesRes, msgsRes] = await Promise.all([
+      fetch(API_URL + '/api/cases'),
+      fetch(API_URL + '/api/messages')
+    ]);
+    CASES = await casesRes.json();
+    MSG_DATA = await msgsRes.json();
+    CASES.forEach(c => { c.product = c.asin_name || c.asin || (c.issue_type || '\u2014'); });
+    renderApp();
+    try {
+      const statsRes = await fetch(API_URL + '/api/stats');
+      const stats = await statsRes.json();
+      updateLastRefreshLabel(stats.last_refresh);
+    } catch(e) { /* ignore */ }
+  } catch (err) {
+    console.error('Failed to load data from API:', err);
+    document.getElementById('meta-line').textContent = 'Error loading data from API';
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   MODULE: STATE COMPUTATION
+   ══════════════════════════════════════════════════════════════════════════════ */
+function computeDerivedState() {
+  const allCases = CASES.filter(c => c.case_type !== 'notification');
+  openCases = allCases.filter(c => !c.close && c.case_type !== 'fba_issue');
+  closedCases = allCases.filter(c => c.close && c.case_type !== 'fba_issue');
+  fbaIssues = allCases.filter(c => !c.close && c.case_type === 'fba_issue');
+  kpiCases = allCases.filter(c => !EXCLUDED_FROM_STATS.includes(c.case_id) && !c.auto_dismissed);
+  kpiOpen = kpiCases.filter(c => !c.close);
+  kpiClosed = kpiCases.filter(c => c.close);
+
+  const allNotifs = CASES.filter(c => c.case_type === 'notification');
+  notifActive = allNotifs.filter(c => !c.close);
+  notifClosed = allNotifs.filter(c => c.close);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   MODULE: UNSEEN EMAILS
+   ══════════════════════════════════════════════════════════════════════════════ */
+function computeUnseenCases() {
+  _unseenCaseIds = new Set();
+  const uid = _currentUid || 'anonymous';
+  CASES.filter(c => !c.close).forEach(c => {
+    const seenTs = _seenEmails[c.case_id]?.[uid];
+    if (!seenTs) {
+      _unseenCaseIds.add(c.case_id);
+    } else {
+      const lastUpdate = new Date(c.last_update_date).getTime();
+      if (lastUpdate > seenTs) _unseenCaseIds.add(c.case_id);
+    }
+  });
+}
+
+function acknowledgeCase(el) {
+  const caseId = el.dataset.case;
+  if (!caseId) return;
+  const uid = _currentUid || 'anonymous';
+  firebase.database().ref('seen_emails/' + caseId + '/' + uid).set(Date.now());
+  el.remove();
+  _unseenCaseIds.delete(caseId);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   MODULE: RENDER APP
+   ══════════════════════════════════════════════════════════════════════════════ */
+function renderApp() {
+  computeDerivedState();
+
+  // Cases KPIs
+  const avgDaysOpen = kpiOpen.length ? Math.round(kpiOpen.reduce((s, c) => s + c.days_open, 0) / kpiOpen.length) : 0;
+  const totalMsgs = kpiCases.reduce((s, c) => s + (c.msgs || 0), 0);
+
+  document.getElementById('stat-open').textContent = kpiOpen.length;
+  document.getElementById('stat-closed').textContent = kpiClosed.length;
+  document.getElementById('stat-days').textContent = avgDaysOpen;
+  document.getElementById('stat-msgs').textContent = totalMsgs;
+
+  // Resolved rate
+  const resolvedCount = kpiClosed.filter(c => c.status_bucket === 'Resolved' || !c.status_bucket).length;
+  const rate = kpiClosed.length ? Math.round((resolvedCount / kpiClosed.length) * 100) : 0;
+  document.getElementById('stat-rate').textContent = rate + '%';
+  document.getElementById('stat-rate-sub').textContent = resolvedCount + ' of ' + kpiClosed.length + ' closed';
+
+  // Notifications KPIs
+  const notifAutoDismissed = CASES.filter(c => c.case_type === 'notification' && c.auto_dismissed).length;
+  document.getElementById('stat-notif-active').textContent = notifActive.filter(c => !c.auto_dismissed).length;
+  document.getElementById('stat-notif-auto').textContent = notifAutoDismissed;
+  document.getElementById('stat-notif-total').textContent = CASES.filter(c => c.case_type === 'notification').length;
+
+  // Sort: VIP/Premium first, then by days_open desc
+  openCases.sort((a, b) => {
+    const aVip = (a.issue_type === 'VIP Seller Relations' || a.issue_type === 'Premium Support') ? 1 : 0;
+    const bVip = (b.issue_type === 'VIP Seller Relations' || b.issue_type === 'Premium Support') ? 1 : 0;
+    if (aVip !== bVip) return bVip - aVip;
+    return b.days_open - a.days_open;
+  });
+
+  // Render tables
+  renderCaseRows('active-tbody', openCases);
+  renderCaseRows('closed-tbody', closedCases);
+  renderCaseRows('fba-tbody', fbaIssues);
+  renderNotifRows('notif-active-tbody', notifActive);
+  renderNotifRows('notif-closed-tbody', notifClosed);
+
+  // FBA section visibility
+  const fbaSection = document.getElementById('fba-section');
+  if (fbaSection) fbaSection.style.display = fbaIssues.length ? '' : 'none';
+  const fbaCount = document.getElementById('fba-count');
+  if (fbaCount) fbaCount.textContent = fbaIssues.length;
+
+  // Update meta line
+  const fbaLabel = fbaIssues.length ? ' \u00b7 ' + fbaIssues.length + ' FBA' : '';
+  const notifLabel = notifActive.filter(c => !c.auto_dismissed).length ? ' \u00b7 ' + notifActive.filter(c => !c.auto_dismissed).length + ' Notifications' : '';
+  document.getElementById('meta-line').textContent = openCases.length + ' active \u00b7 ' + closedCases.length + ' closed' + fbaLabel + notifLabel + ' \u00b7 Source: API';
+
+  updateTabBadges();
+
+  // Init UI components after DOM is ready
+  setTimeout(() => {
+    populateFilters();
+    initStatusDropdowns();
+    document.querySelectorAll('.mkt-select').forEach(sel => styleMktSelect(sel));
+    buildAllCharts();
+    initMsgTimeline();
+    applyFilters('cases');
+    applyFilters('notifications');
+    if (typeof _triggerFirebaseSync === 'function') _triggerFirebaseSync();
+  }, 100);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   MODULE: TABLE RENDERING — CASES
+   ══════════════════════════════════════════════════════════════════════════════ */
+function buildAsinCell(c) {
+  const caseId = c.case_id;
+  const detectedAsin = c.asin || '';
+  const detectedName = detectedAsin ? (ASIN_NAMES[detectedAsin] || '') : '';
+
+  // Build display
+  let displayHtml = '';
+  if (detectedAsin) {
+    displayHtml = '<span class="asin-code">' + detectedAsin + '</span>' +
+      (detectedName ? '<span class="asin-name">' + detectedName + '</span>' : '');
+  }
+
+  // Build dropdown
+  let selectHtml = '<select class="asin-select" data-case="' + caseId + '" onchange="asinChanged(this)">';
+  selectHtml += '<option value="">N/A</option>';
+  ASIN_OPTIONS_SORTED.forEach(opt => {
+    const selected = (opt.asin === detectedAsin) ? ' selected' : '';
+    selectHtml += '<option value="' + opt.asin + '"' + selected + '>' + opt.name + ' (' + opt.asin + ')</option>';
+  });
+  // If detected ASIN is not in the list, add it
+  if (detectedAsin && !ASIN_NAMES[detectedAsin]) {
+    selectHtml += '<option value="' + detectedAsin + '" selected>' + detectedAsin + '</option>';
+  }
+  selectHtml += '</select>';
+
+  return displayHtml + selectHtml;
+}
+
+function renderCaseRows(tbodyId, cases) {
+  const tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
+  tbody.querySelectorAll('tr[data-case]').forEach(r => r.remove());
+  tbody.querySelectorAll('.msg-detail-row').forEach(r => r.remove());
+
+  cases.forEach(c => {
+    const tr = document.createElement('tr');
+    tr.setAttribute('data-case', c.case_id);
+    tr.setAttribute('data-brand', c.brand || '');
+    tr.setAttribute('data-mkt', c.marketplace || '');
+    if (c.auto_dismissed) tr.setAttribute('data-auto-dismissed', '1');
+
+    const bucketClass = c.status_bucket === 'Waiting on Us' ? 'bucket-us'
+      : c.status_bucket === 'Waiting on Amazon' ? 'bucket-amz'
+      : c.status_bucket === 'Resolved' ? 'bucket-res'
+      : c.status_bucket === 'Not Resolved' ? 'bucket-nr'
+      : c.status_bucket === 'On Hold' ? 'bucket-hold'
+      : '';
+    const daysClass = c.days_open >= 14 ? 'days-urgent' : c.days_open >= 7 ? 'days-warn' : 'days-ok';
+    const isVip = c.issue_type === 'Premium Support' || c.issue_type === 'VIP Seller Relations';
+
+    // Issue type dropdown
+    const currentIssue = c.issue_type || 'Other';
+    const issueOptions = ISSUE_CATEGORIES.map(cat =>
+      '<option value="' + cat + '"' + (cat === currentIssue ? ' selected' : '') + '>' + cat + '</option>'
+    ).join('');
+    const extraIssueOpt = ISSUE_CATEGORIES.includes(currentIssue) ? '' : '<option value="' + currentIssue + '" selected>' + currentIssue + '</option>';
+    const issueHtml = isVip
+      ? '<span class="issue-vip">' + (c.issue_type || '') + '</span>'
+      : '<select class="issue-select" data-case="' + c.case_id + '" onchange="issueTypeChanged(this)">' + extraIssueOpt + issueOptions + '</select>';
+
+    // Owner dropdown
+    const ownerOptions = OWNERS.map(o =>
+      '<option value="' + o + '"' + (c.owner === o ? ' selected' : '') + '>' + o + '</option>'
+    ).join('');
+
+    // MKT dropdown
+    const curMkt = c.marketplace || '';
+    const mktOpts = MKT_OPTIONS.map(m => '<option value="' + m + '"' + (m === curMkt ? ' selected' : '') + '>' + m + '</option>').join('');
+    const extraMkt = MKT_OPTIONS.includes(curMkt) ? '' : '<option value="' + curMkt + '" selected>' + curMkt + '</option>';
+
+    // Case ID badges
+    let caseIdHtml = '';
+    if (c.case_type === 'notification') caseIdHtml += '<span class="badge badge-notif" style="font-size:0.6rem;margin-right:4px;vertical-align:middle;">NOTIF</span>';
+    if (c.case_type === 'fba_issue') caseIdHtml += '<span class="badge badge-fba" style="font-size:0.6rem;margin-right:4px;vertical-align:middle;">FBA</span>';
+    if (c.auto_dismissed) caseIdHtml += '<span class="badge badge-auto" style="font-size:0.6rem;margin-right:4px;vertical-align:middle;">AUTO</span>';
+    if (_unseenCaseIds.has(c.case_id)) caseIdHtml += '<span class="new-email-icon" data-case="' + c.case_id + '" onclick="acknowledgeCase(this)" title="New email received">\u2709</span>';
+    caseIdHtml += c.case_id;
+
+    tr.innerHTML =
+      '<td class="col-close"><input type="checkbox" class="close-check" data-case="' + c.case_id + '" data-source="' + c.close + '" onchange="closeToggled(this)"></td>' +
+      '<td class="col-case">' + caseIdHtml + '</td>' +
+      '<td class="col-parent"><span class="parent-link" data-case="' + c.case_id + '" onclick="editParent(this)"></span></td>' +
+      '<td class="col-summary">' + (c.summary || c.status_current || '') + '</td>' +
+      '<td>' + (c.brand || '') + '</td>' +
+      '<td><select class="mkt-select" data-case="' + c.case_id + '" onchange="marketplaceChanged(this)">' + extraMkt + mktOpts + '</select></td>' +
+      '<td class="col-owner"><select class="owner-select" data-case="' + c.case_id + '" onchange="ownerChanged(this)">' + ownerOptions + '</select></td>' +
+      '<td class="col-date">' + (c.opened_date || '') + '</td>' +
+      '<td class="col-date">' + (c.last_update_date || '') + '</td>' +
+      '<td class="col-asin">' + buildAsinCell(c) + '</td>' +
+      '<td class="col-issue">' + issueHtml + '</td>' +
+      '<td><span class="bucket ' + bucketClass + '">' + (c.status_bucket || '') + '</span></td>' +
+      '<td class="col-action"><div class="note-text" data-case="' + c.case_id + '" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>' +
+      '<td class="col-notes"><div class="note-text" data-case="' + c.case_id + '" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>' +
+      '<td class="col-num">' + (c.msgs || 0) + '</td>' +
+      '<td class="col-num ' + daysClass + '">' + c.days_open + '</td>';
+
+    tbody.appendChild(tr);
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   MODULE: TABLE RENDERING — NOTIFICATIONS
+   ══════════════════════════════════════════════════════════════════════════════ */
+function renderNotifRows(tbodyId, cases) {
+  const tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
+  tbody.querySelectorAll('tr[data-case]').forEach(r => r.remove());
+
+  cases.forEach(c => {
+    const tr = document.createElement('tr');
+    tr.setAttribute('data-case', c.case_id);
+    tr.setAttribute('data-brand', c.brand || '');
+    tr.setAttribute('data-mkt', c.marketplace || '');
+    if (c.auto_dismissed) tr.setAttribute('data-auto-dismissed', '1');
+
+    const daysClass = c.days_open >= 14 ? 'days-urgent' : c.days_open >= 7 ? 'days-warn' : 'days-ok';
+    const bucketClass = c.status_bucket === 'Waiting on Us' ? 'bucket-us'
+      : c.status_bucket === 'Waiting on Amazon' ? 'bucket-amz'
+      : c.status_bucket === 'Resolved' ? 'bucket-res'
+      : c.status_bucket === 'Not Resolved' ? 'bucket-nr'
+      : c.status_bucket === 'On Hold' ? 'bucket-hold'
+      : '';
+    const mktClass = c.marketplace ? 'mkt-' + c.marketplace.toLowerCase() : '';
+
+    let caseIdHtml = '<span class="badge badge-notif" style="font-size:0.6rem;margin-right:4px;vertical-align:middle;">NOTIF</span>';
+    if (c.auto_dismissed) caseIdHtml += '<span class="badge badge-auto" style="font-size:0.6rem;margin-right:4px;vertical-align:middle;">AUTO</span>';
+    caseIdHtml += c.case_id;
+
+    const currentIssue = c.issue_type || 'Notification';
+    const issueOptions = ISSUE_CATEGORIES.map(cat =>
+      '<option value="' + cat + '"' + (cat === currentIssue ? ' selected' : '') + '>' + cat + '</option>'
+    ).join('');
+    const extraIssueOpt = ISSUE_CATEGORIES.includes(currentIssue) ? '' : '<option value="' + currentIssue + '" selected>' + currentIssue + '</option>';
+    const issueHtml = '<select class="issue-select" data-case="' + c.case_id + '" onchange="issueTypeChanged(this)">' + extraIssueOpt + issueOptions + '</select>';
+
+    tr.innerHTML =
+      '<td class="col-close"><input type="checkbox" class="close-check" data-case="' + c.case_id + '" data-source="' + c.close + '" onchange="closeToggled(this)"></td>' +
+      '<td class="col-case">' + caseIdHtml + '</td>' +
+      '<td>' + (c.brand || '') + '</td>' +
+      '<td><span class="badge ' + mktClass + '">' + (c.marketplace || '') + '</span></td>' +
+      '<td class="col-summary">' + (c.summary || c.status_current || '') + '</td>' +
+      '<td class="col-issue">' + issueHtml + '</td>' +
+      '<td class="col-date">' + (c.opened_date || '') + '</td>' +
+      '<td><span class="bucket ' + bucketClass + '">' + (c.status_bucket || '') + '</span></td>' +
+      '<td class="col-num ' + daysClass + '">' + c.days_open + '</td>';
+
+    tbody.appendChild(tr);
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   MODULE: ASIN DROPDOWN
+   ══════════════════════════════════════════════════════════════════════════════ */
+function asinChanged(sel) {
+  if (_syncing) return;
+  const caseId = sel.dataset.case;
+  const val = sel.value;
+  const db = firebase.database();
+  if (val) {
+    db.ref('asins/' + caseId).set(val);
+  } else {
+    db.ref('asins/' + caseId).remove();
+  }
+  // Update CASES array
+  const c = CASES.find(x => String(x.case_id) === String(caseId));
+  if (c) {
+    c.asin = val || null;
+    c.asin_name = val ? (ASIN_NAMES[val] || val) : null;
+    c.product = c.asin_name || c.asin || (c.issue_type || '\u2014');
+  }
+  // Update display in same cell
+  const td = sel.closest('td');
+  if (td) {
+    const codeSpan = td.querySelector('.asin-code');
+    const nameSpan = td.querySelector('.asin-name');
+    if (val) {
+      if (codeSpan) { codeSpan.textContent = val; }
+      else { const s = document.createElement('span'); s.className = 'asin-code'; s.textContent = val; td.insertBefore(s, td.firstChild); }
+      const name = ASIN_NAMES[val] || '';
+      if (nameSpan) { nameSpan.textContent = name; }
+      else if (name) { const s = document.createElement('span'); s.className = 'asin-name'; s.textContent = name; const code = td.querySelector('.asin-code'); if (code) code.after(s); }
+    } else {
+      if (codeSpan) codeSpan.remove();
+      if (nameSpan) nameSpan.remove();
+    }
+  }
+  if (typeof rebuildAnalyticsIfOpen === 'function') rebuildAnalyticsIfOpen();
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   MODULE: STATUS DROPDOWNS
+   ══════════════════════════════════════════════════════════════════════════════ */
+function initStatusDropdowns() {
+  function applyToRow(row, cellIndex, options, changeHandler) {
+    const cell = row.cells[cellIndex];
+    if (!cell) return;
+    if (cell.querySelector('.close-status-select')) return;
+    const span = cell.querySelector('.bucket');
+    if (!span) return;
+    const currentVal = span.textContent.trim();
+    const caseId = row.dataset.case;
+    const sel = document.createElement('select');
+    sel.className = 'close-status-select';
+    sel.dataset.case = caseId;
+    sel.setAttribute('onchange', changeHandler);
+    options.forEach(opt => {
+      const o = document.createElement('option');
+      o.value = opt; o.textContent = opt;
+      if (opt === currentVal) o.selected = true;
+      sel.appendChild(o);
+    });
+    cell.innerHTML = '';
+    cell.appendChild(sel);
+    styleCloseStatus(sel);
+  }
+
+  // Cases active + closed — status at cell 11
+  document.querySelectorAll('#active-tbody tr[data-case]:not(.msg-detail-row), #closed-tbody tr[data-case]:not(.msg-detail-row)').forEach(row => {
+    applyToRow(row, 11, STATUS_OPTIONS, 'statusChanged(this)');
+  });
+  // FBA — status at cell 11 (same column layout now)
+  document.querySelectorAll('#fba-tbody tr[data-case]').forEach(row => {
+    applyToRow(row, 11, STATUS_OPTIONS, 'statusChanged(this)');
+  });
+  // Notification active + closed — status at cell 7
+  document.querySelectorAll('#notif-active-tbody tr[data-case], #notif-closed-tbody tr[data-case]').forEach(row => {
+    applyToRow(row, 7, STATUS_OPTIONS, 'statusChanged(this)');
+  });
+}
+
+function styleCloseStatus(sel) {
+  sel.className = 'close-status-select';
+  const map = {
+    'Resolved': 'st-resolved', 'Not Resolved': 'st-notresolved', 'On Hold': 'st-onhold',
+    'Waiting on Amazon': 'st-waitamazon', 'Waiting on Us': 'st-waitus',
+    'Investigation': 'st-invest'
+  };
+  if (map[sel.value]) sel.classList.add(map[sel.value]);
+}
+
+function statusChanged(sel) {
+  if (_syncing) return;
+  styleCloseStatus(sel);
+  firebase.database().ref('statuses/' + sel.dataset.case).set(sel.value);
+  updateKpiCounts();
+  if (typeof rebuildAnalyticsIfOpen === 'function') rebuildAnalyticsIfOpen();
+}
+
+function closeStatusChanged(sel) {
+  if (_syncing) return;
+  styleCloseStatus(sel);
+  firebase.database().ref('close_statuses/' + sel.dataset.case).set(sel.value);
+  updateKpiCounts();
+  if (typeof rebuildAnalyticsIfOpen === 'function') rebuildAnalyticsIfOpen();
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   MODULE: MKT STYLING
+   ══════════════════════════════════════════════════════════════════════════════ */
+function styleMktSelect(sel) {
+  sel.className = 'mkt-select';
+  const cls = sel.value ? 'mkt-' + sel.value.toLowerCase() : '';
+  if (cls) sel.classList.add(cls);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   MODULE: FILTERS
+   ══════════════════════════════════════════════════════════════════════════════ */
+function populateFilters() {
+  const brands = [...new Set(CASES.map(c => c.brand).filter(Boolean))].sort();
+  const mkts = [...new Set(CASES.map(c => c.marketplace).filter(Boolean))].sort();
+
+  // Cases filters
+  const bSel = document.getElementById('filter-brand');
+  const mSel = document.getElementById('filter-mkt');
+  const oSel = document.getElementById('filter-owner');
+  bSel.innerHTML = '<option value="">All</option>';
+  mSel.innerHTML = '<option value="">All</option>';
+  oSel.innerHTML = '<option value="">All</option>';
+  brands.forEach(b => { bSel.innerHTML += '<option value="' + b + '">' + b + '</option>'; });
+  mkts.forEach(m => { mSel.innerHTML += '<option value="' + m + '">' + m + '</option>'; });
+  OWNERS.forEach(w => { oSel.innerHTML += '<option value="' + w + '">' + w + '</option>'; });
+
+  // Notification filters
+  const nbSel = document.getElementById('notif-filter-brand');
+  const nmSel = document.getElementById('notif-filter-mkt');
+  nbSel.innerHTML = '<option value="">All</option>';
+  nmSel.innerHTML = '<option value="">All</option>';
+  brands.forEach(b => { nbSel.innerHTML += '<option value="' + b + '">' + b + '</option>'; });
+  mkts.forEach(m => { nmSel.innerHTML += '<option value="' + m + '">' + m + '</option>'; });
+}
+
+function applyFilters(tab) {
+  if (tab === 'cases' || !tab) {
+    const brand = document.getElementById('filter-brand').value;
+    const mkt = document.getElementById('filter-mkt').value;
+    const owner = document.getElementById('filter-owner').value;
+    const rows = document.querySelectorAll('#active-tbody tr');
+
+    const visibleParents = new Set();
+    rows.forEach(row => {
+      if (row.classList.contains('msg-detail-row')) return;
+      const ownerSel = row.querySelector('.owner-select');
+      const rowOwner = ownerSel ? ownerSel.value : '';
+      const matches = (!brand || row.dataset.brand === brand) && (!mkt || row.dataset.mkt === mkt) && (!owner || rowOwner === owner);
+      if (matches) visibleParents.add(row.dataset.case);
+    });
+
+    const visibleCases = new Set();
+    rows.forEach(row => {
+      if (row.classList.contains('msg-detail-row')) return;
+      const ownerSel = row.querySelector('.owner-select');
+      const rowOwner = ownerSel ? ownerSel.value : '';
+      const matches = (!brand || row.dataset.brand === brand) && (!mkt || row.dataset.mkt === mkt) && (!owner || rowOwner === owner);
+      const parentSpan = row.querySelector('.parent-link');
+      const parentId = parentSpan ? parentSpan.textContent.trim() : '';
+      const followsParent = parentId && visibleParents.has(parentId);
+      const visible = matches || followsParent;
+      row.style.display = visible ? '' : 'none';
+      if (visible) visibleCases.add(row.dataset.case);
+    });
+    document.querySelectorAll('#active-tbody .msg-detail-row').forEach(dr => {
+      const parentId = dr.dataset.parentCase;
+      if (!visibleCases.has(parentId)) {
+        dr.style.display = 'none';
+      } else {
+        dr.style.display = dr.classList.contains('open') ? 'table-row' : 'none';
+      }
+    });
+  }
+
+  if (tab === 'notifications' || !tab) {
+    const brand = document.getElementById('notif-filter-brand').value;
+    const mkt = document.getElementById('notif-filter-mkt').value;
+    document.querySelectorAll('#notif-active-tbody tr[data-case]').forEach(row => {
+      const matches = (!brand || row.dataset.brand === brand) && (!mkt || row.dataset.mkt === mkt);
+      row.style.display = matches ? '' : 'none';
+    });
+  }
+}
+
+function resetFilters(tab) {
+  if (tab === 'cases') {
+    document.getElementById('filter-brand').value = '';
+    document.getElementById('filter-mkt').value = '';
+    document.getElementById('filter-owner').value = '';
+    applyFilters('cases');
+  } else if (tab === 'notifications') {
+    document.getElementById('notif-filter-brand').value = '';
+    document.getElementById('notif-filter-mkt').value = '';
+    applyFilters('notifications');
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   MODULE: KPI COUNTER UPDATES
+   ══════════════════════════════════════════════════════════════════════════════ */
+function updateKpiCounts() {
+  const activeRows = document.querySelectorAll('#active-tbody tr[data-case]:not(.msg-detail-row):not([data-auto-dismissed])').length;
+  const closedRows = document.querySelectorAll('#closed-tbody tr[data-case]:not(.msg-detail-row):not([data-auto-dismissed])').length;
+  document.getElementById('stat-open').textContent = activeRows;
+  document.getElementById('stat-closed').textContent = closedRows;
+
+  // Resolved rate from outcome dropdowns
+  let resolved = 0, total = 0;
+  document.querySelectorAll('#closed-tbody tr[data-case]:not([data-auto-dismissed]) .close-status-select').forEach(sel => {
+    total++;
+    if (sel.value === 'Resolved') resolved++;
+  });
+  const rate = total > 0 ? Math.round((resolved / total) * 100) : 0;
+  document.getElementById('stat-rate').textContent = rate + '%';
+  document.getElementById('stat-rate-sub').textContent = resolved + ' of ' + total + ' closed';
+
+  // Notification KPIs
+  const notifActiveRows = document.querySelectorAll('#notif-active-tbody tr[data-case]:not([data-auto-dismissed])').length;
+  const notifClosedRows = document.querySelectorAll('#notif-closed-tbody tr[data-case]').length;
+  const notifAutoDismissed = document.querySelectorAll('#notif-active-tbody tr[data-auto-dismissed], #notif-closed-tbody tr[data-auto-dismissed]').length;
+  document.getElementById('stat-notif-active').textContent = notifActiveRows;
+  document.getElementById('stat-notif-auto').textContent = notifAutoDismissed;
+  document.getElementById('stat-notif-total').textContent = notifActiveRows + notifClosedRows;
+
+  // Meta line
+  const fbaRows = document.querySelectorAll('#fba-tbody tr[data-case]').length;
+  const fbaLabel = fbaRows ? ' \u00b7 ' + fbaRows + ' FBA' : '';
+  const notifLabel = notifActiveRows ? ' \u00b7 ' + notifActiveRows + ' Notifications' : '';
+  document.getElementById('meta-line').textContent = activeRows + ' active \u00b7 ' + closedRows + ' closed' + fbaLabel + notifLabel + ' \u00b7 Source: API';
+
+  updateTabBadges();
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   MODULE: CLOSE WORKFLOW
+   ══════════════════════════════════════════════════════════════════════════════ */
+function today() { return new Date().toISOString().split('T')[0]; }
+
+function closeToggled(cb) {
+  if (_syncing) return;
+  const caseId = cb.dataset.case;
+  const db = firebase.database();
+
+  if (cb.checked) {
+    db.ref('closed/' + caseId).set(true);
+    db.ref('close_dates/' + caseId).set(today());
+  } else {
+    db.ref('closed/' + caseId).remove();
+  }
+
+  moveRow(caseId, cb.checked);
+  updateKpiCounts();
+  if (typeof rebuildAnalyticsIfOpen === 'function') rebuildAnalyticsIfOpen();
+  scheduleChartRebuild();
+}
+
+function moveRow(caseId, toClose) {
+  const row = document.querySelector('tr[data-case="' + caseId + '"]');
+  if (!row) return;
+  const c = CASES.find(x => String(x.case_id) === String(caseId));
+  const isNotif = c && c.case_type === 'notification';
+  const isFba = c && c.case_type === 'fba_issue';
+  const db = firebase.database();
+
+  let sourceTbody, closedTbody, statusCellIndex;
+
+  if (isNotif) {
+    sourceTbody = document.getElementById('notif-active-tbody');
+    closedTbody = document.getElementById('notif-closed-tbody');
+    statusCellIndex = 7;
+  } else if (isFba) {
+    sourceTbody = document.getElementById('fba-tbody');
+    closedTbody = document.getElementById('closed-tbody');
+    statusCellIndex = 11;
+  } else {
+    sourceTbody = document.getElementById('active-tbody');
+    closedTbody = document.getElementById('closed-tbody');
+    statusCellIndex = 11;
+  }
+
+  if (toClose) {
+    const cell = row.cells[statusCellIndex];
+    const sel = cell && cell.querySelector('.close-status-select');
+    if (sel) {
+      sel.setAttribute('onchange', 'closeStatusChanged(this)');
+      sel.value = 'Resolved';
+      styleCloseStatus(sel);
+      if (!_syncing) db.ref('close_statuses/' + caseId).set('Resolved');
+    }
+    closedTbody.appendChild(row);
+    // Move detail row too
+    const dr = document.getElementById('msg-row-' + caseId);
+    if (dr) closedTbody.appendChild(dr);
+  } else {
+    const cell = row.cells[statusCellIndex];
+    const sel = cell && cell.querySelector('.close-status-select');
+    if (sel) {
+      sel.setAttribute('onchange', 'statusChanged(this)');
+      sel.value = c ? (c.status_bucket || 'Waiting on Amazon') : 'Waiting on Amazon';
+      styleCloseStatus(sel);
+    }
+    if (!_syncing) db.ref('close_statuses/' + caseId).remove();
+    sourceTbody.appendChild(row);
+    const dr = document.getElementById('msg-row-' + caseId);
+    if (dr) sourceTbody.appendChild(dr);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   MODULE: FIREBASE SYNC — CHANGE HANDLERS
+   ══════════════════════════════════════════════════════════════════════════════ */
+function ownerChanged(sel) {
+  if (_syncing) return;
+  firebase.database().ref('owners/' + sel.dataset.case).set(sel.value);
+}
+
+function issueTypeChanged(sel) {
+  if (_syncing) return;
+  firebase.database().ref('issue_types/' + sel.dataset.case).set(sel.value);
+  const c = CASES.find(x => String(x.case_id) === String(sel.dataset.case));
+  if (c) {
+    c.issue_type = sel.value;
+    c.product = c.asin_name || c.asin || (c.issue_type || '\u2014');
+  }
+  if (typeof rebuildAnalyticsIfOpen === 'function') rebuildAnalyticsIfOpen();
+}
+
+function marketplaceChanged(sel) {
+  if (_syncing) return;
+  firebase.database().ref('marketplaces/' + sel.dataset.case).set(sel.value);
+  styleMktSelect(sel);
+  const c = CASES.find(x => String(x.case_id) === String(sel.dataset.case));
+  if (c) c.marketplace = sel.value;
+  const row = sel.closest('tr');
+  if (row) row.setAttribute('data-mkt', sel.value);
+  if (typeof rebuildAnalyticsIfOpen === 'function') rebuildAnalyticsIfOpen();
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   MODULE: EDITABLE CELLS
+   ══════════════════════════════════════════════════════════════════════════════ */
+function editNote(div) {
+  if (div.querySelector('textarea')) return;
+  const caseId = div.dataset.case;
+  const field = div.dataset.field || 'notes';
+  const current = div.textContent || '';
+  const textarea = document.createElement('textarea');
+  textarea.className = 'note-input';
+  textarea.value = current;
+  div.textContent = '';
+  div.appendChild(textarea);
+  textarea.focus();
+
+  function save() {
+    const val = textarea.value.trim();
+    div.textContent = val;
+    if (val) {
+      firebase.database().ref(field + '/' + caseId).set(val);
+    } else {
+      firebase.database().ref(field + '/' + caseId).remove();
+    }
+  }
+
+  textarea.addEventListener('blur', save);
+  textarea.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') { div.textContent = current; }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); save(); }
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   MODULE: PARENT-CHILD GROUPING
+   ══════════════════════════════════════════════════════════════════════════════ */
+function editParent(span) {
+  const caseId = span.dataset.case;
+  const current = span.textContent.trim();
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.value = current;
+  input.placeholder = 'Parent case ID';
+  input.style.cssText = 'width:100px;font-family:monospace;font-size:0.72rem;padding:2px 4px;border:1px solid #5282e0;border-radius:3px;';
+  span.textContent = '';
+  span.appendChild(input);
+  input.focus();
+
+  function save() {
+    const val = input.value.trim();
+    span.textContent = val;
+    if (val) {
+      span.classList.add('has-parent');
+      firebase.database().ref('parent_cases/' + caseId).set(val);
+    } else {
+      span.classList.remove('has-parent');
+      firebase.database().ref('parent_cases/' + caseId).remove();
+    }
+    regroupRows();
+  }
+
+  input.addEventListener('blur', save);
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); save(); }
+    if (e.key === 'Escape') { span.textContent = current; if (current) span.classList.add('has-parent'); }
+  });
+}
+
+function regroupRows() {
+  const tbody = document.getElementById('active-tbody');
+  if (!tbody) return;
+  const rows = Array.from(tbody.querySelectorAll('tr:not(.msg-detail-row)'));
+  const parentMap = {};
+
+  rows.forEach(row => {
+    const span = row.querySelector('.parent-link');
+    if (span && span.textContent.trim()) {
+      parentMap[row.dataset.case] = span.textContent.trim();
+    }
+  });
+
+  rows.forEach(row => row.classList.remove('grouped-parent', 'grouped-child'));
+  const parentIds = new Set(Object.values(parentMap));
+  rows.forEach(row => {
+    const cid = row.dataset.case;
+    if (parentIds.has(cid)) row.classList.add('grouped-parent');
+    if (parentMap[cid]) row.classList.add('grouped-child');
+  });
+
+  const placed = new Set();
+  const ordered = [];
+  rows.forEach(row => {
+    const cid = row.dataset.case;
+    if (placed.has(cid) || parentMap[cid]) return;
+    ordered.push(row);
+    placed.add(cid);
+    rows.forEach(child => {
+      if (parentMap[child.dataset.case] === cid && !placed.has(child.dataset.case)) {
+        ordered.push(child);
+        placed.add(child.dataset.case);
+      }
+    });
+  });
+  rows.forEach(row => {
+    if (!placed.has(row.dataset.case)) { ordered.push(row); placed.add(row.dataset.case); }
+  });
+
+  ordered.forEach(row => {
+    tbody.appendChild(row);
+    const dr = document.getElementById('msg-row-' + row.dataset.case);
+    if (dr) tbody.appendChild(dr);
+  });
+  applyFilters('cases');
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   MODULE: SORT
+   ══════════════════════════════════════════════════════════════════════════════ */
+function cellValue(row, col) {
+  const cell = row.children[col];
+  const sel = cell && cell.querySelector('select');
+  return sel ? sel.value : (cell ? cell.textContent.trim() : '');
+}
+
+function sortTable(th, tbodyId) {
+  const tbody = document.getElementById(tbodyId);
+  const rows = Array.from(tbody.querySelectorAll('tr:not(.msg-detail-row)'));
+  const colIndex = Array.from(th.parentElement.children).indexOf(th);
+  const currentDir = th.dataset.sortDir || '';
+
+  th.parentElement.querySelectorAll('th').forEach(h => {
+    h.classList.remove('sort-asc', 'sort-desc');
+    delete h.dataset.sortDir;
+  });
+
+  const newDir = currentDir === 'asc' ? 'desc' : 'asc';
+  th.dataset.sortDir = newDir;
+  th.classList.add('sort-' + newDir);
+
+  const parentMap = {};
+  const rowMap = {};
+  rows.forEach(row => {
+    rowMap[row.dataset.case] = row;
+    const span = row.querySelector('.parent-link');
+    if (span && span.textContent.trim()) parentMap[row.dataset.case] = span.textContent.trim();
+  });
+
+  const roots = rows.filter(r => !parentMap[r.dataset.case]);
+  const children = rows.filter(r => parentMap[r.dataset.case]);
+
+  roots.sort((a, b) => {
+    const aVal = cellValue(a, colIndex);
+    const bVal = cellValue(b, colIndex);
+    const cmp = aVal.localeCompare(bVal, undefined, { numeric: true });
+    return newDir === 'asc' ? cmp : -cmp;
+  });
+
+  const ordered = [];
+  roots.forEach(row => {
+    ordered.push(row);
+    children.filter(c => parentMap[c.dataset.case] === row.dataset.case).forEach(k => ordered.push(k));
+  });
+  children.filter(c => !ordered.includes(c)).forEach(c => ordered.push(c));
+
+  ordered.forEach(row => {
+    tbody.appendChild(row);
+    const dr = document.getElementById('msg-row-' + row.dataset.case);
+    if (dr) tbody.appendChild(dr);
+  });
+  if (tbodyId === 'active-tbody') regroupRows();
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   MODULE: MESSAGE TIMELINE
+   ══════════════════════════════════════════════════════════════════════════════ */
+function initMsgTimeline() {
+  const caseOpenedTs = {};
+  CASES.forEach(c => {
+    if (c.opened_date) caseOpenedTs[c.case_id] = new Date(c.opened_date + 'T00:00:00Z').getTime() / 1000;
+  });
+
+  function buildTimeline(row, toggleCell, caseId, msgs) {
+    if (!toggleCell || toggleCell.querySelector('.msg-toggle')) return;
+    const toggle = document.createElement('span');
+    toggle.className = 'msg-toggle';
+    toggle.textContent = '\u25B6';
+    toggle.title = msgs.length + ' Amazon message' + (msgs.length > 1 ? 's' : '');
+    toggle.onclick = function(e) { e.stopPropagation(); toggleMsgRow(caseId); };
+    const badge = document.createElement('span');
+    badge.className = 'msg-count-badge';
+    badge.textContent = msgs.length;
+    toggleCell.insertBefore(toggle, toggleCell.firstChild);
+    toggleCell.appendChild(badge);
+
+    if (!document.getElementById('msg-row-' + caseId)) {
+      const detailRow = document.createElement('tr');
+      detailRow.id = 'msg-row-' + caseId;
+      detailRow.className = 'msg-detail-row';
+      detailRow.dataset.parentCase = caseId;
+      const td = document.createElement('td');
+      td.colSpan = row.children.length;
+      const timeline = document.createElement('div');
+      timeline.className = 'msg-timeline';
+      const sorted = [...msgs].sort((a, b) => a.ts - b.ts);
+      sorted.forEach(m => {
+        const entry = document.createElement('div');
+        entry.className = 'msg-entry';
+        const d = new Date(m.ts * 1000);
+        const dateStr = d.toISOString().split('T')[0];
+        entry.innerHTML =
+          '<span class="msg-date">' + dateStr + '</span>' +
+          '<span class="msg-from" title="' + (m.from || '').replace(/"/g, '&quot;') + '">' + (m.from || '') + '</span>' +
+          '<span class="msg-preview">' + (m.preview || '') + '</span>';
+        timeline.appendChild(entry);
+      });
+      td.appendChild(timeline);
+      detailRow.appendChild(td);
+      row.after(detailRow);
+    }
+  }
+
+  // Active cases — toggle on Case ID column (col 1)
+  document.querySelectorAll('#active-tbody tr[data-case]').forEach(row => {
+    const caseId = row.dataset.case;
+    let msgs = MSG_DATA[caseId];
+    if (!msgs || msgs.length === 0) return;
+    const openTs = caseOpenedTs[caseId];
+    if (openTs) msgs = msgs.filter(m => m.ts >= openTs - 86400);
+    if (msgs.length === 0) return;
+    buildTimeline(row, row.querySelector('.col-case'), caseId, msgs);
+  });
+
+  // FBA Issues — toggle on Case ID column (col 1)
+  document.querySelectorAll('#fba-tbody tr[data-case]').forEach(row => {
+    const caseId = row.dataset.case;
+    let msgs = MSG_DATA[caseId];
+    if (!msgs || msgs.length === 0) return;
+    const openTs = caseOpenedTs[caseId];
+    if (openTs) msgs = msgs.filter(m => m.ts >= openTs - 86400);
+    if (msgs.length === 0) return;
+    buildTimeline(row, row.querySelector('.col-case'), caseId, msgs);
+  });
+}
+
+function toggleMsgRow(caseId) {
+  const detailRow = document.getElementById('msg-row-' + caseId);
+  const toggle = document.querySelector('tr[data-case="' + caseId + '"] .msg-toggle');
+  if (!detailRow) return;
+  detailRow.classList.toggle('open');
+  const isOpen = detailRow.classList.contains('open');
+  detailRow.style.display = isOpen ? 'table-row' : 'none';
+  if (toggle) {
+    toggle.classList.toggle('open');
+    toggle.textContent = isOpen ? '\u25BC' : '\u25B6';
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   MODULE: CHARTS
+   ══════════════════════════════════════════════════════════════════════════════ */
+Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+Chart.defaults.font.size = 11;
+Chart.defaults.color = '#888';
+
+function makeSimpleBar(canvasId, subset, key, color, opts, returnInstance) {
+  opts = opts || {};
+  const map = {};
+  subset.forEach(c => { const k = c[key] || 'Unknown'; map[k] = (map[k] || 0) + 1; });
+  const entries = Object.entries(map).sort((a, b) => b[1] - a[1]);
+  const cfgPlugins = { legend: { display: false } };
+  const chartPlugins = [];
+  if (opts.datalabels && typeof ChartDataLabels !== 'undefined') {
+    chartPlugins.push(ChartDataLabels);
+    cfgPlugins.datalabels = { anchor: 'end', align: 'end', font: { weight: 600, size: 11 }, color: '#555' };
+  }
+  const chart = new Chart(document.getElementById(canvasId), {
+    type: 'bar',
+    plugins: chartPlugins,
+    data: {
+      labels: entries.map(([k]) => k),
+      datasets: [{ data: entries.map(([, v]) => v), backgroundColor: Array.isArray(color) ? entries.map((_, i) => color[i % color.length]) : color, borderRadius: 3 }]
+    },
+    options: {
+      indexAxis: opts.horizontal ? 'y' : 'x',
+      responsive: true, maintainAspectRatio: false,
+      plugins: cfgPlugins,
+      scales: {
+        x: { grid: { display: opts.horizontal }, border: { display: false }, ticks: opts.horizontal ? { stepSize: 1, precision: 0 } : {} },
+        y: { beginAtZero: true, grid: { color: '#f0f1f5', display: !opts.horizontal }, border: { display: false }, ticks: !opts.horizontal ? { stepSize: 1, precision: 0 } : {} }
+      }
+    }
+  });
+  if (returnInstance) return chart;
+}
+
+function makeDoughnut(canvasId, subset, key, colorMap, opts) {
+  opts = opts || {};
+  const map = {};
+  subset.forEach(c => { const k = c[key] || 'Unknown'; map[k] = (map[k] || 0) + 1; });
+  const entries = Object.entries(map);
+  const cfgPlugins = {
+    legend: {
+      position: 'right',
+      labels: {
+        boxWidth: 10, padding: 10, font: { size: 10 },
+        generateLabels: opts.datalabels ? function(chart) {
+          const ds = chart.data.datasets[0];
+          return chart.data.labels.map((label, i) => ({
+            text: label + ' (' + ds.data[i] + ')',
+            fillStyle: ds.backgroundColor[i],
+            strokeStyle: '#fff', lineWidth: 2, hidden: false, index: i
+          }));
+        } : undefined
+      }
+    }
+  };
+  const chartPlugins = [];
+  if (opts.datalabels && typeof ChartDataLabels !== 'undefined') {
+    chartPlugins.push(ChartDataLabels);
+    cfgPlugins.datalabels = { color: '#fff', font: { weight: 700, size: 12 }, formatter: v => v > 0 ? v : '' };
+  }
+  new Chart(document.getElementById(canvasId), {
+    type: 'doughnut',
+    plugins: chartPlugins,
+    data: {
+      labels: entries.map(([k]) => k),
+      datasets: [{ data: entries.map(([, v]) => v), backgroundColor: entries.map(([k], i) => (colorMap && colorMap[k]) || PAL[i % PAL.length]), borderWidth: 2, borderColor: '#fff' }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: cfgPlugins, cutout: '60%' }
+  });
+}
+
+function makeStackedBarReturn(canvasId, subset, primaryKey, groupKey) {
+  const primaries = [...new Set(subset.map(c => c[primaryKey] || 'Unknown'))];
+  const groupCounts = {};
+  subset.forEach(c => { const g = c[groupKey] || 'Unknown'; groupCounts[g] = (groupCounts[g] || 0) + 1; });
+  const groups = Object.entries(groupCounts).sort((a, b) => b[1] - a[1]).map(e => e[0]);
+  const datasets = groups.map((g, i) => ({
+    label: g,
+    data: primaries.map(p => subset.filter(c => (c[primaryKey] || 'Unknown') === p && (c[groupKey] || 'Unknown') === g).length),
+    backgroundColor: PAL[i % PAL.length],
+    borderRadius: 3,
+    stack: 'stack'
+  }));
+  return new Chart(document.getElementById(canvasId), {
+    type: 'bar',
+    data: { labels: primaries, datasets },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top', align: 'end', labels: { boxWidth: 10, padding: 10, font: { size: 10 } } } },
+      scales: {
+        x: { stacked: true, grid: { display: true }, border: { display: false }, ticks: { stepSize: 1, precision: 0 } },
+        y: { stacked: true, grid: { display: false }, border: { display: false } }
+      }
+    }
+  });
+}
+
+function getLiveOpenCases() {
+  const rows = document.querySelectorAll('#active-tbody tr[data-case]:not(.msg-detail-row)');
+  const cases = [];
+  rows.forEach(row => {
+    const caseId = row.dataset.case;
+    if (EXCLUDED_FROM_STATS.includes(caseId)) return;
+    const c = CASES.find(x => String(x.case_id) === String(caseId)) || {};
+    if (c.auto_dismissed) return;
+    const ownerSel = row.querySelector('.owner-select');
+    const statusSel = row.querySelector('.close-status-select');
+    cases.push({
+      ...c,
+      owner: ownerSel ? ownerSel.value : (c.owner || 'Unassigned'),
+      status_bucket: statusSel ? statusSel.value : (c.status_bucket || 'Unknown'),
+    });
+  });
+  return cases;
+}
+
+function buildAssigneeCharts() {
+  kpiOpen = getLiveOpenCases();
+  if (_assigneeOpenChart) _assigneeOpenChart.destroy();
+  _assigneeOpenChart = makeSimpleBar('ch-assignee-open', kpiOpen, 'owner', PAL, { datalabels: true, horizontal: true }, true);
+}
+
+function buildAllCharts() {
+  document.querySelectorAll('#tab-cases .chart-wrap canvas, #tab-cases .chart-wrap-lg canvas').forEach(canvas => {
+    const existing = Chart.getChart(canvas);
+    if (existing) existing.destroy();
+  });
+
+  buildAssigneeCharts();
+
+  makeDoughnut('ch-workload-status', kpiOpen, 'status_bucket', {
+    'Waiting on Us': '#e05252', 'Waiting on Amazon': '#5282e0',
+    'On Hold': '#e09b52', 'Not Resolved': '#cc3322', 'Resolved': '#52c97c',
+  }, { datalabels: true });
+
+  makeSimpleBar('ch-workload-issue', kpiOpen, 'issue_type', PAL, { datalabels: true });
+  makeSimpleBar('ch-workload-issue-all', kpiCases, 'issue_type', PAL, { datalabels: true });
+
+  // Daily chart - last 30 days
+  const todayDate = new Date();
+  const dailyMap = {};
+  kpiCases.forEach(c => { if (c.opened_date) dailyMap[c.opened_date] = (dailyMap[c.opened_date] || 0) + 1; });
+  const dailyLabels = [];
+  const dailyData = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(todayDate);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    dailyLabels.push(key);
+    dailyData.push(dailyMap[key] || 0);
+  }
+  new Chart(document.getElementById('ch-daily'), {
+    type: 'bar',
+    plugins: typeof ChartDataLabels !== 'undefined' ? [ChartDataLabels] : [],
+    data: {
+      labels: dailyLabels,
+      datasets: [{ data: dailyData, backgroundColor: '#5282e0', borderRadius: 3 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'end', font: { weight: 600, size: 10 }, color: '#555', formatter: v => v > 0 ? v : '' } },
+      scales: {
+        x: { grid: { display: false }, border: { display: false }, ticks: { maxTicksLimit: 10 } },
+        y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 }, grid: { color: '#f0f1f5' }, border: { display: false } }
+      }
+    }
+  });
+
+  // Monthly chart (featured)
+  const monthlyMap = {};
+  kpiCases.forEach(c => {
+    if (c.opened_date) {
+      const m = c.opened_date.slice(0, 7);
+      monthlyMap[m] = (monthlyMap[m] || 0) + 1;
+    }
+  });
+  const monthlySorted = Object.entries(monthlyMap).sort((a, b) => a[0].localeCompare(b[0]));
+  new Chart(document.getElementById('ch-monthly'), {
+    type: 'bar',
+    plugins: typeof ChartDataLabels !== 'undefined' ? [ChartDataLabels] : [],
+    data: {
+      labels: monthlySorted.map(([m]) => m),
+      datasets: [{ data: monthlySorted.map(([, v]) => v), backgroundColor: '#52c97c', borderRadius: 3 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'end', font: { weight: 600, size: 11 }, color: '#555' } },
+      scales: {
+        x: { grid: { display: false }, border: { display: false } },
+        y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 }, grid: { color: '#f0f1f5' }, border: { display: false } }
+      }
+    }
+  });
+}
+
+function scheduleChartRebuild() {
+  if (_chartRebuildTimer) clearTimeout(_chartRebuildTimer);
+  _chartRebuildTimer = setTimeout(() => { _chartRebuildTimer = null; buildAllCharts(); }, 150);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   MODULE: ANALYTICS ACCORDION
+   ══════════════════════════════════════════════════════════════════════════════ */
+function toggleAccordion(header, groupId) {
+  const group = document.getElementById(groupId);
+  const allHeaders = group.querySelectorAll('.accordion-header');
+  const body = header.nextElementSibling;
+  const isOpen = header.classList.contains('open');
+
+  allHeaders.forEach(h => {
+    h.classList.remove('open');
+    h.nextElementSibling.classList.remove('open');
+  });
+
+  if (!isOpen) {
+    header.classList.add('open');
+    body.classList.add('open');
+    body.dataset.inited = '1';
+    initAccordionCharts(body.id);
+  }
+}
+
+function destroyAnCharts(prefix) {
+  Object.keys(_anCharts).forEach(k => {
+    if (k.startsWith(prefix)) { _anCharts[k].destroy(); delete _anCharts[k]; }
+  });
+}
+
+function getLiveSubset(prefix) {
+  const openIds = new Set();
+  const closedIds = new Set();
+  document.querySelectorAll('#active-tbody tr[data-case]:not(.msg-detail-row)').forEach(r => openIds.add(r.dataset.case));
+  document.querySelectorAll('#closed-tbody tr[data-case]:not(.msg-detail-row)').forEach(r => closedIds.add(r.dataset.case));
+
+  // Sync dropdown values into CASES
+  document.querySelectorAll('.issue-select').forEach(sel => {
+    const c = CASES.find(x => String(x.case_id) === String(sel.dataset.case));
+    if (c && sel.value) {
+      c.issue_type = sel.value;
+      c.product = c.asin_name || c.asin || (c.issue_type || '\u2014');
+    }
+  });
+  document.querySelectorAll('.mkt-select').forEach(sel => {
+    const c = CASES.find(x => String(x.case_id) === String(sel.dataset.case));
+    if (c && sel.value) c.marketplace = sel.value;
+  });
+
+  if (prefix === 'total') return kpiCases;
+  if (prefix === 'open') return kpiCases.filter(c => openIds.has(String(c.case_id)));
+  if (prefix === 'closed') return kpiCases.filter(c => closedIds.has(String(c.case_id)));
+  return kpiCases;
+}
+
+function initAccordionCharts(bodyId) {
+  if (bodyId === 'acc-body-total') buildAnalyticsSet('total', getLiveSubset('total'));
+  if (bodyId === 'acc-body-open') buildAnalyticsSet('open', getLiveSubset('open'));
+  if (bodyId === 'acc-body-closed') buildAnalyticsSet('closed', getLiveSubset('closed'));
+}
+
+function buildAnalyticsSet(prefix, subset) {
+  destroyAnCharts('an-' + prefix);
+  _anCharts['an-' + prefix + '-brand'] = makeStackedBarReturn('an-' + prefix + '-brand', subset, 'brand', 'issue_type');
+  _anCharts['an-' + prefix + '-mkt'] = makeStackedBarReturn('an-' + prefix + '-mkt', subset, 'marketplace', 'issue_type');
+  _anCharts['an-' + prefix + '-product'] = makeStackedBarReturn('an-' + prefix + '-product', subset.filter(c => c.asin), 'product', 'issue_type');
+}
+
+function rebuildAnalyticsIfOpen() {
+  ['total', 'open', 'closed'].forEach(prefix => {
+    const body = document.getElementById('acc-body-' + prefix);
+    if (body && body.dataset.inited && body.classList.contains('open')) {
+      buildAnalyticsSet(prefix, getLiveSubset(prefix));
+    }
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   MODULE: COPY ASSIGNMENTS
+   ══════════════════════════════════════════════════════════════════════════════ */
+function copyAssignments(btn) {
+  const toClose = [];
+  const toCloseDates = {};
+  const fbDates = window._fbCloseDates || {};
+
+  document.querySelectorAll('.close-check').forEach(cb => {
+    if (cb.checked) {
+      toClose.push(cb.dataset.case);
+      const date = fbDates[cb.dataset.case] || null;
+      if (date) toCloseDates[cb.dataset.case] = date;
+    }
+  });
+
+  const owners = {};
+  document.querySelectorAll('.owner-select').forEach(sel => { owners[sel.dataset.case] = sel.value; });
+
+  const statuses = {};
+  document.querySelectorAll('#active-tbody .close-status-select').forEach(sel => { statuses[sel.dataset.case] = sel.value; });
+
+  const closeStatuses = {};
+  document.querySelectorAll('#closed-tbody .close-status-select').forEach(sel => { closeStatuses[sel.dataset.case] = sel.value; });
+
+  const parentCases = {};
+  document.querySelectorAll('.parent-link.has-parent').forEach(span => { parentCases[span.dataset.case] = span.textContent.trim(); });
+
+  const output = { close: toClose, close_dates: toCloseDates, close_statuses: closeStatuses, statuses: statuses, owners: owners, parent_cases: parentCases };
+  const text = 'Case assignments:\n' + JSON.stringify(output, null, 2);
+
+  navigator.clipboard.writeText(text).then(() => {
+    btn.classList.add('copied');
+    btn.textContent = '\u2713 Copied!';
+    setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = '&#128203; Copy Assignments'; }, 2000);
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   MODULE: REFRESH
+   ══════════════════════════════════════════════════════════════════════════════ */
+function updateLastRefreshLabel(ts) {
+  const el = document.getElementById('last-refresh');
+  if (!el || !ts) return;
+  const d = new Date(ts);
+  const now = new Date();
+  const diff = Math.floor((now - d) / 60000);
+  let ago;
+  if (diff < 1) ago = 'just now';
+  else if (diff < 60) ago = diff + 'm ago';
+  else if (diff < 1440) ago = Math.floor(diff / 60) + 'h ago';
+  else ago = Math.floor(diff / 1440) + 'd ago';
+  el.textContent = 'Last refresh: ' + d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) + ' ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + ' (' + ago + ')';
+}
+
+async function triggerRefresh(btn) {
+  btn.disabled = true;
+  btn.textContent = 'Refreshing...';
+
+  const bar = document.getElementById('refresh-progress');
+  const fill = bar.querySelector('.rp-fill');
+  const statusEl = bar.querySelector('.rp-status');
+  const pctEl = bar.querySelector('.rp-pct');
+  bar.className = 'refresh-progress active';
+  let pct = 0;
+
+  function setProgress(val, label) {
+    if (val !== undefined) pct = Math.min(val, 100);
+    fill.style.width = pct + '%';
+    pctEl.textContent = Math.round(pct) + '%';
+    if (label) statusEl.textContent = label;
+  }
+
+  let animId = null;
+  function animateTo(target, duration) {
+    const start = pct;
+    const startTime = performance.now();
+    function step(now) {
+      const elapsed = now - startTime;
+      const t = Math.min(elapsed / duration, 1);
+      setProgress(start + (target - start) * t);
+      if (t < 1) animId = requestAnimationFrame(step);
+    }
+    if (animId) cancelAnimationFrame(animId);
+    animId = requestAnimationFrame(step);
+  }
+
+  try {
+    setProgress(5, 'Waking up server...');
+    const startRes = await fetch(API_URL + '/api/refresh', {
+      method: 'POST',
+      headers: { 'x-api-key': API_KEY }
+    });
+    if (!startRes.ok && startRes.status === 409) {
+      setProgress(10, 'Refresh already running, waiting...');
+    } else {
+      setProgress(10, 'Fetching emails from Missive...');
+    }
+
+    let status = { in_progress: true };
+    let polls = 0;
+    const maxPolls = 40;
+    while (status.in_progress && polls < maxPolls) {
+      const target = 10 + (80 * (1 - 1 / (polls / 2 + 1)));
+      animateTo(target, 2800);
+
+      if (polls === 1) setProgress(undefined, 'Processing conversations...');
+      if (polls === 3) setProgress(undefined, 'Classifying cases...');
+      if (polls === 6) setProgress(undefined, 'Updating database...');
+      if (polls === 10) setProgress(undefined, 'Still processing...');
+
+      await new Promise(r => setTimeout(r, 3000));
+      const res = await fetch(API_URL + '/api/refresh/status');
+      status = await res.json();
+      polls++;
+    }
+
+    if (animId) cancelAnimationFrame(animId);
+
+    setProgress(92, 'Loading updated cases...');
+    await loadDataFromAPI();
+    setProgress(100, 'Done!');
+    bar.classList.add('done');
+
+    btn.textContent = '\u2713 Updated!';
+    updateLastRefreshLabel(new Date().toISOString());
+    const result = status.last_result;
+    if (result && result.updatedCaseIds && result.updatedCaseIds.length) {
+      result.updatedCaseIds.forEach(id => _unseenCaseIds.add(id));
+      document.querySelectorAll('.col-case').forEach(td => {
+        const tr = td.closest('tr');
+        if (!tr) return;
+        const caseId = tr.dataset.case;
+        if (_unseenCaseIds.has(caseId) && !td.querySelector('.new-email-icon')) {
+          const icon = document.createElement('span');
+          icon.className = 'new-email-icon';
+          icon.dataset.case = caseId;
+          icon.onclick = function() { acknowledgeCase(this); };
+          icon.title = 'New email received';
+          icon.textContent = '\u2709';
+          td.insertBefore(icon, td.firstChild);
+        }
+      });
+    }
+    if (result) {
+      const parts = [];
+      if (result.newCases) parts.push(result.newCases + ' new case' + (result.newCases > 1 ? 's' : ''));
+      if (result.updatedCases) parts.push(result.updatedCases + ' updated');
+      if (result.newMessages) parts.push(result.newMessages + ' new msg' + (result.newMessages > 1 ? 's' : ''));
+      if (parts.length) statusEl.textContent = 'Done \u2014 ' + parts.join(', ');
+      else statusEl.textContent = 'Done \u2014 no new emails';
+    }
+
+    setTimeout(() => {
+      bar.className = 'refresh-progress';
+      fill.style.width = '0%';
+      btn.innerHTML = '&#x21BB; Refresh';
+      btn.disabled = false;
+    }, 3000);
+
+  } catch (err) {
+    if (animId) cancelAnimationFrame(animId);
+    setProgress(100, 'Refresh failed: ' + err.message);
+    bar.classList.add('error');
+    btn.textContent = 'Error';
+    console.error('Refresh failed:', err);
+    setTimeout(() => {
+      bar.className = 'refresh-progress';
+      fill.style.width = '0%';
+      btn.innerHTML = '&#x21BB; Refresh';
+      btn.disabled = false;
+    }, 4000);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   MODULE: FIREBASE AUTH & SYNC
+   ══════════════════════════════════════════════════════════════════════════════ */
+firebase.initializeApp(FIREBASE_CONFIG);
+const auth = firebase.auth();
+const db = firebase.database();
+
+function signIn() {
+  auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+}
+
+function signOut() {
+  auth.signOut();
+}
+
+auth.onAuthStateChanged(user => {
+  const overlay = document.getElementById('login-overlay');
+  const app = document.getElementById('app');
+  const userBar = document.getElementById('user-bar');
+
+  if (user) {
+    if (!ALLOWED_EMAILS.includes(user.email)) {
+      overlay.innerHTML = '<div class="login-box">' +
+        '<h1>Access Denied</h1>' +
+        '<p style="color:#bb2211;margin-bottom:16px;">Your account (' + user.email + ') is not authorized.</p>' +
+        '<p>Contact tom@themothership.ai for access.</p>' +
+        '<button class="btn-google" onclick="signOut()" style="margin-top:16px;">Sign out</button>' +
+        '</div>';
+      overlay.style.display = '';
+      app.style.display = 'none';
+      return;
+    }
+    overlay.style.display = 'none';
+    app.style.display = '';
+    userBar.innerHTML = (user.photoURL ? '<img src="' + user.photoURL + '" alt="">' : '') +
+      '<span>' + (user.displayName || user.email) + '</span>' +
+      '<button class="btn-signout" onclick="signOut()">Sign out</button>';
+    _currentUid = user.uid;
+    initFirebaseSync();
+    loadDataFromAPI();
+  } else {
+    overlay.style.display = '';
+    app.style.display = 'none';
+    userBar.innerHTML = '';
+  }
+});
+
+function initFirebaseSync() {
+  // Sync owners
+  db.ref('owners').on('value', snap => {
+    _syncing = true;
+    const owners = snap.val() || {};
+    document.querySelectorAll('.owner-select').forEach(sel => {
+      if (owners[sel.dataset.case]) sel.value = owners[sel.dataset.case];
+    });
+    CASES.forEach(c => { if (owners[c.case_id]) c.owner = owners[c.case_id]; });
+    scheduleChartRebuild();
+    rebuildAnalyticsIfOpen();
+    _syncing = false;
+  });
+
+  // Sync closed states
+  db.ref('closed').on('value', snap => {
+    _syncing = true;
+    const closed = snap.val() || {};
+    CASES.forEach(c => { if (closed[c.case_id] !== undefined) c.close = !!closed[c.case_id]; });
+    document.querySelectorAll('.close-check').forEach(cb => {
+      const caseId = cb.dataset.case;
+      const shouldBeChecked = closed[caseId] || cb.dataset.source === 'true';
+      if (cb.checked !== shouldBeChecked) {
+        cb.checked = shouldBeChecked;
+        moveRow(caseId, shouldBeChecked);
+      }
+    });
+    initStatusDropdowns();
+    updateKpiCounts();
+    scheduleChartRebuild();
+    rebuildAnalyticsIfOpen();
+    _syncing = false;
+  });
+
+  // Sync close dates
+  db.ref('close_dates').on('value', snap => {
+    window._fbCloseDates = snap.val() || {};
+  });
+
+  // Sync close statuses (outcome)
+  db.ref('close_statuses').on('value', snap => {
+    _syncing = true;
+    const statuses = snap.val() || {};
+    initStatusDropdowns();
+    document.querySelectorAll('.close-status-select').forEach(sel => {
+      if (statuses[sel.dataset.case]) {
+        sel.value = statuses[sel.dataset.case];
+        styleCloseStatus(sel);
+      }
+    });
+    updateKpiCounts();
+    rebuildAnalyticsIfOpen();
+    _syncing = false;
+  });
+
+  // Sync active case statuses
+  db.ref('statuses').on('value', snap => {
+    _syncing = true;
+    const statuses = snap.val() || {};
+    document.querySelectorAll('#active-tbody .close-status-select, #notif-active-tbody .close-status-select').forEach(sel => {
+      if (statuses[sel.dataset.case]) {
+        sel.value = statuses[sel.dataset.case];
+        styleCloseStatus(sel);
+      }
+    });
+    _syncing = false;
+  });
+
+  // Sync notes
+  db.ref('notes').on('value', snap => {
+    _syncing = true;
+    const notes = snap.val() || {};
+    document.querySelectorAll('.note-text[data-field="notes"]').forEach(div => {
+      div.textContent = notes[div.dataset.case] || '';
+    });
+    _syncing = false;
+  });
+
+  // Sync issue type overrides
+  db.ref('issue_types').on('value', snap => {
+    _syncing = true;
+    const types = snap.val() || {};
+    document.querySelectorAll('.issue-select').forEach(sel => {
+      if (types[sel.dataset.case]) {
+        sel.value = types[sel.dataset.case];
+        const c = CASES.find(x => String(x.case_id) === String(sel.dataset.case));
+        if (c) {
+          c.issue_type = types[sel.dataset.case];
+          c.product = c.asin_name || c.asin || (c.issue_type || '\u2014');
+        }
+      }
+    });
+    _syncing = false;
+    rebuildAnalyticsIfOpen();
+  });
+
+  // Sync marketplaces
+  db.ref('marketplaces').on('value', snap => {
+    _syncing = true;
+    const mkts = snap.val() || {};
+    document.querySelectorAll('.mkt-select').forEach(sel => {
+      if (mkts[sel.dataset.case]) {
+        sel.value = mkts[sel.dataset.case];
+        styleMktSelect(sel);
+        const c = CASES.find(x => String(x.case_id) === String(sel.dataset.case));
+        if (c) c.marketplace = mkts[sel.dataset.case];
+        const row = sel.closest('tr');
+        if (row) row.setAttribute('data-mkt', mkts[sel.dataset.case]);
+      }
+    });
+    _syncing = false;
+  });
+
+  // Sync next actions
+  db.ref('next_actions').on('value', snap => {
+    _syncing = true;
+    const actions = snap.val() || {};
+    document.querySelectorAll('.note-text[data-field="next_actions"]').forEach(div => {
+      div.textContent = actions[div.dataset.case] || '';
+    });
+    _syncing = false;
+  });
+
+  // Sync parent cases
+  db.ref('parent_cases').on('value', snap => {
+    _syncing = true;
+    const parents = snap.val() || {};
+    document.querySelectorAll('.parent-link').forEach(span => {
+      const val = parents[span.dataset.case] || '';
+      span.textContent = val;
+      if (val) span.classList.add('has-parent');
+      else span.classList.remove('has-parent');
+    });
+    _syncing = false;
+    regroupRows();
+  });
+
+  // Sync seen emails
+  db.ref('seen_emails').on('value', snap => {
+    _seenEmails = snap.val() || {};
+    computeUnseenCases();
+    document.querySelectorAll('.col-case').forEach(td => {
+      const tr = td.closest('tr');
+      if (!tr) return;
+      const caseId = tr.dataset.case;
+      if (!caseId) return;
+      const existing = td.querySelector('.new-email-icon');
+      if (_unseenCaseIds.has(caseId) && !existing) {
+        const icon = document.createElement('span');
+        icon.className = 'new-email-icon';
+        icon.dataset.case = caseId;
+        icon.onclick = function() { acknowledgeCase(this); };
+        icon.title = 'New email received';
+        icon.textContent = '\u2709';
+        td.insertBefore(icon, td.firstChild);
+      } else if (!_unseenCaseIds.has(caseId) && existing) {
+        existing.remove();
+      }
+    });
+  });
+
+  // Sync ASIN overrides (NEW)
+  db.ref('asins').on('value', snap => {
+    _syncing = true;
+    const asins = snap.val() || {};
+    document.querySelectorAll('.asin-select').forEach(sel => {
+      const caseId = sel.dataset.case;
+      if (asins[caseId]) {
+        sel.value = asins[caseId];
+        const c = CASES.find(x => String(x.case_id) === String(caseId));
+        if (c) {
+          c.asin = asins[caseId];
+          c.asin_name = ASIN_NAMES[asins[caseId]] || asins[caseId];
+          c.product = c.asin_name || c.asin || (c.issue_type || '\u2014');
+        }
+        // Update display
+        const td = sel.closest('td');
+        if (td) {
+          let codeSpan = td.querySelector('.asin-code');
+          let nameSpan = td.querySelector('.asin-name');
+          if (codeSpan) codeSpan.textContent = asins[caseId];
+          else { codeSpan = document.createElement('span'); codeSpan.className = 'asin-code'; codeSpan.textContent = asins[caseId]; td.insertBefore(codeSpan, td.firstChild); }
+          const name = ASIN_NAMES[asins[caseId]] || '';
+          if (nameSpan) nameSpan.textContent = name;
+          else if (name) { nameSpan = document.createElement('span'); nameSpan.className = 'asin-name'; nameSpan.textContent = name; codeSpan.after(nameSpan); }
+        }
+      }
+    });
+    _syncing = false;
+    rebuildAnalyticsIfOpen();
+  });
+
+  // Initial close state from data source
+  document.querySelectorAll('.close-check').forEach(cb => {
+    if (cb.dataset.source === 'true') {
+      cb.checked = true;
+      moveRow(cb.dataset.case, true);
+    }
+  });
+}
+
+// Re-apply Firebase state after re-render
+function _triggerFirebaseSync() {
+  _syncing = true;
+  Promise.all([
+    db.ref('owners').once('value'),
+    db.ref('closed').once('value'),
+    db.ref('close_statuses').once('value'),
+    db.ref('statuses').once('value'),
+    db.ref('notes').once('value'),
+    db.ref('next_actions').once('value'),
+    db.ref('parent_cases').once('value'),
+    db.ref('issue_types').once('value'),
+    db.ref('marketplaces').once('value'),
+    db.ref('asins').once('value'),
+  ]).then(([ownersSnap, closedSnap, closeStatusSnap, statusSnap, notesSnap, actionsSnap, parentsSnap, issueTypesSnap, mktSnap, asinsSnap]) => {
+    // 1. Owners
+    const owners = ownersSnap.val() || {};
+    document.querySelectorAll('.owner-select').forEach(sel => {
+      if (owners[sel.dataset.case]) sel.value = owners[sel.dataset.case];
+    });
+    CASES.forEach(c => { if (owners[c.case_id]) c.owner = owners[c.case_id]; });
+
+    // 2. Closed state
+    const closed = closedSnap.val() || {};
+    CASES.forEach(c => { if (closed[c.case_id] !== undefined) c.close = !!closed[c.case_id]; });
+    document.querySelectorAll('.close-check').forEach(cb => {
+      const caseId = cb.dataset.case;
+      const shouldBeChecked = closed[caseId] || cb.dataset.source === 'true';
+      if (cb.checked !== shouldBeChecked) {
+        cb.checked = shouldBeChecked;
+        moveRow(caseId, shouldBeChecked);
+      }
+    });
+    initStatusDropdowns();
+
+    // 3. Close statuses
+    const closeStatuses = closeStatusSnap.val() || {};
+    document.querySelectorAll('.close-status-select').forEach(sel => {
+      if (closeStatuses[sel.dataset.case]) {
+        sel.value = closeStatuses[sel.dataset.case];
+        styleCloseStatus(sel);
+      }
+    });
+
+    // 4. Active statuses
+    const statuses = statusSnap.val() || {};
+    document.querySelectorAll('#active-tbody .close-status-select, #notif-active-tbody .close-status-select').forEach(sel => {
+      if (statuses[sel.dataset.case]) {
+        sel.value = statuses[sel.dataset.case];
+        styleCloseStatus(sel);
+      }
+    });
+
+    // 5. Notes
+    const notes = notesSnap.val() || {};
+    document.querySelectorAll('.note-text[data-field="notes"]').forEach(div => {
+      div.textContent = notes[div.dataset.case] || '';
+    });
+
+    // 6. Next actions
+    const actions = actionsSnap.val() || {};
+    document.querySelectorAll('.note-text[data-field="next_actions"]').forEach(div => {
+      div.textContent = actions[div.dataset.case] || '';
+    });
+
+    // 7. Parent cases
+    const parents = parentsSnap.val() || {};
+    document.querySelectorAll('.parent-link').forEach(span => {
+      const val = parents[span.dataset.case] || '';
+      span.textContent = val;
+      if (val) span.classList.add('has-parent');
+      else span.classList.remove('has-parent');
+    });
+    regroupRows();
+
+    // 8. Issue types
+    const issueTypes = issueTypesSnap.val() || {};
+    document.querySelectorAll('.issue-select').forEach(sel => {
+      if (issueTypes[sel.dataset.case]) {
+        sel.value = issueTypes[sel.dataset.case];
+        const c = CASES.find(x => String(x.case_id) === String(sel.dataset.case));
+        if (c) {
+          c.issue_type = issueTypes[sel.dataset.case];
+          c.product = c.asin_name || c.asin || (c.issue_type || '\u2014');
+        }
+      }
+    });
+
+    // 9. Marketplaces
+    const mkts = mktSnap.val() || {};
+    document.querySelectorAll('.mkt-select').forEach(sel => {
+      if (mkts[sel.dataset.case]) {
+        sel.value = mkts[sel.dataset.case];
+        styleMktSelect(sel);
+        const c = CASES.find(x => String(x.case_id) === String(sel.dataset.case));
+        if (c) c.marketplace = mkts[sel.dataset.case];
+        const row = sel.closest('tr');
+        if (row) row.setAttribute('data-mkt', mkts[sel.dataset.case]);
+      }
+    });
+
+    // 10. ASIN overrides (NEW)
+    const asins = asinsSnap.val() || {};
+    document.querySelectorAll('.asin-select').forEach(sel => {
+      const caseId = sel.dataset.case;
+      if (asins[caseId]) {
+        sel.value = asins[caseId];
+        const c = CASES.find(x => String(x.case_id) === String(caseId));
+        if (c) {
+          c.asin = asins[caseId];
+          c.asin_name = ASIN_NAMES[asins[caseId]] || asins[caseId];
+          c.product = c.asin_name || c.asin || (c.issue_type || '\u2014');
+        }
+        const td = sel.closest('td');
+        if (td) {
+          let codeSpan = td.querySelector('.asin-code');
+          let nameSpan = td.querySelector('.asin-name');
+          if (codeSpan) codeSpan.textContent = asins[caseId];
+          else { codeSpan = document.createElement('span'); codeSpan.className = 'asin-code'; codeSpan.textContent = asins[caseId]; td.insertBefore(codeSpan, td.firstChild); }
+          const name = ASIN_NAMES[asins[caseId]] || '';
+          if (nameSpan) nameSpan.textContent = name;
+          else if (name) { nameSpan = document.createElement('span'); nameSpan.className = 'asin-name'; nameSpan.textContent = name; codeSpan.after(nameSpan); }
+        }
+      }
+    });
+
+    // 11. Rebuild everything
+    updateKpiCounts();
+    buildAllCharts();
+    rebuildAnalyticsIfOpen();
+    _syncing = false;
+  });
+}
+</script>
+
+</body>
+</html>
