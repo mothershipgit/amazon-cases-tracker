@@ -462,6 +462,7 @@ tr.msg-detail-row > td {
 .msg-date { flex-shrink: 0; font-family: monospace; font-size: var(--fs-xs); color: #888; min-width: 74px; padding-top: 1px; }
 .msg-from { flex-shrink: 0; font-weight: 600; color: var(--text-secondary); min-width: 160px; max-width: 200px; font-size: 0.72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .msg-preview { color: #666; flex: 1; }
+.msg-subject { color: #333; flex: 1; font-weight: 500; }
 .msg-count-badge {
   display: inline-block; font-size: 0.6rem; background: #e8f0fe; color: #3366aa;
   border-radius: 8px; padding: 1px 5px; margin-left: 4px; vertical-align: middle; font-weight: 600;
@@ -614,9 +615,9 @@ tr.msg-detail-row > td {
   </div>
 </div>
 
-<!-- Team Workload -->
+<!-- Team & Workload — 4 charts in a row -->
 <h2 style="background:#e8f0fe; padding:8px 14px; border-radius:6px; display:inline-block;">Team &amp; Workload</h2>
-<div class="charts-grid">
+<div class="charts-grid" style="grid-template-columns: repeat(4, 1fr);">
   <div class="chart-card">
     <div class="chart-title">Open Cases by Assignee</div>
     <div class="chart-sub">Currently active per person</div>
@@ -626,6 +627,16 @@ tr.msg-detail-row > td {
     <div class="chart-title">Workload by Status</div>
     <div class="chart-sub">Open cases by status</div>
     <div class="chart-wrap"><canvas id="ch-workload-status"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Cases Created Daily</div>
+    <div class="chart-sub">Last 30 days (open + closed)</div>
+    <div class="chart-wrap"><canvas id="ch-daily"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Monthly Cases</div>
+    <div class="chart-sub">Cases opened per month (open + closed)</div>
+    <div class="chart-wrap"><canvas id="ch-monthly"></canvas></div>
   </div>
 </div>
 
@@ -650,11 +661,9 @@ tr.msg-detail-row > td {
       <th class="sortable" onclick="sortTable(this,'active-tbody')">MKT</th>
       <th class="col-owner sortable" onclick="sortTable(this,'active-tbody')">Owner</th>
       <th class="col-date sortable" onclick="sortTable(this,'active-tbody')">Opened</th>
-      <th class="col-date sortable" onclick="sortTable(this,'active-tbody')">Last Update</th>
       <th class="col-asin">ASIN / Product</th>
       <th class="col-issue">Issue Type</th>
       <th>Status</th>
-      <th class="col-action">Next Action</th>
       <th class="col-notes">Notes</th>
       <th class="col-num">Msgs</th>
       <th class="col-num sortable" onclick="sortTable(this,'active-tbody')">Days</th>
@@ -679,11 +688,9 @@ tr.msg-detail-row > td {
         <th>MKT</th>
         <th class="col-owner">Owner</th>
         <th class="col-date">Opened</th>
-        <th class="col-date">Last Update</th>
         <th class="col-asin">ASIN / Product</th>
         <th class="col-issue">Issue Type</th>
         <th>Status</th>
-        <th class="col-action">Next Action</th>
         <th class="col-notes">Notes</th>
         <th class="col-num">Msgs</th>
         <th class="col-num">Days</th>
@@ -706,11 +713,9 @@ tr.msg-detail-row > td {
       <th>MKT</th>
       <th class="col-owner">Owner</th>
       <th class="col-date">Opened</th>
-      <th class="col-date">Last Update</th>
       <th class="col-asin">ASIN / Product</th>
       <th class="col-issue">Issue Type</th>
       <th>Outcome</th>
-      <th class="col-action">Next Action</th>
       <th class="col-notes">Notes</th>
       <th class="col-num">Msgs</th>
       <th class="col-num">Days</th>
@@ -719,21 +724,9 @@ tr.msg-detail-row > td {
   </table>
 </div>
 
-<!-- Charts Section -->
-<h2>Charts</h2>
-<div style="margin-bottom:14px;">
-  <div class="chart-card featured">
-    <div class="chart-title featured-title">Monthly Cases</div>
-    <div class="chart-sub">Cases opened per month (open + closed)</div>
-    <div class="chart-wrap-lg"><canvas id="ch-monthly"></canvas></div>
-  </div>
-</div>
+<!-- Issue Workload Charts -->
+<h2>Issue Workload</h2>
 <div class="charts-grid">
-  <div class="chart-card">
-    <div class="chart-title">Cases Created Daily</div>
-    <div class="chart-sub">Last 30 days (open + closed)</div>
-    <div class="chart-wrap"><canvas id="ch-daily"></canvas></div>
-  </div>
   <div class="chart-card">
     <div class="chart-title">Workload by Issue (OPEN)</div>
     <div class="chart-sub">Open cases by issue type</div>
@@ -1211,11 +1204,9 @@ function renderCaseRows(tbodyId, cases) {
       '<td><select class="mkt-select" data-case="' + c.case_id + '" onchange="marketplaceChanged(this)">' + extraMkt + mktOpts + '</select></td>' +
       '<td class="col-owner"><select class="owner-select" data-case="' + c.case_id + '" onchange="ownerChanged(this)">' + ownerOptions + '</select></td>' +
       '<td class="col-date">' + (c.opened_date || '') + '</td>' +
-      '<td class="col-date">' + (c.last_update_date || '') + '</td>' +
       '<td class="col-asin">' + buildAsinCell(c) + '</td>' +
       '<td class="col-issue">' + issueHtml + '</td>' +
       '<td><span class="bucket ' + bucketClass + '">' + (c.status_bucket || '') + '</span></td>' +
-      '<td class="col-action"><div class="note-text" data-case="' + c.case_id + '" data-field="next_actions" data-placeholder="Add action..." onclick="editNote(this)"></div></td>' +
       '<td class="col-notes"><div class="note-text" data-case="' + c.case_id + '" data-field="notes" data-placeholder="Add note..." onclick="editNote(this)"></div></td>' +
       '<td class="col-num">' + (c.msgs || 0) + '</td>' +
       '<td class="col-num ' + daysClass + '">' + c.days_open + '</td>';
@@ -1340,13 +1331,13 @@ function initStatusDropdowns() {
     styleCloseStatus(sel);
   }
 
-  // Cases active + closed — status at cell 11
+  // Cases active + closed — status at cell 10
   document.querySelectorAll('#active-tbody tr[data-case]:not(.msg-detail-row), #closed-tbody tr[data-case]:not(.msg-detail-row)').forEach(row => {
-    applyToRow(row, 11, STATUS_OPTIONS, 'statusChanged(this)');
+    applyToRow(row, 10, STATUS_OPTIONS, 'statusChanged(this)');
   });
-  // FBA — status at cell 11 (same column layout now)
+  // FBA — status at cell 10 (same column layout now)
   document.querySelectorAll('#fba-tbody tr[data-case]').forEach(row => {
-    applyToRow(row, 11, STATUS_OPTIONS, 'statusChanged(this)');
+    applyToRow(row, 10, STATUS_OPTIONS, 'statusChanged(this)');
   });
   // Notification active + closed — status at cell 7
   document.querySelectorAll('#notif-active-tbody tr[data-case], #notif-closed-tbody tr[data-case]').forEach(row => {
@@ -1554,11 +1545,11 @@ function moveRow(caseId, toClose) {
   } else if (isFba) {
     sourceTbody = document.getElementById('fba-tbody');
     closedTbody = document.getElementById('closed-tbody');
-    statusCellIndex = 11;
+    statusCellIndex = 10;
   } else {
     sourceTbody = document.getElementById('active-tbody');
     closedTbody = document.getElementById('closed-tbody');
-    statusCellIndex = 11;
+    statusCellIndex = 10;
   }
 
   if (toClose) {
@@ -1827,10 +1818,11 @@ function initMsgTimeline() {
         entry.className = 'msg-entry';
         const d = new Date(m.ts * 1000);
         const dateStr = d.toISOString().split('T')[0];
+        const titleText = m.subject || m.preview || '';
         entry.innerHTML =
           '<span class="msg-date">' + dateStr + '</span>' +
           '<span class="msg-from" title="' + (m.from || '').replace(/"/g, '&quot;') + '">' + (m.from || '') + '</span>' +
-          '<span class="msg-preview">' + (m.preview || '') + '</span>';
+          '<span class="msg-subject">' + titleText + '</span>';
         timeline.appendChild(entry);
       });
       td.appendChild(timeline);
@@ -2002,7 +1994,7 @@ function buildAssigneeCharts() {
 }
 
 function buildAllCharts() {
-  document.querySelectorAll('#tab-cases .chart-wrap canvas, #tab-cases .chart-wrap-lg canvas').forEach(canvas => {
+  document.querySelectorAll('#tab-cases .chart-wrap canvas').forEach(canvas => {
     const existing = Chart.getChart(canvas);
     if (existing) existing.destroy();
   });
