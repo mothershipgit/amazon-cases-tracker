@@ -774,6 +774,80 @@ tr.msg-detail-row > td {
 </div>
 </div>
 
+<!-- Instructions -->
+<div style="background: #f0f4ff; border: 1px solid #d0d8ef; border-radius: 10px; padding: 28px 32px; margin-top: 40px; font-size: 0.88rem; line-height: 1.7; color: #2a2e3a;">
+  <h2 style="font-size: 1.1rem; color: #1a1d26; text-transform: none; letter-spacing: 0; margin: 0 0 18px; background: none; padding: 0;">Instructions</h2>
+
+  <p>At the top you will find the main <strong>KPIs</strong> providing an overview of this part of the operational activity on Amazon.</p>
+
+  <p style="margin-top:12px;">Below that, there is a section containing basic <strong>charts about the team's current workload</strong>, including cases by assignee, status, daily/monthly creation, and issue type distribution.</p>
+
+  <p style="margin-top:12px;">Further down there is an accordion section presenting analytics for:</p>
+  <ol style="margin: 8px 0 8px 24px;">
+    <li><strong>Total Cases</strong> &mdash; both open and closed cases combined.</li>
+    <li><strong>Open Cases</strong> &mdash; the same set of charts, but only for cases that are currently open.</li>
+    <li><strong>Closed Cases</strong> &mdash; the same set of charts, but only for cases that have already been closed.</li>
+  </ol>
+
+  <h3 style="font-size: 0.95rem; margin-top: 22px; color: #1a1d26;">Tabs: Cases &amp; Notifications</h3>
+  <p>The dashboard is split into two tabs:</p>
+  <ul style="margin: 8px 0 8px 24px;">
+    <li><strong>Cases</strong> &mdash; standard Amazon Seller Support cases and FBA issues. These are the cases that require action.</li>
+    <li><strong>Notifications</strong> &mdash; automated emails from Amazon (e.g. VAT reminders, compliance notices). These are informational and kept separate so they don't clutter the cases view.</li>
+  </ul>
+  <p style="margin-top:8px;">Some notifications are <strong>auto-dismissed</strong> (e.g. payment confirmations, shipping notices) &mdash; they are automatically closed and excluded from all statistics.</p>
+
+  <h3 style="font-size: 0.95rem; margin-top: 22px; color: #1a1d26;">Close &amp; Status</h3>
+  <p>In the first column, <strong>Close</strong>, we mark the moment when a case is finished &mdash; either successfully or unsuccessfully.</p>
+  <p style="margin-top:8px;">In the <strong>Status</strong> column, the following statuses should be used before moving a case to the closed table:</p>
+  <ul style="margin: 8px 0 8px 24px;">
+    <li><strong>Resolved</strong></li>
+    <li><strong>Not Resolved</strong></li>
+    <li><strong>On Hold</strong></li>
+  </ul>
+  <p>The statuses <em>Waiting on Us</em> and <em>Waiting on Amazon</em> should only be used while the case remains in the upper table (open cases).</p>
+  <p style="margin-top:8px;">Once <strong>Close</strong> is selected and a final status is assigned, the case will automatically move to the bottom table containing closed cases.</p>
+  <p style="margin-top:8px;">If a mistake is made and the case needs to be restored, simply uncheck <strong>Close</strong> in the bottom table, and the case will return to the open cases list.</p>
+
+  <h3 style="font-size: 0.95rem; margin-top: 22px; color: #1a1d26;">Table Columns</h3>
+  <p>The table contains columns that identify and describe each case.</p>
+  <p style="margin-top:8px;"><strong>Summary</strong> shows the email subject or a short description of the case &mdash; placed early in the table for quick scanning.</p>
+  <p style="margin-top:8px;"><strong>Issue Type</strong> is assigned automatically based on AI analysis of the email content. It can be overridden manually via the dropdown.</p>
+  <p style="margin-top:8px;"><strong>ASIN / Product</strong> shows the product associated with the case. If detected automatically from the email, it shows the ASIN code and product name. You can override or assign a product using the dropdown. Select <strong>N/A</strong> for cases not related to a specific product (e.g. VAT issues).</p>
+  <p style="margin-top:8px;">The <strong>Notes</strong> column is intended for manual input by the person responsible for the case. It is recommended to update this field after working on the case, so any team member can quickly understand the current status and next steps.</p>
+
+  <h3 style="font-size: 0.95rem; margin-top: 22px; color: #1a1d26;">Messages &amp; Days Open</h3>
+  <p>At the end of the table there are columns showing the number of <strong>messages</strong> exchanged and the number of <strong>days</strong> the case has been open.</p>
+  <p style="margin-top:8px;">For Issue Type: <strong>Premium Support</strong>, the number of messages and days may be high because this case is kept open all the time. It is excluded from the statistics and charts.</p>
+
+  <h3 style="font-size: 0.95rem; margin-top: 22px; color: #1a1d26;">Parent Cases (Linking Related Cases)</h3>
+  <p>An additional feature handles situations where one issue generates multiple Amazon cases. This often happens when Amazon requests an appeal under a new case number.</p>
+  <p style="margin-top:8px;">Every case contains a <strong>"+"</strong> button in the <strong>Parent</strong> column.</p>
+  <p style="margin-top:8px;">When a second case appears for the same issue:</p>
+  <ul style="margin: 8px 0 8px 24px;">
+    <li>Click the <strong>+</strong> icon in the Parent column next to the second case and enter the Case ID of the original (first) case.</li>
+    <li>The recommendation is that the parent should always be the first case that was created.</li>
+  </ul>
+  <p style="margin-top:8px;">Once linked, related cases appear grouped together with a green background. Sorting is based on the parent case. To remove a link, clear the Parent Case ID and click away.</p>
+
+  <h3 style="font-size: 0.95rem; margin-top: 22px; color: #1a1d26;">Case ID Details</h3>
+  <p>In the <strong>Case ID</strong> column, some cases display a small number badge indicating how many messages have been exchanged.</p>
+  <p style="margin-top:8px;">The <strong>triangle icon &#9654;</strong> expands a message timeline showing:</p>
+  <ul style="margin: 8px 0 8px 24px;">
+    <li>Message dates</li>
+    <li>The sender</li>
+    <li>The email subject line</li>
+  </ul>
+
+  <h3 style="font-size: 0.95rem; margin-top: 22px; color: #1a1d26;">New Email Indicator &#x2709;</h3>
+  <p>When new emails arrive for a case (after clicking <strong>Refresh</strong>), a pulsing red <strong>&#x2709; envelope icon</strong> appears next to the Case ID.</p>
+  <ul style="margin: 8px 0 8px 24px;">
+    <li>The envelope means this case has received a new email that you haven't reviewed yet.</li>
+    <li><strong>Click the envelope</strong> to acknowledge it &mdash; the icon disappears.</li>
+    <li>Each user has their own acknowledgment state &mdash; one person acknowledging does not affect another's view.</li>
+  </ul>
+</div>
+
 </div><!-- /tab-cases -->
 
 <!-- ===== NOTIFICATIONS TAB ================================================= -->
