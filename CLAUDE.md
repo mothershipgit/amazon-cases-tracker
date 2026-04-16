@@ -7,80 +7,123 @@
 ## Purpose
 Track Amazon Seller Support cases across all brands. Backend API pulls emails from Missive, stores in SQLite, serves to HTML dashboard via REST API.
 
-## Architecture (as of 2026-03-16)
+## Architecture (as of 2026-04-16)
 
-**Old:** Static HTML with embedded data, Claude manually edits HTML on every email pull.
-**New:** Backend API (Railway) + Dynamic HTML (GitHub Pages). Dashboard loads data via `fetch()`.
+Backend API (Railway) + Two dashboard versions (GitHub Pages). Dashboards load data via `fetch()`.
 
 ```
-┌──────────────────────────────┐     ┌──────────────────────────────────┐
-│  Frontend (GitHub Pages)     │     │  Backend (Railway)               │
-│  amazon-cases-tracker.html   │     │  amazon-cases-backend            │
-│                              │     │                                  │
-│  fetch /api/cases            │◄───►│  GET /api/cases                  │
-│  fetch /api/messages         │     │  GET /api/messages               │
-│  POST /api/refresh           │     │  POST /api/refresh               │
-│  Firebase (user state)       │     │  Missive API (direct HTTP)       │
-│  Charts.js                   │     │  SQLite (cases.db)               │
-│  Google Auth                 │     │  node-cron (daily 10AM UTC)      │
-└──────────────────────────────┘     └──────────────────────────────────┘
+┌──────────────────────────────────┐     ┌──────────────────────────────────┐
+│  Frontend (GitHub Pages)         │     │  Backend (Railway)               │
+│  amazon-cases-v2.html (active)   │     │  amazon-cases-backend            │
+│  amazon-cases-tracker.html (v1)  │     │                                  │
+│                                  │     │  GET /api/cases                  │
+│  fetch /api/cases                │◄───►│  GET /api/messages               │
+│  fetch /api/messages             │     │  POST /api/refresh               │
+│  POST /api/refresh               │     │  Missive API (paginated)         │
+│  Firebase (user state)           │     │  SQLite (cases.db)               │
+│  Charts.js + DataLabels          │     │  node-cron (daily 10AM UTC)      │
+│  Google Auth                     │     │                                  │
+└──────────────────────────────────┘     └──────────────────────────────────┘
 ```
 
 ## File Structure
 ```
 Amazon Cases/
 ├── CLAUDE.md                    # This file — project memory
-├── cases_core.md                # Archive — no longer source of truth (SQLite is)
-├── amazon-cases-tracker.html    # Dashboard HTML (data loaded from API)
-├── Amazon Cases Tracker.md      # Obsidian view (simplified table)
-├── asin-names.json              # ASIN → product name lookup
-├── brand-accounts.json          # Email → Brand mapping
-├── data/
-│   ├── amazon-cases-meta.json   # Archive — migrated to SQLite
-│   └── msg-timeline.json        # Archive — migrated to SQLite
+├── amazon-cases-v2.html         # Dashboard v2 (tabbed, active)
+├── amazon-cases-tracker.html    # Dashboard v1 (legacy, still works)
+├── cases_core.md                # Archive — no longer source of truth
+├── asin-names.json              # ASIN → product name lookup (archive)
+├── brand-accounts.json          # Email → Brand mapping (archive)
+├── data/                        # Archive files
 └── backend/                     # API backend (separate GitHub repo)
-    ├── server.js                # Express entry point
+    ├── server.js                # Express entry point + daily cron
     ├── .env                     # MISSIVE_API_TOKEN, API_KEY
     ├── db/
-    │   ├── database.js          # sql.js wrapper
+    │   ├── database.js          # sql.js wrapper + migrations
     │   ├── schema.sql           # 4 tables: cases, messages, conversations, refresh_log
-    │   ├── migrate.js           # One-time migration from .md/.json files
     │   └── cases.db             # SQLite database
     ├── routes/
     │   ├── cases.js             # GET /api/cases, GET /api/cases/:id
-    │   ├── messages.js          # GET /api/messages, GET /api/messages/:id
+    │   ├── messages.js          # GET /api/messages (includes subject), GET /api/messages/:id
     │   └── refresh.js           # POST /api/refresh, GET /api/refresh/status
     ├── services/
-    │   ├── missive.js           # Direct Missive HTTP API client
-    │   └── caseProcessor.js     # Email parsing, classification, dedup, normalizeIssueType
+    │   ├── missive.js           # Missive HTTP client (paginated since March 16)
+    │   └── caseProcessor.js     # Email parsing, classification, auto-dismiss, dedup
     └── config/
         ├── brands.js            # Email→Brand mapping, marketplace inference
-        └── asinNames.js         # ASIN→product name lookup
+        ├── asinNames.js         # ASIN→product name lookup
+        ├── issueTypes.js        # Issue type classification rules (2-tier)
+        └── autoDismiss.js       # Subject patterns for auto-dismissing notifications
 ```
 
-## Brands Tracked
-| Brand | Accounts |
-|-------|----------|
-| QSTA | Multiple EU marketplaces |
-| Vegan Vitality | UK |
-| Hudson Chase | UK |
-| TCU | UK |
+## Dashboard v2 (amazon-cases-v2.html)
 
-## cases_core.md Schema (16 columns)
-`close | case_id | brand | marketplace | asin_summary | issue_type | status_bucket | status_current | opened_date | days_open | closed_date | last_update_date | amazon_msgs_count | owner | next_action_due | next_action`
+### Two Tabs
+1. **Cases** — standard cases + FBA issues (separate from notifications)
+2. **Notifications** — notification emails from Amazon (donotreply@)
+
+### Cases Tab Layout
+```
+KPI Strip: Open | Closed | Avg Days | Total Msgs | Resolved Rate
+Charts (6): Assignee | Status | Daily | Monthly | Issue(Open) | Issue(All)
+Filter Bar: Brand | MKT | Owner | Reset
+Active Cases Table (14 cols)
+FBA Section (collapsible)
+Closed Section (collapsed by default)
+Analytics Accordions: Total / Open / Closed
+```
+
+### Cases Table Columns (14)
+```
+Close | Case ID | Parent | Summary | Brand | MKT | Owner | Opened | ASIN/Product | Issue Type | Status | Notes | Msgs | Days
+```
+
+### Notifications Tab Layout
+```
+KPI Strip: Active | Auto-dismissed | Total
+Filter Bar: Brand | MKT | Reset
+Active Notifications Table (9 cols): Close | Case ID | Brand | MKT | Subject | Issue Type | Opened | Status | Days
+Closed/Auto-dismissed Section (collapsed)
+```
+
+### Key Features
+- **ASIN/Product dropdown** — every case has editable product dropdown synced to Firebase `asins/{caseId}`
+- **Auto-dismiss** — notification cases matching subject patterns auto-closed + excluded from KPIs/charts
+- **Message timeline** — expandable rows show email subjects (not body preview) per case
+- **All charts above the table** — 6 charts in 2 rows before the filter bar
+- **Per-tab filters** — Brand/MKT/Owner for Cases, Brand/MKT for Notifications
+
+## Backend Features
+
+### Auto-Dismiss Notifications
+Config: `backend/config/autoDismiss.js` — subject patterns that auto-close noise notifications:
+- Refund initiated, payment on the way, shipped items, FBA fees, etc.
+- Auto-dismissed cases: `close=1`, `auto_dismissed=1`, excluded from all KPIs/charts
+
+### Missive Pagination
+`listAllConversationsSince(label, sinceDate)` — paginates through all conversations back to a cutoff date (currently March 16, 2026). Uses `until` parameter with `last_activity_at` for pagination. Rate-limited 1s between pages.
+
+### Case Type Detection
+- **Standard** — has case ID in subject (`[CASE 12345]` etc.)
+- **FBA Issue** — subject matches "missing inbound/items"
+- **Notification** — from `donotreply@amazon.com`, no case ID, deterministic `NOTIF-{suffix}` ID
+
+### Message Subject Storage
+Messages table includes `subject` field — stores email subject/title per message. Displayed in timeline instead of body preview.
 
 ## GitHub & Deployment
 
 ### Frontend (Dashboard HTML)
 - **Repo:** `https://github.com/mothershipgit/amazon-cases-tracker`
-- **Live URL:** `https://mothershipgit.github.io/amazon-cases-tracker/`
-- **Branch:** `main`
+- **v2 URL:** `https://mothershipgit.github.io/amazon-cases-tracker/amazon-cases-v2.html`
+- **v1 URL:** `https://mothershipgit.github.io/amazon-cases-tracker/`
 
 ### Backend (API)
 - **Repo:** `https://github.com/mothershipgit/amazon-cases-backend`
 - **Live URL:** `https://amazon-cases-backend-production.up.railway.app`
-- **Railway:** Separate service, Hobby plan (sleep-on-idle enabled)
-- **Daily cron:** node-cron at 10:00 AM UTC (CRON_ENABLED=true)
+- **Railway:** Hobby plan (sleep-on-idle enabled)
+- **Daily cron:** node-cron at 10:00 AM UTC
 
 ### Environment Variables (Railway)
 ```
@@ -91,99 +134,39 @@ MISSIVE_API_TOKEN=<token>
 CRON_ENABLED=true
 ```
 
-## Daily Automation
-**Old:** Windows Task Scheduler → Claude CLI → edits HTML → git push
-**New:** Railway node-cron → backend calls Missive API → updates SQLite automatically
-
-The Windows Task Scheduler (`AmazonCasesDailyUpdate`) is **obsolete** — can be disabled.
-
-## Key Decisions
-- **Data via API** — HTML no longer has embedded CASES/MSG_DATA arrays. Data loaded via fetch() from backend API.
-- **Table rows dynamically generated** — renderTableRows() builds rows from API data. No static <tr> in HTML.
-- **Refresh button** — triggers POST /api/refresh → pulls Missive emails → polls status → reloads data.
-- **Issue type normalization** — backend normalizeIssueType() consolidates categories (all VAT→"VAT", all safety→"Product Safety", etc.)
-- **VIP case pinned** — VIP Seller Relations/Premium Support always sorted to top of active table.
-- **SQLite is source of truth** — cases_core.md is now an archive, not actively updated.
-- **MSG_DATA from API** — stored in SQLite messages table, served via GET /api/messages.
-- **All UI state synced via Firebase Realtime Database** — no localStorage
-- **Email detection**: always fetch all Missive messages, filter by processed ID list (deletion-safe)
-- **`amazon_msgs_count`**: permanent historical counter, never decrements
-- **Close workflow**: tick checkbox → row moves to Closed table + Outcome dropdown injected (default: Resolved) + date stamped → Firebase syncs `closed`, `close_dates`, `close_statuses`
-- **KPI counters**: `updateKpiCounts()` recalculates Open/Closed from actual table rows after every close toggle and Firebase sync
-- **Notification cases**: Emails from `donotreply@amazon.com` / `do-not-reply@amazon.com` with no case ID are captured as `case_type: 'notification'` with deterministic ID format `NOTIF-{last6charsOfConvUUID}` (stable across rebuilds). Marketplace inferred from full email body via `/messages/{id}` endpoint (country names, amazon.XX/sellercentral URLs, language detection). ASIN extracted from full body. Included in KPI stats and assignee charts. Shown in main Active Cases table with amber NOTIF badge. Intended as parent cases — when a real case is opened to address the notification, link it as a child.
-- **Marketplace dropdown**: Marketplace column is an editable dropdown (DE/FR/IT/ES/UK/US) persisted via Firebase `marketplaces/{case_id}`. Overrides backend-detected marketplace. Color-coded per marketplace. Changes trigger chart rebuild.
-- **Issue type categories**: KYC and Investigation are issue types (not statuses). Full list: Other, VAT, GPSR Compliance, Image Compliance, Business Compliance, Listing Compliance, Logistics, Product Safety, Restricted Products, Regulatory Compliance, IP Violation, IP Complaint, Authenticity Complaint, Product Condition Complaint, Listing Policy Violation, Reviews Policy Violation, Policy Violation, Premium Support, Escalation, Notification, KYC, Investigation.
-- **Charts read from DOM**: Analytics charts (`getLiveSubset`) sync issue_type and marketplace from DOM dropdowns before building, ensuring Firebase overrides are reflected. Accordion charts rebuild every time opened (not lazy-init once).
-- **Issue Type per Product chart**: Only shows cases that have an ASIN — cases without ASIN are excluded to prevent issue types appearing as product names.
-
 ## Firebase Keys (Realtime Database)
 | Key | Type | Purpose |
 |-----|------|---------|
-| `owners/{case_id}` | string | Assignee per case (Unassigned/Tom/Vitali) |
+| `owners/{case_id}` | string | Assignee (Unassigned/Tom/Vitali/Natasha/Leticia/Francesco) |
 | `closed/{case_id}` | boolean | Closed state |
 | `close_dates/{case_id}` | string | Close date (YYYY-MM-DD) |
-| `close_statuses/{case_id}` | string | Outcome: Resolved/Not Resolved/On Hold/Waiting on Amazon/Waiting on Us |
+| `close_statuses/{case_id}` | string | Outcome: Resolved/Not Resolved/On Hold/etc. |
 | `notes/{case_id}` | string | Free-text notes |
-| `next_actions/{case_id}` | string | Next action text |
+| `next_actions/{case_id}` | string | Next action text (legacy, column removed in v2) |
 | `parent_cases/{case_id}` | string | Parent case ID |
 | `issue_types/{case_id}` | string | Issue type override |
 | `marketplaces/{case_id}` | string | Marketplace override (DE/FR/IT/ES/UK/US) |
+| `asins/{case_id}` | string | ASIN/Product override (v2 only) |
+| `seen_emails/{case_id}/{uid}` | number | Per-user last-seen timestamp for envelope icons |
 
-## HTML Dashboard Features
-
-### MSG_DATA — Message Timeline
-- **Static JS object** embedded in HTML alongside `CASES` array
-- Contains chronological message data for each open case: `{ ts, from, preview }`
-- **Must be regenerated every time HTML is rebuilt** (missive-reader Step 7) — it does not persist
-- `initMsgTimeline()` creates expandable rows with ▶/▼ toggle and badge count
-- Detail rows use `.msg-detail-row` class with `data-parent-case` attribute
-
-**Filtering rules:**
-- Only messages where `ts >= case.opened_date - 86400` (filters out predecessor case messages from reused Missive threads)
-- Deduplication by `email_message_id` (handles QSTA dual-inbox)
-- VIP/Premium Support cases with 25+ messages excluded to avoid HTML bloat
-
-### Parent-Child Case Grouping
-- Cases can be linked as parent/child in the HTML (`.parent-link` span)
-- `sortTable()` treats parent+children as unbreakable blocks — only parent row data determines sort position
-- `regroupRows()` ensures children always appear directly after their parent
-- Both functions exclude `.msg-detail-row` elements from grouping/sorting via `:not(.msg-detail-row)`
-
-### Closed Table — Outcome Dropdown
-- When a case moves to closed table, the Status Bucket column becomes an **Outcome** dropdown
-- Options: **Resolved** (green), **Not Resolved** (red), **On Hold** (orange), **Waiting on Amazon** (blue), **Waiting on Us** (red), **Investigation** (purple)
-- Default value: Resolved
-- When case is reopened, dropdown reverts to static status badge from CASES array
-- Synced via Firebase `close_statuses/{case_id}`
-- Included in Copy Assignments JSON as `close_statuses`
-
-### EXCLUDED_FROM_STATS
-- `const EXCLUDED_FROM_STATS = ['CASE_ID', ...]` — array of case IDs excluded from dashboard statistics
-- Used for outlier cases that distort averages (e.g., very old cases)
-
-### Charts (Chart.js)
-- **Assignee charts** (`ch-assignee-total`, `ch-assignee-open`) — rebuild automatically when Firebase owner sync fires, so they reflect live owner assignments (not just `cases_core.md` defaults). Uses `buildAssigneeCharts()` which destroys and recreates chart instances.
-- **Cases Created Daily** (`ch-daily`) — last 30 days with zero-filled gaps (shows days without cases)
-- **Monthly Cases** (`ch-monthly`) — cases grouped by `YYYY-MM` from `opened_date`
-- **Workload by Status** — doughnut chart of all cases by `status_bucket`
-- **Marketplace & Brand** — grouped bar charts (cases per marketplace by brand, and vice versa)
-- **Case Types & Products** — issue type distribution + product/issue type grouped bar
-
-## Active Cases (as of last update)
-See `cases_core.md` for live data.
+## Key Decisions
+- **Two dashboards** — v2 is the active version, v1 kept as fallback
+- **Tabbed layout** — Cases and Notifications are separate tabs with own KPIs/tables
+- **14-column table** — Summary at position 4 (after Parent), no Last Update or Next Action columns
+- **All 6 charts above the table** — Assignee, Status, Daily, Monthly, Issue(Open), Issue(All)
+- **Auto-dismiss** — noise notifications auto-closed by subject pattern match, excluded from stats
+- **ASIN dropdown** — editable product assignment via dropdown, stored in Firebase
+- **Paginated Missive pull** — fetches all conversations since March 16 with pagination
+- **Subject in timeline** — messages store and display email subject, not body preview
+- **SQLite is source of truth** — cases_core.md is archive only
+- **Firebase for UI state** — owners, notes, closed state, marketplace/issue overrides
+- **EXCLUDED_FROM_STATS** — case IDs excluded from KPI calculations (e.g., VIP outlier)
 
 ## Missive Integration
 - **Amazon Cases label ID:** `c88eb69d-7abe-4ca7-97b2-118fefc36042`
-- Case 12122795542 has 2 separate Missive conversation threads → both stored in `conversation_ids`
-- A single Missive conversation can contain messages from **multiple Amazon case IDs** (predecessor cases reusing same email thread) — opened_date filtering handles this
-- Write Obsidian note directly via Write tool (not MCP) — Obsidian picks up via file watcher
+- Pagination via `until` parameter on `/conversations` endpoint (max 50 per page)
+- Single conversation can contain multiple case IDs — opened_date filtering handles this
+- QSTA dual-inbox dedup via `email_message_id`
 
-## Notes
-- Case 10526714132 removed (453 days old, distorting statistics)
-- Case 10995838672 (VIP) has 26+ conversations — excluded from MSG_DATA timeline
-- Sort active cases by `last_activity_at` (newest first)
-- **Amazon Msgs** = count of messages from `@amazon.*` domains only
-- **MSG_DATA badge vs Msgs column**: Badge shows all messages from live Missive fetch (with opened_date filter); Msgs column reflects only messages processed by missive-reader. Temporary mismatches resolve on next skill run.
-
-## Skill
-Managed by `.claude/skills/missive-reader/SKILL.md`
+## Issue Type Categories
+Other, VAT, GPSR Compliance, Image Compliance, Business Compliance, Listing Compliance, Logistics, Product Safety, Restricted Products, Regulatory Compliance, IP Violation, IP Complaint, Authenticity Complaint, Product Condition Complaint, Listing Policy Violation, Reviews Policy Violation, Policy Violation, Premium Support, Escalation, Notification, KYC, Investigation
