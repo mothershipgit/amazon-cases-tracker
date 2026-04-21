@@ -2362,11 +2362,21 @@ async function triggerRefresh(btn) {
       });
     }
     if (result) {
+      // Split updated/new case IDs by type using the freshly-loaded CASES array
+      let notifTouched = 0, caseTouched = 0;
+      if (result.updatedCaseIds && result.updatedCaseIds.length) {
+        result.updatedCaseIds.forEach(id => {
+          const c = CASES.find(x => String(x.case_id) === String(id));
+          if (!c) return;
+          if (c.case_type === 'notification') notifTouched++;
+          else caseTouched++;
+        });
+      }
       const parts = [];
-      if (result.newCases) parts.push(result.newCases + ' new case' + (result.newCases > 1 ? 's' : ''));
-      if (result.updatedCases) parts.push(result.updatedCases + ' updated');
+      if (caseTouched) parts.push(caseTouched + ' case' + (caseTouched > 1 ? 's' : ''));
+      if (notifTouched) parts.push(notifTouched + ' notification' + (notifTouched > 1 ? 's' : ''));
       if (result.newMessages) parts.push(result.newMessages + ' new msg' + (result.newMessages > 1 ? 's' : ''));
-      if (parts.length) statusEl.textContent = 'Done \u2014 ' + parts.join(', ');
+      if (parts.length) statusEl.textContent = 'Done \u2014 ' + parts.join(' \u00B7 ');
       else statusEl.textContent = 'Done \u2014 no new emails';
     }
 
