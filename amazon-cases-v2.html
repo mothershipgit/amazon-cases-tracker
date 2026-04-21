@@ -331,7 +331,7 @@ input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-colo
 .col-case { width: 110px; font-family: monospace; font-size: 0.75rem; color: var(--text-secondary); }
 .col-parent { width: 110px; }
 .col-brand { width: 100px; }
-.col-asin { width: 150px; }
+.col-asin { width: 220px; }
 .col-issue { min-width: 140px; }
 .col-date { width: 90px; white-space: nowrap; color: #888; font-size: 0.75rem; }
 .col-num { width: 60px; text-align: center; }
@@ -344,8 +344,8 @@ input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-colo
 .asin-code { font-family: monospace; font-size: 0.7rem; color: #888; display: block; }
 .asin-name { font-size: 0.72rem; color: var(--text-secondary); display: block; margin-top: 1px; font-weight: 600; }
 .asin-select {
-  font-size: 0.7rem;
-  padding: 2px 4px;
+  font-size: 0.72rem;
+  padding: 3px 6px;
   border: 1px solid var(--border-light);
   border-radius: var(--radius-sm);
   background: var(--bg-card);
@@ -353,6 +353,7 @@ input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-colo
   cursor: pointer;
   width: 100%;
   margin-top: 3px;
+  text-overflow: ellipsis;
 }
 .asin-select:focus { outline: none; border-color: var(--color-info); }
 
